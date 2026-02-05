@@ -1,0 +1,113 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Dashboard Inventario{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <h2 class="mb-4">
+        <i class="fas fa-chart-line text-primary"></i>
+        Dashboard de Inventario
+    </h2>
+
+    <!-- Tarjetas resumen -->
+    <div class="row g-4">
+
+        <div class="col-md-3">
+            <div class="card shadow text-center border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Tipos de Balancín</h6>
+                    <h2 class="fw-bold text-primary">{{ total_tipos }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow text-center border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Balancines</h6>
+                    <h2 class="fw-bold text-success">{{ total_balancines }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow text-center border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Repuestos</h6>
+                    <h2 class="fw-bold text-warning">{{ total_repuestos }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow text-center border-0">
+                <div class="card-body">
+                    <h6 class="text-muted">Adicionales</h6>
+                    <h2 class="fw-bold text-info">{{ total_adicionales }}</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Alertas -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="alert alert-danger shadow">
+                <h5><i class="fas fa-exclamation-triangle"></i> Stock Bajo</h5>
+                <p>Repuestos críticos: <b>{{ stock_bajo_repuestos }}</b></p>
+                <p>Adicionales críticos: <b>{{ stock_bajo_adicionales }}</b></p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Gráfica -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    Distribución del Inventario
+                </div>
+                <div class="card-body">
+                    <canvas id="graficaInventario"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volver -->
+    <div class="text-center mt-4">
+        <a href="{% url 'inventario_principal' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+</div>
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('graficaInventario');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Tipos', 'Balancines', 'Repuestos', 'Adicionales'],
+        datasets: [{
+            label: 'Cantidad',
+            data: [
+                {{ total_tipos }},
+                {{ total_balancines }},
+                {{ total_repuestos }},
+                {{ total_adicionales }}
+            ]
+        }]
+    }
+});
+</script>
+
+{% endblock %}

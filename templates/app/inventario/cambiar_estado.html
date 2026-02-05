@@ -1,0 +1,149 @@
+<!-- templates/app/inventario/cambiar_estado.html -->
+{% extends 'app/base.html' %}
+
+{% block title %}{{ title }} - Sistema TRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-primary">
+                <i class="fas fa-exchange-alt"></i> Cambiar Estado del Balancín
+            </h1>
+            <p class="text-muted mb-0">Actualizar el estado actual del balancín</p>
+        </div>
+        <div>
+            <a href="{% url 'detalle_balancin' balancin.serial %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Detalle
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Información del balancín -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Información del Balancín
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless mb-0">
+                        <tr>
+                            <th width="40%">Serial:</th>
+                            <td><strong>{{ balancin.serial }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Tipo:</th>
+                            <td>{{ balancin.tipo.codigo }} ({{ balancin.tipo.get_tipo_display }})</td>
+                        </tr>
+                        <tr>
+                            <th>Estado Actual:</th>
+                            <td>
+                                {% if balancin.estado == 'taller' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-warehouse"></i> {{ estado_actual }}
+                                </span>
+                                {% elif balancin.estado == 'servicio' %}
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-cogs"></i> {{ estado_actual }}
+                                </span>
+                                {% elif balancin.estado == 'mantenimiento' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-tools"></i> {{ estado_actual }}
+                                </span>
+                                {% elif balancin.estado == 'baja' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle"></i> {{ estado_actual }}
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Ingreso:</th>
+                            <td>{{ balancin.fecha_ingreso|date:"d/m/Y" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Formulario para cambiar estado -->
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sync-alt"></i> Cambiar Estado
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.nuevo_estado.id_for_label }}" class="form-label">
+                                <i class="fas fa-arrow-right"></i> Nuevo Estado *
+                            </label>
+                            {{ form.nuevo_estado }}
+                            {% if form.nuevo_estado.errors %}
+                            <div class="text-danger small">{{ form.nuevo_estado.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                <i class="fas fa-sticky-note"></i> Observaciones
+                            </label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                            <div class="text-danger small">{{ form.observaciones.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Describe el motivo del cambio de estado. Ej: "Enviado a mantenimiento preventivo", 
+                                "Instalado en proyecto XYZ", "Dado de baja por desgaste", etc.
+                            </div>
+                        </div>
+                        
+                        <!-- Información de estados -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading"><i class="fas fa-info-circle"></i> Significado de los estados:</h6>
+                            <ul class="mb-0 small">
+                                <li><strong>En taller:</strong> Disponible para uso o mantenimiento</li>
+                                <li><strong>En servicio:</strong> Actualmente en uso en un proyecto</li>
+                                <li><strong>En mantenimiento:</strong> En reparación o mantenimiento</li>
+                                <li><strong>Dado de baja:</strong> Retirado permanentemente del inventario</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'detalle_balancin' balancin.serial %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Confirmar Cambio
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos adicionales -->
+<style>
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.8em;
+}
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+{% endblock %}

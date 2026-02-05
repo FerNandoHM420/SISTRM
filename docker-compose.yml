@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    command: >
+      sh -c "echo 'Esperando a PostgreSQL...' &&
+             while ! pg_isready -h db -p 5432; do sleep 2; done &&
+             echo 'PostgreSQL listo!' &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000 --noreload"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: proyecto_db
+      POSTGRES_USER: proyecto_user
+      POSTGRES_PASSWORD: proyecto_pass
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U proyecto_user -d proyecto_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

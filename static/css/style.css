@@ -1,0 +1,176 @@
+ /* static/css/style.css */
+
+ /* Estilos generales */
+ body {
+     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+     background-color: #f8f9fa;
+     min-height: 100vh;
+     display: flex;
+     flex-direction: column;
+ }
+
+ main {
+     flex: 1;
+ }
+
+ /* Hero section */
+ .hero-section {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+     color: white;
+     border-radius: 15px;
+     padding: 3rem !important;
+ }
+
+ .hero-section h1 {
+     font-weight: 700;
+     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+ }
+
+ /* Cards */
+ .card {
+     transition: transform 0.3s ease, box-shadow 0.3s ease;
+     border: none;
+ }
+
+ .card:hover {
+     transform: translateY(-5px);
+     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+ }
+
+ /* Navbar */
+ .navbar {
+     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+ }
+
+ .navbar-brand {
+     font-weight: 700;
+     font-size: 1.5rem;
+ }
+
+ /* Dashboard */
+ .dashboard-header {
+     border-left: 5px solid #007bff;
+ }
+
+ /* Formularios */
+ .form-control:focus {
+     border-color: #80bdff;
+     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+ }
+
+ /* Botones */
+ .btn {
+     border-radius: 8px;
+     font-weight: 500;
+     transition: all 0.3s ease;
+ }
+
+ .btn-lg {
+     padding: 0.75rem 1.5rem;
+ }
+
+ /* Alertas */
+ .alert {
+     border-radius: 10px;
+     border: none;
+ }
+
+ /* Footer */
+ footer {
+     margin-top: auto;
+ }
+
+ /* Responsive */
+ @media (max-width: 768px) {
+     .hero-section {
+         padding: 2rem !important;
+     }
+
+     .display-4 {
+         font-size: 2.5rem;
+     }
+ }
+
+ /* static/css/style.css - Agrega esto al final */
+
+ /* Estilos para la página de inicio */
+ .hover-card {
+     transition: transform 0.3s ease, box-shadow 0.3s ease;
+     border-radius: 15px;
+     overflow: hidden;
+ }
+
+ .hover-card:hover {
+     transform: translateY(-10px);
+     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+ }
+
+ .card-header {
+     border-radius: 15px 15px 0 0 !important;
+ }
+
+ /* Gradientes personalizados */
+ .bg-gradient-primary {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+ }
+
+ .bg-gradient-danger {
+     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+ }
+
+ .bg-gradient-success {
+     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+ }
+
+ .bg-gradient-warning {
+     background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+ }
+
+ .bg-gradient-info {
+     background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) !important;
+ }
+
+ .bg-gradient-purple {
+     background: linear-gradient(135deg, #9a6bff 0%, #4b2cff 100%) !important;
+ }
+
+ .bg-gradient-secondary {
+     background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important;
+ }
+
+ .bg-gradient-dark {
+     background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%) !important;
+ }
+
+ /* Botón morado */
+ .btn-purple {
+     background-color: #9a6bff !important;
+     border-color: #9a6bff !important;
+     color: white !important;
+ }
+
+ .btn-purple:hover {
+     background-color: #7c4dff !important;
+     border-color: #7c4dff !important;
+     color: white !important;
+ }
+
+ /* Tarjetas de estadísticas */
+ .stat-card {
+     transition: all 0.3s ease;
+ }
+
+ .stat-card:hover {
+     background-color: rgba(0, 0, 0, 0.05) !important;
+ }
+
+ /* Responsive */
+ @media (max-width: 768px) {
+     .display-3 {
+         font-size: 2.5rem;
+     }
+
+     .card {
+         margin-bottom: 1rem;
+     }
+ }

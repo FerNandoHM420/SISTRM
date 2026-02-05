@@ -1,0 +1,210 @@
+<!-- templates/app/inventario/inventario_principal.html -->
+{% extends 'app/base.html' %}
+
+{% block title %}Balancines - Sistema TRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary">
+            <i class="fas fa-warehouse"></i> Gestion de Balancines
+        </h1>
+        <p class="lead text-muted">
+            Gestión centralizada de todos los recursos del los Balancines
+        </p>
+    </div>
+
+    <!-- Tarjetas de módulos del inventario -->
+    <div class="row g-4">
+        <!-- Tipos de Balancín -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-gradient-primary text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-list"></i> Tipos de Balancín</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Gestión de modelos y tipos de balancines disponibles en el taller.
+                        Control de cantidades por modelo.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{% url 'lista_tipos_balancin' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> Ver Lista
+                        </a>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+
+        <!-- Repuestos para Balancines -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-gradient-warning text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-cogs"></i> Repuestos para Balancines</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Inventario de repuestos específicos para balancines.
+                        Control de stock y ubicaciones.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{% url 'lista_repuestos_balancin' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-eye"></i> Ver Lista
+                        </a>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repuestos Adicionales -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-gradient-info text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-tools"></i> Repuestos Adicionales</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Inventario de repuestos generales y herramientas.
+                        Consumibles y materiales diversos.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{% url 'lista_repuestos_adicionales' %}" class="btn btn-outline-info">
+                            <i class="fas fa-eye"></i> Ver Lista
+                        </a>
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Inventario -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-gradient-secondary text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-chart-line"></i> Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Estadísticas y reportes del inventario.
+                        Gráficos y análisis de stock.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{% url 'dashboard_inventario' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-chart-bar"></i> Ver Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+     <!-- Búsqueda Rápida -->
+<div class="col-xl-4 col-lg-6">
+    <div class="card h-100 shadow-lg border-0 hover-card">
+        <div class="card-header bg-gradient-purple text-white py-4">
+            <h4 class="mb-0"><i class="fas fa-search"></i> Búsqueda Rápida</h4>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'buscar_inventario' %}">
+                <div class="mb-3">
+                    <label class="form-label">Buscar en inventario:</label>
+                    <input type="text" 
+                           class="form-control" 
+                           name="q" 
+                           placeholder="Serial, código, descripción..."
+                           value="{{ request.GET.q|default:'' }}"
+                           autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo:</label>
+                    <select class="form-select" name="tipo">
+                        <option value="">Todo el inventario</option>
+                        <option value="tipos" {% if request.GET.tipo == 'tipos' %}selected{% endif %}>
+                            Tipos de Balancín
+                        </option>
+                        <option value="balancines" {% if request.GET.tipo == 'balancines' %}selected{% endif %}>
+                            Balancines Individuales
+                        </option>
+                        <option value="repuestos" {% if request.GET.tipo == 'repuestos' %}selected{% endif %}>
+                            Repuestos para Balancines
+                        </option>
+                        <option value="adicionales" {% if request.GET.tipo == 'adicionales' %}selected{% endif %}>
+                            Repuestos Adicionales
+                        </option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-purple w-100">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+                {% if request.GET.q %}
+                    <a href="{% url 'inventario_principal' %}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-times"></i> Limpiar Búsqueda
+                    </a>
+                {% endif %}
+            </form>
+            
+            <!-- Estadísticas rápidas -->
+            <hr class="my-3">
+            <div class="text-center">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> Busca por serial, código, descripción o ubicación
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Acciones rápidas -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0"><i class="fas fa-bolt"></i> Acciones Rápidas</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'agregar_balancin_individual' %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus-circle"></i><br>
+                                Nuevo Balancín
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'agregar_repuesto_balancin' %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-box-open"></i><br>
+                                Nuevo Repuesto
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                           <a href="{% url 'exportar_inventario_excel' %}" class="btn btn-outline-warning w-100">
+
+                                <i class="fas fa-file-export"></i><br>
+                                Exportar Inventario
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="#" class="btn btn-outline-danger w-100">
+                                <i class="fas fa-exclamation-triangle"></i><br>
+                                Stock Bajo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Volver al inicio -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{% url 'home' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

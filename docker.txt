@@ -1,0 +1,48 @@
+# Ir a la carpeta del proyecto
+cd "C:\Users\HOME\Desktop\Nueva carpeta\ProyectoNuevo"
+
+# =============================
+# PRIMERA VEZ (construcción completa)
+# =============================
+docker compose build
+docker compose up -d
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py createsuperuser
+
+# =============================
+# USO DIARIO (solo iniciar)
+# =============================
+docker compose up -d
+
+# =============================
+# Ver logs en tiempo real
+# =============================
+docker compose logs -f
+
+# =============================
+# Detener contenedores
+# =============================
+docker compose down
+
+# =============================
+# Reiniciar limpio (borra base de datos)
+# =============================
+docker compose down -v
+docker compose build
+docker compose up -d
+
+
+restaur la web 
+docker compose restart web
+
+#Guardar backupd la base de datos 
+docker compose exec -T db pg_dump -U proyecto_user proyecto_db > backup_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%.sql
+
+
+#restaura la base de datos 
+docker compose exec -T db psql -U proyecto_user proyecto_db < backup.sql
+
+Antes de apagar el PC:
+
+docker compose down
+docker compose exec -T db pg_dump -U proyecto_user proyecto_db > backup.sql

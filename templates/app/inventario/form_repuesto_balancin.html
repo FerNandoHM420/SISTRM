@@ -1,0 +1,100 @@
+<!-- templates/app/inventario/form_repuesto_balancin.html -->
+{% extends 'app/base.html' %}
+
+{% block title %}Agregar Repuesto para Balancín - Sistema TRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus"></i> Agregar Repuesto para Balancín
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código del Item *</label>
+                            <input type="text" class="form-control" name="item" 
+                                   placeholder="Ej: REP-BAL-001, VÁLVULA-4T, etc." required>
+                            <div class="form-text">Código único para identificar el repuesto</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción *</label>
+                            <textarea class="form-control" name="descripcion" rows="3" 
+                                      placeholder="Descripción detallada del repuesto..." required></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Cantidad Inicial</label>
+                                    <input type="number" class="form-control" name="cantidad" 
+                                           value="0" min="0" step="1">
+                                    <div class="form-text">Cantidad disponible en stock</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ubicación</label>
+                                    <input type="text" class="form-control" name="ubicacion" 
+                                           placeholder="Ej: Estante A1, Caja B3, etc.">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Observaciones</label>
+                            <textarea class="form-control" name="observaciones" rows="2" 
+                                      placeholder="Observaciones adicionales..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'lista_repuestos_balancin' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Repuesto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Información de ayuda -->
+            <div class="card shadow mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información de ayuda</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Formato recomendado para códigos:</strong></p>
+                    <ul class="small">
+                        <li><code>REP-BAL-001</code> - Repuesto genérico para balancín</li>
+                        <li><code>VÁLVULA-4T</code> - Válvula para balancín 4T</li>
+                        <li><code>JUNTA-6T</code> - Junta para balancín 6T</li>
+                        <li><code>MANÓMETRO-8T</code> - Manómetro para balancín 8T</li>
+                    </ul>
+                    <p class="mb-0 small text-muted">
+                        <i class="fas fa-lightbulb"></i> Los repuestos se pueden editar y gestionar su stock desde la lista principal.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control, .form-select {
+    border-radius: 5px;
+    padding: 10px;
+}
+.btn {
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
