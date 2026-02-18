@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buscar en Inventario - Sistema TRM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-highlight {
+        background-color: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    .result-card {
+        transition: all 0.2s;
+        border-left: 4px solid transparent;
+    }
+    .result-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .tipo-tipos { border-left-color: #007bff; }
+    .tipo-balancines { border-left-color: #28a745; }
+    .tipo-torres { border-left-color: #17a2b8; }
+    .tipo-repuestos { border-left-color: #ffc107; }
+    .tipo-adicionales { border-left-color: #6c757d; }
+    
+    .stats-badge {
+        font-size: 0.8rem;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <!-- Header con estadísticas -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-primary">
+                <i class="fas fa-search"></i> Buscar en Inventario
+            </h1>
+            {% if query %}
+            <p class="text-muted mb-0">
+                <i class="fas fa-filter"></i> 
+                Resultados para: "<strong class="search-highlight">{{ query }}</strong>"
+                {% if tipo_filtro %}
+                    en <strong>{{ tipo_filtro|title }}</strong>
+                {% endif %}
+                <span class="stats-badge ms-3">
+                    <i class="fas fa-chart-bar"></i> {{ total_resultados }} resultados
+                </span>
+            </p>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{% url 'inventario_principal' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulario de búsqueda mejorado -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'buscar_inventario' %}" id="searchForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-search text-primary"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   name="q" 
+                                   placeholder="Buscar por código, descripción, ubicación..." 
+                                   value="{{ query }}"
+                                   autofocus>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select form-select-lg" name="tipo">
+                            <option value="">📋 Todo el inventario</option>
+                            <option value="tipos" {% if tipo_filtro == 'tipos' %}selected{% endif %}>📦 Tipos de Balancín</option>
+                            <option value="balancines" {% if tipo_filtro == 'balancines' %}selected{% endif %}>⚙️ Balancines Individuales</option>
+                            <option value="torres" {% if tipo_filtro == 'torres' %}selected{% endif %}>🏭 Torres</option>
+                            <option value="repuestos" {% if tipo_filtro == 'repuestos' %}selected{% endif %}>🔧 Repuestos para Balancines</option>
+                            <option value="adicionales" {% if tipo_filtro == 'adicionales' %}selected{% endif %}>🛠️ Repuestos Adicionales</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    {% if tiene_resultados %}
+        <!-- Barra de filtros rápidos -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-outline-primary active" onclick="filterResults('all')">
+                        <i class="fas fa-th-large"></i> Todos ({{ total_resultados }})
+                    </button>
+                    {% if resultados.tipos %}
+                    <button class="btn btn-outline-primary" onclick="filterResults('tipos')">
+                        <i class="fas fa-list"></i> Tipos ({{ resultados.tipos|length }})
+                    </button>
+                    {% endif %}
+                    {% if resultados.balancines %}
+                    <button class="btn btn-outline-primary" onclick="filterResults('balancines')">
+                        <i class="fas fa-cog"></i> Balancines ({{ resultados.balancines|length }})
+                    </button>
+                    {% endif %}
+                    {% if resultados.torres %}
+                    <button class="btn btn-outline-primary" onclick="filterResults('torres')">
+                        <i class="fas fa-building"></i> Torres ({{ resultados.torres|length }})
+                    </button>
+                    {% endif %}
+                    {% if resultados.repuestos_balancin %}
+                    <button class="btn btn-outline-primary" onclick="filterResults('repuestos')">
+                        <i class="fas fa-cogs"></i> Repuestos ({{ resultados.repuestos_balancin|length }})
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados agrupados -->
+        <div class="results-container">
+            
+            <!-- Tipos de Balancín -->
+            {% if resultados.tipos %}
+            <div class="result-group mb-4" data-category="tipos">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary text-white p-2 rounded-circle me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h4 class="mb-0">Tipos de Balancín <span class="badge bg-primary ms-2">{{ resultados.tipos|length }}</span></h4>
+                </div>
+                <div class="row">
+                    {% for tipo in resultados.tipos %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card result-card tipo-tipos">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1">
+                                            <strong>{{ tipo.codigo }}</strong>
+                                        </h5>
+                                        <p class="text-muted small mb-2">
+                                            <span class="badge bg-info">{{ tipo.get_tipo_display }}</span>
+                                            <span class="badge bg-secondary">Stock: {{ tipo.cantidad_total }}</span>
+                                        </p>
+                                        <p class="mb-0">
+                                            <i class="fas fa-chart-line text-primary"></i>
+                                            <small>{{ tipo.balancines_instalados }} instalados</small>
+                                        </p>
+                                    </div>
+                                    <a href="{% url 'detalle_tipo_balancin' tipo.codigo %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Balancines Individuales -->
+            {% if resultados.balancines %}
+            <div class="result-group mb-4" data-category="balancines">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success text-white p-2 rounded-circle me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h4 class="mb-0">Balancines Individuales <span class="badge bg-success ms-2">{{ resultados.balancines|length }}</span></h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Ubicación</th>
+                                <th>Sentido</th>
+                                <th>Estado OH</th>
+                                <th>Última OH</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in resultados.balancines %}
+                            <tr>
+                                <td><strong>{{ b.codigo }}</strong></td>
+                                <td>
+                                    <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                                    {{ b.torre.linea.nombre }} - T{{ b.torre.numero_torre }}
+                                </td>
+                                <td>
+                                    {% if b.sentido == 'ASCENDENTE' %}
+                                    <span class="badge bg-success">ASC</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">DESC</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ b.estado_color }}">
+                                        {{ b.estado_texto }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if b.ultimo_oh %}
+                                    OH#{{ b.ultimo_oh.numero_oh }} - {{ b.ultimo_oh.fecha_oh|date:"d/m/Y" }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'dashboard_oh_nuevo' %}?balancin={{ b.codigo }}#listado" 
+                                       class="btn btn-sm btn-outline-success"
+                                       title="Ver historial OH">
+                                        <i class="fas fa-clock"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Torres -->
+            {% if resultados.torres %}
+            <div class="result-group mb-4" data-category="torres">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info text-white p-2 rounded-circle me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h4 class="mb-0">Torres <span class="badge bg-info ms-2">{{ resultados.torres|length }}</span></h4>
+                </div>
+                <div class="row">
+                    {% for torre in resultados.torres %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card result-card tipo-torres">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h5 class="card-title mb-2">
+                                            <i class="fas fa-industry"></i> 
+                                            {{ torre.linea.nombre }} - Torre {{ torre.numero_torre }}
+                                        </h5>
+                                        <p class="mb-1">
+                                            <small>
+                                                <span class="badge bg-success">ASC: {{ torre.tipo_balancin_ascendente }}</span>
+                                                <span class="badge bg-danger">DESC: {{ torre.tipo_balancin_descendente }}</span>
+                                            </small>
+                                        </p>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="fas fa-cog"></i> {{ torre.ascendentes }} ascendentes / {{ torre.descendentes }} descendentes
+                                        </p>
+                                    </div>
+                                    <span class="badge bg-info" style="height: fit-content;">
+                                        Secc: {{ torre.seccion.nombre }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Repuestos para Balancines -->
+            {% if resultados.repuestos_balancin %}
+            <div class="result-group mb-4" data-category="repuestos">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning text-white p-2 rounded-circle me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h4 class="mb-0">Repuestos para Balancines <span class="badge bg-warning ms-2">{{ resultados.repuestos_balancin|length }}</span></h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descripción</th>
+                                <th>Stock</th>
+                                <th>Ubicación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for repuesto in resultados.repuestos_balancin %}
+                            <tr>
+                                <td><strong>{{ repuesto.item }}</strong></td>
+                                <td>{{ repuesto.descripcion|truncatechars:60 }}</td>
+                                <td>
+                                    <span class="badge {% if repuesto.cantidad == 0 %}bg-danger{% elif repuesto.cantidad < 5 %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ repuesto.cantidad }}
+                                    </span>
+                                </td>
+                                <td>{{ repuesto.ubicacion|default:"-" }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-warning"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#detalleModal{{ repuesto.item|slugify }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Repuestos Adicionales -->
+            {% if resultados.repuestos_adicionales %}
+            <div class="result-group mb-4" data-category="adicionales">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-secondary text-white p-2 rounded-circle me-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h4 class="mb-0">Repuestos Adicionales <span class="badge bg-secondary ms-2">{{ resultados.repuestos_adicionales|length }}</span></h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Descripción</th>
+                                <th>Stock</th>
+                                <th>Ubicación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for adicional in resultados.repuestos_adicionales %}
+                            <tr>
+                                <td><strong>{{ adicional.item }}</strong></td>
+                                <td>{{ adicional.descripcion|truncatechars:60 }}</td>
+                                <td>
+                                    <span class="badge {% if adicional.cantidad == 0 %}bg-danger{% elif adicional.cantidad < 5 %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ adicional.cantidad }}
+                                    </span>
+                                </td>
+                                <td>{{ adicional.ubicacion|default:"-" }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#detalleAdicionalModal{{ adicional.item|slugify }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    {% elif query %}
+        <!-- Sin resultados -->
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">No se encontraron resultados</h3>
+                <p class="text-muted">
+                    No hay resultados para "<strong>{{ query }}</strong>"
+                    {% if tipo_filtro %} en <strong>{{ tipo_filtro|title }}</strong>{% endif %}
+                </p>
+                <button onclick="document.getElementById('searchForm').reset(); document.querySelector('[name=q]').focus()" 
+                        class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Nueva búsqueda
+                </button>
+            </div>
+        </div>
+    {% else %}
+        <!-- Estado inicial -->
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h3 class="text-muted">¿Qué estás buscando?</h3>
+                <p class="text-muted">
+                    Puedes buscar por código, descripción, ubicación...
+                </p>
+                <div class="row justify-content-center mt-4">
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-around">
+                            <div class="text-center">
+                                <i class="fas fa-list fa-2x text-primary"></i>
+                                <p class="small">Tipos</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-cog fa-2x text-success"></i>
+                                <p class="small">Balancines</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-building fa-2x text-info"></i>
+                                <p class="small">Torres</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-cogs fa-2x text-warning"></i>
+                                <p class="small">Repuestos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript para filtros -->
+<script>
+function filterResults(category) {
+    // Actualizar botones
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Mostrar/ocultar grupos
+    if (category === 'all') {
+        document.querySelectorAll('.result-group').forEach(group => {
+            group.style.display = 'block';
+        });
+    } else {
+        document.querySelectorAll('.result-group').forEach(group => {
+            if (group.dataset.category === category) {
+                group.style.display = 'block';
+            } else {
+                group.style.display = 'none';
+            }
+        });
+    }
+}
+</script>
+
+<!-- MODALES (se mantienen igual que en tu código original) -->
+{% include 'balancines/modales_busqueda.html' %}
+{% endblock %}

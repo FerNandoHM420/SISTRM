@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+    .backlog-preview {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+    .backlog-normal {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .backlog-alerta {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .backlog-critico {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 fw-bold">
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>
+                    Registrar Nuevo OH
+                </h1>
+                <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+
+            <!-- Información del Balancín -->
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-cog me-2"></i>Balancín Seleccionado</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-label">Código</div>
+                        <div class="info-value">{{ balancin.codigo }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-label">Ubicación</div>
+                        <div class="info-value">{{ balancin.torre.linea.nombre }} - Torre {{ balancin.torre.numero_torre }}</div>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <div class="info-label">Sentido</div>
+                        <div class="info-value">{{ balancin.get_sentido_display }}</div>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <div class="info-label">Rango OH</div>
+                        <div class="info-value">{{ balancin.rango_horas_cambio_oh }} horas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card shadow">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-clipboard-list me-2 text-primary"></i>
+                        Datos del Nuevo OH
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.numero_oh|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.fecha_oh|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.horas_operacion|as_crispy_field }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.observaciones|as_crispy_field }}
+                        </div>
+
+                        <!-- Vista previa del backlog -->
+                        <div class="backlog-preview" id="backlogPreview" style="display: none;">
+                            <span id="backlogText"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save me-2"></i> Registrar OH
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    flatpickr("#id_fecha_oh", {
+        dateFormat: "Y-m-d",
+        maxDate: "today"
+    });
+
+    // Vista previa del backlog
+    document.getElementById('id_horas_operacion').addEventListener('input', function(e) {
+        const horas = parseInt(e.target.value) || 0;
+        const rango = {{ balancin.rango_horas_cambio_oh }};
+        
+        if (horas > 0) {
+            const backlog = rango - horas;
+            const preview = document.getElementById('backlogPreview');
+            const text = document.getElementById('backlogText');
+            
+            preview.style.display = 'block';
+            
+            if (backlog < 0) {
+                preview.className = 'backlog-preview backlog-critico';
+                text.innerHTML = `⚠️ Backlog: ${backlog} horas (CRÍTICO)`;
+            } else if (backlog < 5000) {
+                preview.className = 'backlog-preview backlog-alerta';
+                text.innerHTML = `⚠️ Backlog: ${backlog} horas (ALERTA)`;
+            } else {
+                preview.className = 'backlog-preview backlog-normal';
+                text.innerHTML = `✅ Backlog: ${backlog} horas (NORMAL)`;
+            }
+        } else {
+            document.getElementById('backlogPreview').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

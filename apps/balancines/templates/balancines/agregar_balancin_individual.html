@@ -1,0 +1,219 @@
+<!-- templates/app/inventario/agregar_balancin_individual.html -->
+{% extends 'base.html' %}
+
+{% block title %}Instalar Balancín Individual{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success">
+                    <h4 class="mb-0 text-white">
+                        <i class="fas fa-plus-circle"></i> Instalar Nuevo Balancín
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- ✅ MOSTRAR DATOS DE LA TORRE SELECCIONADA -->
+                    {% if torre_seleccionada %}
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Instalando en:</h6>
+                                <strong>Línea {{ torre_seleccionada.linea.nombre }}</strong> - 
+                                <strong>Torre {{ torre_seleccionada.numero_torre }}</strong> 
+                                ({{ torre_seleccionada.seccion.nombre }})
+                                <br>
+                                <span class="badge bg-primary mt-1">
+                                    Tipo: {{ tipo_predefinido }}
+                                </span>
+                                <span class="badge {% if sentido_predefinido == 'ASCENDENTE' %}bg-success{% else %}bg-danger{% endif %} mt-1">
+                                    Sentido: {{ sentido_predefinido|title }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            
+                            <!-- ✅ CAMPO TORRE: SOLO LECTURA -->
+                            {% if field.name == 'torre' %}
+                                <div class="form-control bg-light" style="cursor: not-allowed;">
+                                    <i class="fas fa-building me-2"></i>
+                                    Línea {{ torre_seleccionada.linea.nombre }} - 
+                                    Torre {{ torre_seleccionada.numero_torre }} 
+                                    ({{ torre_seleccionada.seccion.nombre }})
+                                </div>
+                                <input type="hidden" name="torre" value="{{ torre_seleccionada.id }}">
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    La torre de instalación no se puede modificar
+                                </small>
+                            
+                            <!-- ✅ CAMPO SENTIDO: preseleccionado -->
+                            {% elif field.name == 'sentido' %}
+                                <select name="sentido" class="form-select" required>
+                                    <option value="ASCENDENTE" {% if sentido_predefinido == 'ASCENDENTE' %}selected{% endif %}>
+                                        Ascendente
+                                    </option>
+                                    <option value="DESCENDENTE" {% if sentido_predefinido == 'DESCENDENTE' %}selected{% endif %}>
+                                        Descendente
+                                    </option>
+                                </select>
+                            
+                            <!-- ✅ CAMPO CÓDIGO: AUTO-SUGERIDO -->
+                            {% elif field.name == 'codigo' %}
+                                <div class="input-group">
+                                    <input type="text" 
+                                           name="codigo" 
+                                           id="id_codigo"
+                                           class="form-control" 
+                                           placeholder="Ej: BAL-16N/4TR-420C-001"
+                                           value="{% if tipo_predefinido %}Cargando...{% endif %}"
+                                           required>
+                                    <button class="btn btn-outline-secondary" type="button" id="btnGenerarCodigo">
+                                        <i class="fas fa-sync-alt"></i> Generar
+                                    </button>
+                                </div>
+                                <div class="form-text" id="codigoHelp">
+                                    <i class="fas fa-info-circle"></i> 
+                                    <span id="codigoMensaje">Generando código automático...</span>
+                                </div>
+                            
+                            <!-- ✅ CAMPO RANGO HORAS: valor por defecto -->
+                            {% elif field.name == 'rango_horas_cambio_oh' %}
+                                <input type="number" 
+                                       name="rango_horas_cambio_oh" 
+                                       id="id_rango_horas"
+                                       class="form-control" 
+                                       min="1" 
+                                       value="30000"
+                                       required>
+                            
+                            <!-- ✅ OTROS CAMPOS -->
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                            <div class="text-danger">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Instalar Balancín
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codigoInput = document.getElementById('id_codigo');
+    const codigoMensaje = document.getElementById('codigoMensaje');
+    const btnGenerar = document.getElementById('btnGenerarCodigo');
+    const tipoBalancin = '{{ tipo_predefinido }}';
+    
+    // Función para obtener el último código
+    function obtenerUltimoCodigo() {
+        if (!tipoBalancin) {
+            codigoMensaje.innerHTML = 'No se especificó el tipo de balancín';
+            return;
+        }
+        
+        codigoMensaje.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando último código...';
+        
+        fetch(`/api/ultimo-codigo-balancin/?tipo=${encodeURIComponent(tipoBalancin)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    codigoMensaje.innerHTML = `Error: ${data.error}`;
+                    // Fallback a código por defecto
+                    codigoInput.value = `BAL-${tipoBalancin}-001`;
+                } else {
+                    // Actualizar el campo con el siguiente código
+                    codigoInput.value = data.siguiente_codigo;
+                    
+                    if (data.ultimo_codigo) {
+                        codigoMensaje.innerHTML = `Último instalado: ${data.ultimo_codigo} → Sugerido: ${data.siguiente_codigo}`;
+                    } else {
+                        codigoMensaje.innerHTML = `Primera instalación de este tipo → Sugerido: ${data.siguiente_codigo}`;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                codigoMensaje.innerHTML = 'Error al generar código automático. Usando valor por defecto.';
+                codigoInput.value = `BAL-${tipoBalancin}-001`;
+            });
+    }
+    
+    // Generar código al cargar la página
+    obtenerUltimoCodigo();
+    
+    // Botón para regenerar código
+    btnGenerar.addEventListener('click', function(e) {
+        e.preventDefault();
+        obtenerUltimoCodigo();
+    });
+    
+    // Validar formato del código
+    codigoInput.addEventListener('blur', function() {
+        let codigo = this.value.trim();
+        if (codigo && !codigo.startsWith('BAL-')) {
+            this.value = 'BAL-' + codigo;
+        }
+    });
+});
+</script>
+
+<style>
+.form-control, .form-select {
+    border-radius: 5px;
+    padding: 10px;
+    border: 1px solid #ced4da;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+.alert-info {
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    color: #055160;
+    border-radius: 10px;
+}
+.badge {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+}
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+.input-group .btn {
+    border-radius: 0 5px 5px 0;
+}
+</style>
+{% endblock %}

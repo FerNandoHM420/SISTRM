@@ -3,21 +3,21 @@ services:
     build: .
     command: >
       sh -c "echo 'Esperando a PostgreSQL...' &&
-             while ! pg_isready -h db -p 5432; do sleep 2; done &&
+             while ! pg_isready -h db -p 5432 -U proyecto_user; do echo 'Esperando DB...'; sleep 2; done &&
              echo 'PostgreSQL listo!' &&
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000 --noreload"
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.base
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
-
   db:
     image: postgres:15-alpine
     volumes:
@@ -26,6 +26,8 @@ services:
       POSTGRES_DB: proyecto_db
       POSTGRES_USER: proyecto_user
       POSTGRES_PASSWORD: proyecto_pass
+    ports:
+      - "5433:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U proyecto_user -d proyecto_db" ]
       interval: 10s

@@ -46,3 +46,14 @@ Antes de apagar el PC:
 
 docker compose down
 docker compose exec -T db pg_dump -U proyecto_user proyecto_db > backup.sql
+
+#Ver Base de datos tuya directamente 
+docker exec -it proyectonuevo-db-1 psql -U proyecto_user -d proyecto_db
+
+docker exec -it proyectonuevo-db-1 psql -U proyecto_user -l
+docker exec -it proyectonuevo-db-1 psql -U proyecto_user -d proyecto_db
+
+
+
+
+

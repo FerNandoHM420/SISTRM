@@ -1,0 +1,362 @@
+<!-- templates/balancines/detalle_tipo_balancin.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ tipo.codigo }} - Detalle Tipo de Balancín{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-primary">
+                <i class="fas fa-cube"></i> {{ tipo.codigo }}
+            </h1>
+            <p class="text-muted mb-0">
+                <span class="badge 
+                    {% if tipo.tipo == 'compresion' %}bg-warning text-dark
+                    {% elif tipo.tipo == 'soporte' %}bg-info
+                    {% else %}bg-secondary{% endif %} me-2">
+                    {{ tipo.get_tipo_display }}
+                </span>
+                - Balancines instalados en torres
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'lista_tipos_balancin' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'agregar_balancin_individual' %}?tipo={{ tipo.codigo }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Instalar Balancín
+            </a>
+        </div>
+    </div>
+
+    <!-- Información del tipo y estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información del Modelo</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th width="40%">Código:</th>
+                            <td><strong class="fs-5">{{ tipo.codigo }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Tipo:</th>
+                            <td>
+                                <span class="badge 
+                                    {% if tipo.tipo == 'compresion' %}bg-warning text-dark
+                                    {% elif tipo.tipo == 'soporte' %}bg-info
+                                    {% else %}bg-secondary{% endif %} fs-6">
+                                    {{ tipo.get_tipo_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Stock en taller:</th>
+                            <td>
+                                <span class="badge {% if tipo.cantidad_total > 0 %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                                    {{ tipo.cantidad_total }} unidades
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Instalados:</th>
+                            <td>
+                                <span class="badge bg-primary fs-6">
+                                    {{ balancines|length }} balancines
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Registro:</th>
+                            <td>{{ tipo.fecha_registro|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Actualización:</th>
+                            <td>{{ tipo.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas por sentido -->
+        <div class="col-md-8">
+            <div class="row h-100">
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">
+                                <i class="fas fa-arrow-up"></i> Ascendentes
+                            </h5>
+                            <h1 class="display-4 fw-bold mb-0">{{ balancines_asc|length }}</h1>
+                            <p class="mb-0">balancines instalados</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-danger text-white h-100">
+                        <div class="card-body text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">
+                                <i class="fas fa-arrow-down"></i> Descendentes
+                            </h5>
+                            <h1 class="display-4 fw-bold mb-0">{{ balancines_desc|length }}</h1>
+                            <p class="mb-0">balancines instalados</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BALANCINES INSTALADOS EN TORRES (TABLA PRINCIPAL) -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-tools"></i> Balancines Instalados en Torres
+                <span class="badge bg-primary ms-2">{{ balancines|length }} total</span>
+            </h5>
+            <div>
+                <a href="{% url 'agregar_balancin_individual' %}?tipo={{ tipo.codigo }}" 
+                   class="btn btn-sm btn-success">
+                    <i class="fas fa-plus"></i> Nueva Instalación
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if balancines %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código Balancín</th>
+                            <th>Línea</th>
+                            <th>Torre</th>
+                            <th>Sección</th>
+                            <th>Sentido</th>
+                            <th>Rango OH</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in balancines %}
+                        <tr>
+                            <td>
+                                <strong>{{ b.codigo }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">Línea {{ b.torre.linea.nombre }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-dark">Torre {{ b.torre.numero_torre }}</span>
+                            </td>
+                            <td>
+                                <small>{{ b.torre.seccion.nombre }}</small>
+                            </td>
+                            <td>
+                                {% if b.sentido == 'ASCENDENTE' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-arrow-up"></i> Ascendente
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-arrow-down"></i> Descendente
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ b.rango_horas_cambio_oh }} hrs
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                   <a href="{% url 'dashboard_oh_nuevo' %}?balancin={{ b.codigo }}#listado" 
+   class="btn btn-outline-primary"
+   title="Ver historial de OH">
+    <i class="fas fa-eye"></i>
+</a>
+                                    <a href="{% url 'editar_balancin_individual' b.codigo %}" 
+                                       class="btn btn-outline-warning"
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'registrar_oh_balancin' b.codigo %}" 
+                                       class="btn btn-outline-success"
+                                       title="Registrar OH">
+                                        <i class="fas fa-clock"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-cube fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay balancines instalados de este tipo</h4>
+                <p class="text-muted mb-4">
+                    Este modelo aún no tiene balancines instalados en torres.
+                </p>
+                <a href="{% url 'agregar_balancin_individual' %}?tipo={{ tipo.codigo }}" 
+                   class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i> Instalar Primer Balancín
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TORRES COMPATIBLES (Catálogo) -->
+    <div class="card shadow">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-building"></i> Torres Compatibles con {{ tipo.codigo }}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-arrow-up"></i> Sentido Ascendente
+                        </div>
+                        <div class="card-body">
+                            {% if torres_ascendentes %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Línea</th>
+                                            <th>Torre</th>
+                                            <th>Sección</th>
+                                            <th>Estado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for torre in torres_ascendentes %}
+                                        <tr>
+                                            <td>Línea {{ torre.linea.nombre }}</td>
+                                            <td><strong>{{ torre.numero_torre }}</strong></td>
+                                            <td>{{ torre.seccion.nombre }}</td>
+                                            <td>
+                                                {% if torre.id in torres_con_ascendente %}
+                                                <span class="badge bg-success">Instalado</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Disponible</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if torre.id not in torres_con_ascendente %}
+                                                <a href="{% url 'agregar_balancin_individual' %}?torre={{ torre.id }}&sentido=ASCENDENTE&tipo={{ tipo.codigo }}" 
+                                                   class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-plus"></i> Instalar
+                                                </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-0 text-center py-3">
+                                <i class="fas fa-info-circle"></i> No hay torres configuradas con este tipo en ascendente.
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-arrow-down"></i> Sentido Descendente
+                        </div>
+                        <div class="card-body">
+                            {% if torres_descendentes %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Línea</th>
+                                            <th>Torre</th>
+                                            <th>Sección</th>
+                                            <th>Estado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for torre in torres_descendentes %}
+                                        <tr>
+                                            <td>Línea {{ torre.linea.nombre }}</td>
+                                            <td><strong>{{ torre.numero_torre }}</strong></td>
+                                            <td>{{ torre.seccion.nombre }}</td>
+                                            <td>
+                                                {% if torre.id in torres_con_descendente %}
+                                                <span class="badge bg-success">Instalado</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Disponible</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if torre.id not in torres_con_descendente %}
+                                                <a href="{% url 'agregar_balancin_individual' %}?torre={{ torre.id }}&sentido=DESCENDENTE&tipo={{ tipo.codigo }}" 
+                                                   class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-plus"></i> Instalar
+                                                </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-0 text-center py-3">
+                                <i class="fas fa-info-circle"></i> No hay torres configuradas con este tipo en descendente.
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Estilos adicionales -->
+<style>
+    .badge {
+        font-weight: 500;
+        padding: 6px 12px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        font-weight: 600;
+    }
+    .btn-group .btn {
+        margin: 0 2px;
+    }
+    .display-4 {
+        font-size: 3rem;
+    }
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}

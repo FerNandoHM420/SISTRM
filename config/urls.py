@@ -6,7 +6,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('app.urls')),  # <--- Debe incluir las URLs de tu app
+    # ✅ CAMBIADO: antes 'app.urls', ahora 'apps.balancines.urls'
+    path('', include('apps.balancines.urls')),
 ]
 
 # Para servir archivos media en desarrollo

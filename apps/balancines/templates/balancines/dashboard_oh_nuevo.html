@@ -1,0 +1,759 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Mantenimiento OH - Completo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/Chart.min.css">
+<style>
+    /* ===== TARJETAS DE ESTADÍSTICAS ===== */
+    .stat-card {
+        transition: all 0.2s;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 5px solid;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+    .stat-card .stat-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+    
+    /* ===== FILTROS ===== */
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+    
+    /* ===== PESTAÑAS ===== */
+    .nav-tabs-custom {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+    .nav-tabs-custom .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 12px 24px;
+        margin-right: 10px;
+        border-radius: 8px 8px 0 0;
+        transition: all 0.2s;
+    }
+    .nav-tabs-custom .nav-link:hover {
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+    .nav-tabs-custom .nav-link.active {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    /* ===== GRÁFICOS ===== */
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        margin-bottom: 30px;
+    }
+    
+    /* ===== TARJETAS DE BALANCINES ===== */
+    .hover-card {
+        transition: all 0.2s;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .hover-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    }
+    .timeline-oh {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .timeline-oh .badge {
+        font-size: 0.7rem;
+    }
+    .card-footer .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    /* ===== BADGES ===== */
+    .badge-sentido {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-asc {
+        background-color: #d1e7dd;
+        color: #0a5e4a;
+    }
+    .badge-desc {
+        background-color: #f8dddd;
+        color: #9a3b3b;
+    }
+    .badge-oh {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    /* ===== COLORES DE ESTADO ===== */
+    .estado-critico {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    .estado-alerta {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    .estado-normal {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    .estado-sin-oh {
+        background-color: rgba(108, 117, 125, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    
+    <!-- ===== HEADER ===== -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold" style="color: #2c3e50;">
+                <i class="fas fa-chart-line me-2" style="color: #3498db;"></i>
+                Control de Overhaul (OH) por Torre
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                Seguimiento completo de órdenes de horas (OH) por torre
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <a href="{% url 'exportar_oh_excel' %}" class="btn btn-success">
+                <i class="fas fa-file-excel me-1"></i> Exportar
+            </a>
+        </div>
+        <div>
+            <a href="{% url 'inventario_principal' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== FILTROS ===== -->
+    <div class="filter-section">
+        <form method="get" id="filterForm" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-industry me-1"></i> Línea</label>
+                <select name="linea" class="form-select form-select-sm">
+                    <option value="">Todas las líneas</option>
+                    {% for linea in lineas %}
+                    <option value="{{ linea.nombre }}" {% if linea_filtro == linea.nombre %}selected{% endif %}>
+                        {{ linea.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-flag me-1"></i> Torre</label>
+                <input type="text" name="torre" class="form-control form-control-sm" 
+                       placeholder="N° torre" value="{{ torre_filtro }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-exclamation-triangle me-1"></i> Estado</label>
+                <select name="estado" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="normal" {% if estado_filtro == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="alerta" {% if estado_filtro == 'alerta' %}selected{% endif %}>Alerta</option>
+                    <option value="critico" {% if estado_filtro == 'critico' %}selected{% endif %}>Crítico</option>
+                    <option value="sin_oh" {% if estado_filtro == 'sin_oh' %}selected{% endif %}>Sin OH</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== FILTRO ACTIVO (por balancín) ===== -->
+    {% if balancin_filtro %}
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-filter me-2"></i>
+        Mostrando solo el balancín <strong>{{ balancin_filtro }}</strong>
+        <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-sm btn-outline-info ms-3">
+            <i class="fas fa-times"></i> Quitar filtro
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- ===== PESTAÑAS ===== -->
+    <ul class="nav nav-tabs-custom" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                <i class="fas fa-chart-pie"></i> Dashboard de Estado
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado" type="button" role="tab">
+                <i class="fas fa-table"></i> Listado Detallado de OH
+            </button>
+        </li>
+    </ul>
+
+    <!-- ===== CONTENIDO DE PESTAÑAS ===== -->
+    <div class="tab-content" id="myTabContent">
+        
+        <!-- ===== PESTAÑA 1: DASHBOARD DE ESTADO ===== -->
+        <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+            
+            <!-- Tarjetas de resumen -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card h-100 p-3" style="border-left-color: #3498db;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">Total Balancines</div>
+                                <div class="stat-value">{{ total_balancines }}</div>
+                            </div>
+                            <i class="fas fa-building stat-icon" style="color: #3498db;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card h-100 p-3" style="border-left-color: #28a745;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">Balancines OK</div>
+                                <div class="stat-value">{{ total_normal }}</div>
+                            </div>
+                            <i class="fas fa-check-circle stat-icon" style="color: #28a745;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card h-100 p-3" style="border-left-color: #ffc107;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">En Alerta</div>
+                                <div class="stat-value">{{ total_alerta }}</div>
+                            </div>
+                            <i class="fas fa-exclamation-triangle stat-icon" style="color: #ffc107;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card h-100 p-3" style="border-left-color: #dc3545;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="stat-label">Críticos</div>
+                                <div class="stat-value">{{ total_critico }}</div>
+                            </div>
+                            <i class="fas fa-exclamation-circle stat-icon" style="color: #dc3545;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS -->
+            <div class="row">
+                <!-- Gráfico de torta - Estado de Balancines -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-chart-pie me-2 text-primary"></i>
+                                Distribución por Estado
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="estadoPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de barras - Estado por Línea -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-chart-bar me-2 text-primary"></i>
+                                Estado por Línea
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="lineaBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de columnas - Backlog por Torre -->
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-chart-bar me-2 text-primary"></i>
+                                Backlog por Torre (Último OH)
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 400px;">
+                                <canvas id="backlogBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PESTAÑA 2: LISTADO DETALLADO DE OH (VERSIÓN MEJORADA) ===== -->
+        <div class="tab-pane fade" id="listado" role="tabpanel">
+            
+            <!-- Filtros rápidos para la tabla -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="btn-group w-100" role="group">
+                        <button class="btn btn-outline-primary active" onclick="filterTable('all')">
+                            <i class="fas fa-th-large"></i> Todos
+                        </button>
+                        <button class="btn btn-outline-success" onclick="filterTable('normal')">
+                            <i class="fas fa-check-circle"></i> Normal
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="filterTable('alerta')">
+                            <i class="fas fa-exclamation-triangle"></i> Alerta
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="filterTable('critico')">
+                            <i class="fas fa-exclamation-circle"></i> Crítico
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="filterTable('sin_oh')">
+                            <i class="fas fa-clock"></i> Sin OH
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjetas de resumen por línea -->
+            <div class="row mb-3" id="lineaSummary"></div>
+
+            <!-- Tarjetas de balancines -->
+            <div class="row" id="tarjetasContainer">
+                {% for item in historial %}
+                <div class="col-xl-6 col-xxl-4 mb-3 tarjeta-item" data-estado="{{ item.estado }}">
+                    <div class="card h-100 shadow-sm hover-card">
+                        <!-- Cabecera con información principal -->
+                        <div class="card-header d-flex justify-content-between align-items-center 
+                            {% if item.estado == 'critico' %}bg-danger text-white
+                            {% elif item.estado == 'alerta' %}bg-warning
+                            {% elif item.estado == 'normal' %}bg-success text-white
+                            {% else %}bg-secondary text-white{% endif %}">
+                            <div>
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ item.linea_nombre }} - Torre {{ item.torre_numero }}
+                                </h6>
+                                <small>
+                                    <i class="fas fa-arrow-{% if item.sentido == 'ASCENDENTE' %}up{% else %}down{% endif %} me-1"></i>
+                                    {{ item.sentido|slice:":3" }} · {{ item.tipo_balancin }}
+                                </small>
+                            </div>
+                            <span class="badge bg-light text-dark">
+                                Rango: {{ item.rango_oh_horas }}h
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <!-- Progreso actual -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>Progreso actual</span>
+                                    {% with ultimo_backlog=item.oh4_backlog|default:item.oh3_backlog|default:item.oh2_backlog|default:item.oh1_backlog %}
+                                        {% if ultimo_backlog %}
+                                            {% with ultimo_horas=item.oh4_horas|default:item.oh3_horas|default:item.oh2_horas|default:item.oh1_horas %}
+                                                <span class="fw-bold">{{ ultimo_horas }} / {{ item.rango_oh_horas }} h</span>
+                                            {% endwith %}
+                                        {% else %}
+                                            <span class="fw-bold">0 / {{ item.rango_oh_horas }} h</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    {% with ultimo_horas=item.oh4_horas|default:item.oh3_horas|default:item.oh2_horas|default:item.oh1_horas %}
+                                        {% if ultimo_horas %}
+                                            <div class="progress-bar 
+                                                {% if item.estado == 'critico' %}bg-danger
+                                                {% elif item.estado == 'alerta' %}bg-warning
+                                                {% elif item.estado == 'normal' %}bg-success
+                                                {% else %}bg-secondary{% endif %}"
+                                                 style="width: {% widthratio ultimo_horas item.rango_oh_horas 100 %}%">
+                                            </div>
+                                        {% else %}
+                                            <div class="progress-bar bg-secondary" style="width: 0%"></div>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+
+                            <!-- Línea de tiempo de OH -->
+                            <div class="timeline-oh mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <!-- OH1 -->
+                                    <div class="text-center {% if item.oh1_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                        <div class="small fw-bold">OH1</div>
+                                        {% if item.oh1_fecha %}
+                                            <div class="small">{{ item.oh1_fecha }}</div>
+                                            <div class="small">{{ item.oh1_horas }}h</div>
+                                            <span class="badge {% if item.oh1_backlog < 0 %}bg-danger{% elif item.oh1_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                                {{ item.oh1_backlog }}
+                                            </span>
+                                        {% else %}
+                                            <i class="fas fa-minus-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+
+                                    <i class="fas fa-chevron-right text-muted"></i>
+
+                                    <!-- OH2 -->
+                                    <div class="text-center {% if item.oh2_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                        <div class="small fw-bold">OH2</div>
+                                        {% if item.oh2_fecha %}
+                                            <div class="small">{{ item.oh2_fecha }}</div>
+                                            <div class="small">{{ item.oh2_horas }}h</div>
+                                            <span class="badge {% if item.oh2_backlog < 0 %}bg-danger{% elif item.oh2_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                                {{ item.oh2_backlog }}
+                                            </span>
+                                        {% else %}
+                                            <i class="fas fa-minus-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+
+                                    <i class="fas fa-chevron-right text-muted"></i>
+
+                                    <!-- OH3 -->
+                                    <div class="text-center {% if item.oh3_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                        <div class="small fw-bold">OH3</div>
+                                        {% if item.oh3_fecha %}
+                                            <div class="small">{{ item.oh3_fecha }}</div>
+                                            <div class="small">{{ item.oh3_horas }}h</div>
+                                            <span class="badge {% if item.oh3_backlog < 0 %}bg-danger{% elif item.oh3_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                                {{ item.oh3_backlog }}
+                                            </span>
+                                        {% else %}
+                                            <i class="fas fa-minus-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+
+                                    <i class="fas fa-chevron-right text-muted"></i>
+
+                                    <!-- OH4 -->
+                                    <div class="text-center {% if item.oh4_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                        <div class="small fw-bold">OH4</div>
+                                        {% if item.oh4_fecha %}
+                                            <div class="small">{{ item.oh4_fecha }}</div>
+                                            <div class="small">{{ item.oh4_horas }}h</div>
+                                            <span class="badge {% if item.oh4_backlog < 0 %}bg-danger{% elif item.oh4_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                                {{ item.oh4_backlog }}
+                                            </span>
+                                        {% else %}
+                                            <i class="fas fa-minus-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Información adicional -->
+                            <div class="row small text-muted">
+                                <div class="col-6">
+                                    <i class="fas fa-calendar-alt me-1"></i> Inicio: {{ item.inicio_oc }}
+                                </div>
+                                <div class="col-6">
+                                    <i class="fas fa-chart-line me-1"></i> {{ item.horas_promedio_dia }} h/día
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer con acciones -->
+                        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+                            <span class="badge 
+                                {% if item.estado == 'critico' %}bg-danger
+                                {% elif item.estado == 'alerta' %}bg-warning text-dark
+                                {% elif item.estado == 'normal' %}bg-success
+                                {% else %}bg-secondary{% endif %} p-2">
+                                <i class="fas 
+                                    {% if item.estado == 'critico' %}fa-exclamation-circle
+                                    {% elif item.estado == 'alerta' %}fa-exclamation-triangle
+                                    {% elif item.estado == 'normal' %}fa-check-circle
+                                    {% else %}fa-clock{% endif %} me-1">
+                                </i>
+                                {{ item.estado|upper }}
+                            </span>
+                            <div>
+                                <a href="{% url 'registrar_oh_balancin' item.balancin_codigo %}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Registrar OH">
+                                    <i class="fas fa-plus-circle"></i> OH
+                                </a>
+                                <a href="{% url 'dashboard_oh_nuevo' %}?balancin={{ item.balancin_codigo }}#listado" 
+                                   class="btn btn-sm btn-outline-info" 
+                                   title="Ver solo este">
+                                    <i class="fas fa-filter"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center py-5">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No hay registros de OH</h6>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    flatpickr(".datepicker", {dateFormat: "d/m/Y", locale: "es"});
+    
+    // Gráfico de torta - Distribución por Estado
+    var ctxPie = document.getElementById('estadoPieChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+            labels: ['Normal', 'Alerta', 'Crítico', 'Sin OH'],
+            datasets: [{
+                data: [
+                    {{ total_normal }},
+                    {{ total_alerta }},
+                    {{ total_critico }},
+                    {{ total_sin_oh }}
+                ],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Gráfico de barras - Estado por Línea
+    var ctxBar = document.getElementById('lineaBarChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: {{ labels_lineas|safe }},
+            datasets: [
+                {
+                    label: 'Normal',
+                    data: {{ data_normal|safe }},
+                    backgroundColor: '#28a745'
+                },
+                {
+                    label: 'Alerta',
+                    data: {{ data_alerta|safe }},
+                    backgroundColor: '#ffc107'
+                },
+                {
+                    label: 'Crítico',
+                    data: {{ data_critico|safe }},
+                    backgroundColor: '#dc3545'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true }
+            }
+        }
+    });
+    
+    // Gráfico de columnas - Backlog por Torre
+    var ctxBacklog = document.getElementById('backlogBarChart').getContext('2d');
+    new Chart(ctxBacklog, {
+        type: 'bar',
+        data: {
+            labels: {{ torres_labels|safe }},
+            datasets: [
+                {
+                    label: 'Backlog (horas)',
+                    data: {{ backlog_data|safe }},
+                    backgroundColor: {{ backlog_colors|safe }},
+                    borderWidth: 1,
+                    borderRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            let value = context.raw;
+                            let estado = '';
+                            
+                            if (value < 0) {
+                                estado = 'CRÍTICO';
+                            } else if (value < 5000) {
+                                estado = 'ALERTA';
+                            } else {
+                                estado = 'NORMAL';
+                            }
+                            
+                            return `${label}: ${value} h (${estado})`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Horas de backlog'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+
+    // Activar pestaña de listado si viene con #listado en la URL
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash === '#listado') {
+            document.getElementById('listado-tab').click();
+            setTimeout(function() {
+                document.getElementById('listado').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+        actualizarResumen();
+    });
+
+    // Función para filtrar tarjetas por estado
+    function filterTable(estado) {
+        // Actualizar botones
+        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Filtrar tarjetas
+        document.querySelectorAll('.tarjeta-item').forEach(tarjeta => {
+            if (estado === 'all' || tarjeta.dataset.estado === estado) {
+                tarjeta.style.display = 'block';
+            } else {
+                tarjeta.style.display = 'none';
+            }
+        });
+        
+        actualizarResumen();
+    }
+
+    // Función para actualizar resumen por línea
+    function actualizarResumen() {
+        const lineas = {};
+        const tarjetasVisibles = document.querySelectorAll('.tarjeta-item[style="display: block;"], .tarjeta-item:not([style*="display: none"])');
+        
+        tarjetasVisibles.forEach(tarjeta => {
+            const header = tarjeta.querySelector('.card-header h6').textContent;
+            const linea = header.split('-')[0].trim();
+            const estado = tarjeta.dataset.estado;
+            
+            if (!lineas[linea]) {
+                lineas[linea] = { normal: 0, alerta: 0, critico: 0, sin_oh: 0 };
+            }
+            lineas[linea][estado]++;
+        });
+
+        const summaryDiv = document.getElementById('lineaSummary');
+        summaryDiv.innerHTML = '';
+        
+        Object.keys(lineas).forEach(linea => {
+            const data = lineas[linea];
+            summaryDiv.innerHTML += `
+                <div class="col-md-3 mb-2">
+                    <div class="card bg-light">
+                        <div class="card-body p-2">
+                            <h6 class="mb-1">${linea}</h6>
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-success">✅ ${data.normal}</span>
+                                <span class="text-warning">⚠️ ${data.alerta}</span>
+                                <span class="text-danger">⚡ ${data.critico}</span>
+                                <span class="text-secondary">🕒 ${data.sin_oh}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+<!-- ========== MODALES PARA REPUESTOS BALANCINES ========== -->
+{% if resultados.repuestos_balancin %}
+{% for repuesto in resultados.repuestos_balancin %}
+<div class="modal fade" id="detalleModal{{ repuesto.item|slugify }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> {{ repuesto.item }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Código:</strong> {{ repuesto.item }}</p>
+                        <p><strong>Descripción:</strong> {{ repuesto.descripcion }}</p>
+                        <p><strong>Cantidad:</strong> 
+                            <span class="badge {% if repuesto.cantidad > 10 %}bg-success{% elif repuesto.cantidad > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ repuesto.cantidad }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Ubicación:</strong> {{ repuesto.ubicacion|default:"No especificada" }}</p>
+                        <p><strong>Ingreso:</strong> {{ repuesto.fecha_ingreso|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Último movimiento:</strong> {{ repuesto.fecha_ultimo_movimiento|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+                {% if repuesto.observaciones %}
+                <div class="mt-3">
+                    <h6>Observaciones:</h6>
+                    <p class="mb-0">{{ repuesto.observaciones }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="{% url 'lista_repuestos_balancin' %}" class="btn btn-warning">
+                    <i class="fas fa-external-link-alt"></i> Ir a Repuestos Balancines
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- ========== MODALES PARA REPUESTOS ADICIONALES ========== -->
+{% if resultados.repuestos_adicionales %}
+{% for adicional in resultados.repuestos_adicionales %}
+<div class="modal fade" id="detalleAdicionalModal{{ adicional.item|slugify }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> {{ adicional.item }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Código:</strong> {{ adicional.item }}</p>
+                        <p><strong>Descripción:</strong> {{ adicional.descripcion }}</p>
+                        <p><strong>Cantidad:</strong> 
+                            <span class="badge {% if adicional.cantidad > 10 %}bg-success{% elif adicional.cantidad > 0 %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ adicional.cantidad }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Ubicación:</strong> {{ adicional.ubicacion|default:"No especificada" }}</p>
+                        <p><strong>Ingreso:</strong> {{ adicional.fecha_ingreso|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Último movimiento:</strong> {{ adicional.fecha_ultimo_movimiento|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+                {% if adicional.observaciones %}
+                <div class="mt-3">
+                    <h6>Observaciones:</h6>
+                    <p class="mb-0">{{ adicional.observaciones }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="{% url 'lista_repuestos_adicionales' %}" class="btn btn-secondary">
+                    <i class="fas fa-external-link-alt"></i> Ir a Repuestos Adicionales
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}

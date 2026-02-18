@@ -1,0 +1,41 @@
+<!-- templates/app/logout.html -->
+{% extends 'base.html' %}
+
+{% block title %}Cerrar Sesión{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-6">
+    <div class="card shadow-lg">
+      <div class="card-header bg-danger text-white">
+        <h3 class="mb-0"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</h3>
+      </div>
+      <div class="card-body text-center">
+        <div class="mb-4">
+          <i class="fas fa-door-open fa-4x text-danger mb-3"></i>
+          <h4>¿Estás seguro que deseas cerrar sesión?</h4>
+          <p class="text-muted">Serás redirigido a la página de inicio.</p>
+        </div>
+        
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <div class="d-grid gap-2 d-md-block">
+            <button type="submit" class="btn btn-danger btn-lg px-4">
+              <i class="fas fa-sign-out-alt"></i> Sí, cerrar sesión
+            </button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg px-4">
+              <i class="fas fa-times"></i> Cancelar
+            </a>
+          </div>
+        </form>
+        
+        <div class="mt-4">
+          <small class="text-muted">
+            Usuario actual: <strong>{{ user.email }}</strong>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

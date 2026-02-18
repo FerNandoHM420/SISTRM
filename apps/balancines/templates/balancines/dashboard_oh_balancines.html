@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Mantenimiento OH{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* ===== TARJETAS DE ESTADÍSTICAS ===== */
+    .stat-card {
+        transition: all 0.2s;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 5px solid;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .stat-card .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.3;
+    }
+    .stat-card .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+    .stat-card .stat-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+    
+    /* ===== FILTROS ===== */
+    .filter-section {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+    .filter-section .form-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+    }
+    
+    /* ===== TABLA ===== */
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .table {
+        margin-bottom: 0;
+    }
+    .table thead th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 8px;
+        border-bottom: 2px solid #dee2e6;
+        white-space: nowrap;
+    }
+    .table tbody td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* ===== BADGES ===== */
+    .badge-sentido {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-asc {
+        background-color: #d1e7dd;
+        color: #0a5e4a;
+    }
+    .badge-desc {
+        background-color: #f8dddd;
+        color: #9a3b3b;
+    }
+    .badge-oh {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .backlog-positivo {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    .backlog-negativo {
+        color: #198754;
+        font-weight: 600;
+    }
+    
+    /* ===== PROGRESO ===== */
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+    }
+    .progress-bar {
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    
+    <!-- ===== HEADER ===== -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold" style="color: #2c3e50;">
+                <i class="fas fa-chart-line me-2" style="color: #3498db;"></i>
+                Mantenimiento de Balancines
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                Seguimiento de órdenes de horas (OH) por torre
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <a href="{% url 'exportar_oh_excel' %}" class="btn btn-success">
+                <i class="fas fa-file-excel me-1"></i> Exportar
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== FILTROS RÁPIDOS ===== -->
+    <div class="filter-section">
+        <form method="get" id="filterForm" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-industry me-1"></i> Línea</label>
+                <select name="linea" class="form-select form-select-sm">
+                    <option value="">Todas</option>
+                    {% for linea in lineas %}
+                    <option value="{{ linea.id }}" {% if linea_filtro == linea.id|stringformat:"i" %}selected{% endif %}>
+                        {{ linea.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-flag me-1"></i> Torre</label>
+                <input type="text" name="torre" class="form-control form-control-sm" 
+                       placeholder="N° torre" value="{{ torre_filtro }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-arrows-alt-v me-1"></i> Sentido</label>
+                <select name="sentido" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="ASCENDENTE" {% if sentido_filtro == 'ASCENDENTE' %}selected{% endif %}>Ascendente</option>
+                    <option value="DESCENDENTE" {% if sentido_filtro == 'DESCENDENTE' %}selected{% endif %}>Descendente</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-cube me-1"></i> Tipo</label>
+                <select name="tipo" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos %}
+                    <option value="{{ tipo.codigo }}" {% if tipo_filtro == tipo.codigo %}selected{% endif %}>
+                        {{ tipo.codigo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="fas fa-exclamation-triangle me-1"></i> Estado</label>
+                <select name="estado_oh" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="critico" {% if estado_oh_filtro == 'critico' %}selected{% endif %}>Crítico</option>
+                    <option value="alerta" {% if estado_oh_filtro == 'alerta' %}selected{% endif %}>Alerta</option>
+                    <option value="normal" {% if estado_oh_filtro == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="sin_oh" {% if estado_oh_filtro == 'sin_oh' %}selected{% endif %}>Sin OH</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                    <a href="{% url 'dashboard_oh_balancines' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-eraser me-1"></i> Limpiar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== TARJETAS DE ESTADÍSTICAS ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card h-100 p-3" style="border-left-color: #3498db;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Total Balancines</div>
+                        <div class="stat-value">{{ total_balancines }}</div>
+                        <div class="small text-muted mt-1">
+                            <span class="text-success">↑ {{ balancines_asc }}</span> / 
+                            <span class="text-danger">↓ {{ balancines_desc }}</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-cubes stat-icon" style="color: #3498db;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card h-100 p-3" style="border-left-color: #2ecc71;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">OH Registradas</div>
+                        <div class="stat-value">{{ total_oh }}</div>
+                        <div class="small text-muted mt-1">
+                            OH1: {{ total_oh1 }} | OH2: {{ total_oh2 }}
+                        </div>
+                    </div>
+                    <i class="fas fa-clipboard-check stat-icon" style="color: #2ecc71;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card h-100 p-3" style="border-left-color: #f39c12;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Requieren Atención</div>
+                        <div class="stat-value">{{ balancines_alerta|add:balancines_criticos }}</div>
+                        <div class="small text-muted mt-1">
+                            <span class="text-warning">⚠ {{ balancines_alerta }}</span> / 
+                            <span class="text-danger">⚡ {{ balancines_criticos }}</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-exclamation-triangle stat-icon" style="color: #f39c12;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card h-100 p-3" style="border-left-color: #9b59b6;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="stat-label">Sin Registro OH</div>
+                        <div class="stat-value">{{ balancines_sin_oh }}</div>
+                        <div class="small text-muted mt-1">
+                            {{ balancines_normal }} en rango óptimo
+                        </div>
+                    </div>
+                    <i class="fas fa-clock stat-icon" style="color: #9b59b6;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== GRÁFICO DE ESTADO ===== -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        Balancines por Línea
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="graficoLineas" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+                        Estado de Mantenimiento
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>✅ Normal</span>
+                            <span class="fw-bold">{{ porcentaje_normal|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: {{ porcentaje_normal }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>⚠️ Alerta (>80%)</span>
+                            <span class="fw-bold">{{ porcentaje_alerta|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" style="width: {{ porcentaje_alerta }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>⚡ Crítico</span>
+                            <span class="fw-bold">{{ porcentaje_critico|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" style="width: {{ porcentaje_critico }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TABLA DE HISTORIAL OH (SIMPLIFICADA) ===== -->
+    <div class="table-container">
+        <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-history me-2 text-primary"></i>
+                Historial de Órdenes de Horas (OH)
+            </h5>
+            <div class="d-flex gap-3">
+                <span><span class="badge bg-success">&nbsp;</span> Normal</span>
+                <span><span class="badge bg-warning">&nbsp;</span> Alerta</span>
+                <span><span class="badge bg-danger">&nbsp;</span> Crítico</span>
+                <span><span class="badge bg-secondary">&nbsp;</span> Sin OH</span>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Línea</th>
+                        <th>Torre</th>
+                        <th>Sentido</th>
+                        <th>Tipo</th>
+                        <th>Rango OH</th>
+                        <th colspan="2" class="text-center bg-light">Primer OH</th>
+                        <th colspan="2" class="text-center bg-light">Segundo OH</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    <tr>
+                        <th colspan="5"></th>
+                        <th class="text-center small">Fecha</th>
+                        <th class="text-center small">Horas</th>
+                        <th class="text-center small">Fecha</th>
+                        <th class="text-center small">Horas</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in historial %}
+                    <tr>
+                        <td class="fw-bold">{{ item.linea }}</td>
+                        <td class="text-center">{{ item.torre }}</td>
+                        <td class="text-center">
+                            <span class="badge-sentido {% if item.sentido == 'ASCENDENTE' %}badge-asc{% else %}badge-desc{% endif %}">
+                                {{ item.sentido|slice:":3" }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ item.tipo_balancin }}</span>
+                        </td>
+                        <td class="text-end fw-bold">{{ item.rango_oh|floatformat:0 }} h</td>
+                        
+                        <!-- Primer OH -->
+                        <td class="text-center small">{{ item.oh1_fecha|default:"-" }}</td>
+                        <td class="text-end small">{{ item.oh1_horas|floatformat:0|default:"-" }}</td>
+                        
+                        <!-- Segundo OH -->
+                        <td class="text-center small">{{ item.oh2_fecha|default:"-" }}</td>
+                        <td class="text-end small">{{ item.oh2_horas|floatformat:0|default:"-" }}</td>
+                        
+                        <!-- Estado -->
+                        <td class="text-center">
+                            {% if item.estado == 'critico' %}
+                            <span class="badge-oh bg-danger text-white">Crítico</span>
+                            {% elif item.estado == 'alerta' %}
+                            <span class="badge-oh bg-warning text-dark">Alerta</span>
+                            {% elif item.estado == 'normal' %}
+                            <span class="badge-oh bg-success text-white">Normal</span>
+                            {% else %}
+                            <span class="badge-oh bg-secondary text-white">Sin OH</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Acciones -->
+                        <td class="text-center">
+                            <a href="{% url 'registrar_oh_balancin' item.codigo %}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="Registrar OH">
+                                <i class="fas fa-plus-circle"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center py-5">
+                            <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No hay registros de OH</h6>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    flatpickr(".datepicker", {dateFormat: "d/m/Y", locale: "es"});
+    
+    // Gráfico simple
+    var ctx = document.getElementById('graficoLineas').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels_lineas|safe }},
+            datasets: [{
+                label: 'Balancines',
+                data: {{ data_lineas|safe }},
+                backgroundColor: '#3498db',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+<!-- templates/app/inventario/form_repuesto_adicional.html -->
+{% extends 'base.html' %}
+
+{% block title %}Agregar Repuesto Adicional - Sistema TRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus"></i> Agregar Repuesto Adicional
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código del Item *</label>
+                            <input type="text" class="form-control" name="item" 
+                                   placeholder="Ej: ADIC-001, HERR-01, CONSUM-01, etc." required>
+                            <div class="form-text">Código único para identificar el repuesto</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción *</label>
+                            <textarea class="form-control" name="descripcion" rows="3" 
+                                      placeholder="Descripción detallada del repuesto..." required></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Cantidad Inicial</label>
+                                    <input type="number" class="form-control" name="cantidad" 
+                                           value="0" min="0" step="1">
+                                    <div class="form-text">Cantidad disponible en stock</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ubicación</label>
+                                    <input type="text" class="form-control" name="ubicacion" 
+                                           placeholder="Ej: Estante A1, Caja B3, Herramientas, etc.">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Observaciones</label>
+                            <textarea class="form-control" name="observaciones" rows="2" 
+                                      placeholder="Observaciones adicionales..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'lista_repuestos_adicionales' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Repuesto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Información de ayuda -->
+            <div class="card shadow mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información de ayuda</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Tipos de repuestos adicionales:</strong></p>
+                    <ul class="small">
+                        <li><strong>Herramientas:</strong> Llaves, destornilladores, alicates</li>
+                        <li><strong>Consumibles:</strong> Tornillos, tuercas, arandelas</li>
+                        <li><strong>Materiales:</strong> Aceite, grasa, selladores</li>
+                        <li><strong>Equipos de seguridad:</strong> Guantes, gafas, tapones</li>
+                    </ul>
+                    <p class="mb-0 small text-muted">
+                        <i class="fas fa-lightbulb"></i> Los repuestos adicionales se pueden editar y gestionar su stock desde la lista principal.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control, .form-select {
+    border-radius: 5px;
+    padding: 10px;
+}
+.btn {
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
