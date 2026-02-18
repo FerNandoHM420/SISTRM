@@ -51,9 +51,11 @@ urlpatterns = [
     path('api/ultimo-codigo-balancin/', views.ultimo_codigo_balancin, name='ultimo_codigo_balancin'),
     
     # ========== DASHBOARD OH ==========
-    # ✅ NUEVO DASHBOARD (con tabla app_historial_oh)
     path('inventario/dashboard-oh/', views.dashboard_oh_nuevo, name='dashboard_oh_balancines'),
-    path('inventario/dashboard-oh-nuevo/', views.dashboard_oh_nuevo, name='dashboard_oh_nuevo'),  # ← Para compatibilidad
+    path('inventario/dashboard-oh-nuevo/', views.dashboard_oh_nuevo, name='dashboard_oh_nuevo'),
+    
+    # ========== NUEVA URL PARA AGREGAR OH ==========
+    path('inventario/registrar_oh_balancin/', views.registrar_oh_balancin, name='registrar_oh_balancin'),  # ← AGREGAR ESTA LÍNEA
     
     # ========== INVENTARIO - REPUESTOS PARA BALANCINES ==========
     path('inventario/repuestos-balancin/', views.lista_repuestos_balancin, name='lista_repuestos_balancin'),
@@ -63,10 +65,6 @@ urlpatterns = [
     
     # ========== EXPORTAR DATOS ==========
     path('inventario/exportar-oh-excel/', views.exportar_oh_excel, name='exportar_oh_excel'),
-    # apps/balancines/urls.py
-# Agrega esta línea:
-
-
     
     # ========== INVENTARIO - REPUESTOS ADICIONALES ==========
     path('inventario/repuestos-adicionales/', views.lista_repuestos_adicionales, name='lista_repuestos_adicionales'),

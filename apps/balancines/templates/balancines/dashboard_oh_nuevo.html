@@ -91,6 +91,7 @@
         background-color: #f8f9fa;
         padding: 10px;
         border-radius: 8px;
+        overflow-x: auto;
     }
     .timeline-oh .badge {
         font-size: 0.7rem;
@@ -134,6 +135,30 @@
     }
     .estado-sin-oh {
         background-color: rgba(108, 117, 125, 0.1);
+    }
+
+    /* ===== LÍNEA DE TIEMPO ===== */
+    .timeline-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .timeline-item {
+        flex: 1;
+        min-width: 80px;
+        text-align: center;
+        padding: 5px;
+        border-radius: 6px;
+        background: white;
+        border: 1px solid #dee2e6;
+    }
+    .timeline-item.missing {
+        opacity: 0.5;
+        background: #f8f9fa;
+    }
+    .timeline-arrow {
+        color: #6c757d;
+        font-size: 0.8rem;
     }
 </style>
 {% endblock %}
@@ -430,11 +455,11 @@
                                 </div>
                             </div>
 
-                            <!-- Línea de tiempo de OH -->
+                            <!-- LÍNEA DE TIEMPO DE OH - VERSIÓN DINÁMICA -->
                             <div class="timeline-oh mb-3">
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="timeline-container">
                                     <!-- OH1 -->
-                                    <div class="text-center {% if item.oh1_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                    <div class="timeline-item {% if not item.oh1_fecha %}missing{% endif %}">
                                         <div class="small fw-bold">OH1</div>
                                         {% if item.oh1_fecha %}
                                             <div class="small">{{ item.oh1_fecha }}</div>
@@ -447,53 +472,103 @@
                                         {% endif %}
                                     </div>
 
-                                    <i class="fas fa-chevron-right text-muted"></i>
-
+                                    {% if item.oh2_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
                                     <!-- OH2 -->
-                                    <div class="text-center {% if item.oh2_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                    <div class="timeline-item">
                                         <div class="small fw-bold">OH2</div>
-                                        {% if item.oh2_fecha %}
-                                            <div class="small">{{ item.oh2_fecha }}</div>
-                                            <div class="small">{{ item.oh2_horas }}h</div>
-                                            <span class="badge {% if item.oh2_backlog < 0 %}bg-danger{% elif item.oh2_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
-                                                {{ item.oh2_backlog }}
-                                            </span>
-                                        {% else %}
-                                            <i class="fas fa-minus-circle text-muted"></i>
-                                        {% endif %}
+                                        <div class="small">{{ item.oh2_fecha }}</div>
+                                        <div class="small">{{ item.oh2_horas }}h</div>
+                                        <span class="badge {% if item.oh2_backlog < 0 %}bg-danger{% elif item.oh2_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh2_backlog }}
+                                        </span>
                                     </div>
+                                    {% endif %}
 
-                                    <i class="fas fa-chevron-right text-muted"></i>
-
+                                    {% if item.oh3_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
                                     <!-- OH3 -->
-                                    <div class="text-center {% if item.oh3_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                    <div class="timeline-item">
                                         <div class="small fw-bold">OH3</div>
-                                        {% if item.oh3_fecha %}
-                                            <div class="small">{{ item.oh3_fecha }}</div>
-                                            <div class="small">{{ item.oh3_horas }}h</div>
-                                            <span class="badge {% if item.oh3_backlog < 0 %}bg-danger{% elif item.oh3_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
-                                                {{ item.oh3_backlog }}
-                                            </span>
-                                        {% else %}
-                                            <i class="fas fa-minus-circle text-muted"></i>
-                                        {% endif %}
+                                        <div class="small">{{ item.oh3_fecha }}</div>
+                                        <div class="small">{{ item.oh3_horas }}h</div>
+                                        <span class="badge {% if item.oh3_backlog < 0 %}bg-danger{% elif item.oh3_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh3_backlog }}
+                                        </span>
                                     </div>
+                                    {% endif %}
 
-                                    <i class="fas fa-chevron-right text-muted"></i>
-
+                                    {% if item.oh4_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
                                     <!-- OH4 -->
-                                    <div class="text-center {% if item.oh4_fecha %}text-primary{% else %}text-muted{% endif %}" style="flex: 1;">
+                                    <div class="timeline-item">
                                         <div class="small fw-bold">OH4</div>
-                                        {% if item.oh4_fecha %}
-                                            <div class="small">{{ item.oh4_fecha }}</div>
-                                            <div class="small">{{ item.oh4_horas }}h</div>
-                                            <span class="badge {% if item.oh4_backlog < 0 %}bg-danger{% elif item.oh4_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
-                                                {{ item.oh4_backlog }}
-                                            </span>
-                                        {% else %}
-                                            <i class="fas fa-minus-circle text-muted"></i>
-                                        {% endif %}
+                                        <div class="small">{{ item.oh4_fecha }}</div>
+                                        <div class="small">{{ item.oh4_horas }}h</div>
+                                        <span class="badge {% if item.oh4_backlog < 0 %}bg-danger{% elif item.oh4_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh4_backlog }}
+                                        </span>
                                     </div>
+                                    {% endif %}
+
+                                    {% if item.oh5_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
+                                    <!-- OH5 -->
+                                    <div class="timeline-item">
+                                        <div class="small fw-bold">OH5</div>
+                                        <div class="small">{{ item.oh5_fecha }}</div>
+                                        <div class="small">{{ item.oh5_horas }}h</div>
+                                        <span class="badge {% if item.oh5_backlog < 0 %}bg-danger{% elif item.oh5_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh5_backlog }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if item.oh6_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
+                                    <!-- OH6 -->
+                                    <div class="timeline-item">
+                                        <div class="small fw-bold">OH6</div>
+                                        <div class="small">{{ item.oh6_fecha }}</div>
+                                        <div class="small">{{ item.oh6_horas }}h</div>
+                                        <span class="badge {% if item.oh6_backlog < 0 %}bg-danger{% elif item.oh6_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh6_backlog }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if item.oh7_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
+                                    <!-- OH7 -->
+                                    <div class="timeline-item">
+                                        <div class="small fw-bold">OH7</div>
+                                        <div class="small">{{ item.oh7_fecha }}</div>
+                                        <div class="small">{{ item.oh7_horas }}h</div>
+                                        <span class="badge {% if item.oh7_backlog < 0 %}bg-danger{% elif item.oh7_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh7_backlog }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if item.oh8_fecha %}
+                                    <i class="fas fa-chevron-right timeline-arrow"></i>
+                                    
+                                    <!-- OH8 -->
+                                    <div class="timeline-item">
+                                        <div class="small fw-bold">OH8</div>
+                                        <div class="small">{{ item.oh8_fecha }}</div>
+                                        <div class="small">{{ item.oh8_horas }}h</div>
+                                        <span class="badge {% if item.oh8_backlog < 0 %}bg-danger{% elif item.oh8_backlog < 5000 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ item.oh8_backlog }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
 

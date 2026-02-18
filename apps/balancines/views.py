@@ -1140,7 +1140,7 @@ def dashboard_oh_nuevo(request):
     linea_filtro = request.GET.get('linea', '')
     torre_filtro = request.GET.get('torre', '')
     estado_filtro = request.GET.get('estado', '')
-    balancin_filtro = request.GET.get('balancin', '')  # NUEVO: filtro por balancín específico
+    balancin_filtro = request.GET.get('balancin', '')
     
     # ===== PARTE 1: DATOS PARA FILTROS =====
     lineas = Linea.objects.all().order_by('nombre')
@@ -1148,8 +1148,9 @@ def dashboard_oh_nuevo(request):
     
     # ===== PARTE 2: OBTENER DATOS AGRUPADOS POR BALANCÍN =====
     from django.db import connection
+    import json
     
-    # Construir la consulta base
+    # Consulta para obtener todos los OH dinámicamente
     query = """
         SELECT 
             linea_nombre,
@@ -1160,38 +1161,18 @@ def dashboard_oh_nuevo(request):
             TO_CHAR(inicio_oc, 'Mon-YY') as inicio_oc,
             horas_promedio_dia,
             factor_correccion,
-            
-            -- Primer OH
-            MAX(CASE WHEN numero_oh = 1 THEN TO_CHAR(fecha_oh, 'Mon-YY') END) as oh1_fecha,
-            MAX(CASE WHEN numero_oh = 1 THEN anio END) as oh1_anio,
-            MAX(CASE WHEN numero_oh = 1 THEN horas_operacion END) as oh1_horas,
-            MAX(CASE WHEN numero_oh = 1 THEN backlog END) as oh1_backlog,
-            MAX(CASE WHEN numero_oh = 1 THEN dia_semana END) as oh1_dia,
-            
-            -- Segundo OH
-            MAX(CASE WHEN numero_oh = 2 THEN TO_CHAR(fecha_oh, 'Mon-YY') END) as oh2_fecha,
-            MAX(CASE WHEN numero_oh = 2 THEN anio END) as oh2_anio,
-            MAX(CASE WHEN numero_oh = 2 THEN horas_operacion END) as oh2_horas,
-            MAX(CASE WHEN numero_oh = 2 THEN backlog END) as oh2_backlog,
-            MAX(CASE WHEN numero_oh = 2 THEN dia_semana END) as oh2_dia,
-            
-            -- Tercer OH
-            MAX(CASE WHEN numero_oh = 3 THEN TO_CHAR(fecha_oh, 'Mon-YY') END) as oh3_fecha,
-            MAX(CASE WHEN numero_oh = 3 THEN anio END) as oh3_anio,
-            MAX(CASE WHEN numero_oh = 3 THEN horas_operacion END) as oh3_horas,
-            MAX(CASE WHEN numero_oh = 3 THEN backlog END) as oh3_backlog,
-            MAX(CASE WHEN numero_oh = 3 THEN dia_semana END) as oh3_dia,
-            
-            -- Cuarto OH
-            MAX(CASE WHEN numero_oh = 4 THEN TO_CHAR(fecha_oh, 'Mon-YY') END) as oh4_fecha,
-            MAX(CASE WHEN numero_oh = 4 THEN anio END) as oh4_anio,
-            MAX(CASE WHEN numero_oh = 4 THEN horas_operacion END) as oh4_horas,
-            MAX(CASE WHEN numero_oh = 4 THEN backlog END) as oh4_backlog,
-            MAX(CASE WHEN numero_oh = 4 THEN dia_semana END) as oh4_dia,
-            
+            balancin_codigo,
             COUNT(*) as total_ohs,
-            balancin_codigo
-            
+            json_agg(
+                json_build_object(
+                    'numero', numero_oh,
+                    'fecha', TO_CHAR(fecha_oh, 'Mon-YY'),
+                    'anio', anio,
+                    'horas', horas_operacion,
+                    'backlog', backlog,
+                    'dia', dia_semana
+                ) ORDER BY numero_oh
+            ) as todos_oh
         FROM app_historial_oh
     """
     
@@ -1221,7 +1202,39 @@ def dashboard_oh_nuevo(request):
     with connection.cursor() as cursor:
         cursor.execute(query)
         columns = [col[0] for col in cursor.description]
-        historial = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        historial = []
+        
+        for row in cursor.fetchall():
+            item = dict(zip(columns, row))
+            
+            # Convertir el JSON string a lista de diccionarios
+            todos_oh_str = item['todos_oh']
+            if todos_oh_str:
+                # Si es string, convertirlo a lista
+                if isinstance(todos_oh_str, str):
+                    todos_oh = json.loads(todos_oh_str)
+                else:
+                    todos_oh = todos_oh_str
+            else:
+                todos_oh = []
+            
+            # Asignar cada OH a variables individuales (hasta 10)
+            for i, oh in enumerate(todos_oh[:10], 1):
+                item[f'oh{i}_fecha'] = oh.get('fecha', '')
+                item[f'oh{i}_anio'] = oh.get('anio', '')
+                item[f'oh{i}_horas'] = oh.get('horas', '')
+                item[f'oh{i}_backlog'] = oh.get('backlog', '')
+                item[f'oh{i}_dia'] = oh.get('dia', '')
+            
+            # Limpiar variables para OH que no existen
+            for i in range(len(todos_oh) + 1, 11):
+                item[f'oh{i}_fecha'] = None
+                item[f'oh{i}_anio'] = None
+                item[f'oh{i}_horas'] = None
+                item[f'oh{i}_backlog'] = None
+                item[f'oh{i}_dia'] = None
+            
+            historial.append(item)
     
     # ===== APLICAR FILTROS ADICIONALES (en Python) =====
     if linea_filtro:
@@ -1236,21 +1249,17 @@ def dashboard_oh_nuevo(request):
     total_sin_oh = 0
     
     for item in historial:
-        # Determinar estado basado en el último backlog
         if item['total_ohs'] == 0:
             estado = 'sin_oh'
             total_sin_oh += 1
         else:
-            # Obtener el último backlog (OH más reciente)
+            # Obtener el último backlog
             ultimo_backlog = None
-            if item['oh4_backlog'] is not None:
-                ultimo_backlog = item['oh4_backlog']
-            elif item['oh3_backlog'] is not None:
-                ultimo_backlog = item['oh3_backlog']
-            elif item['oh2_backlog'] is not None:
-                ultimo_backlog = item['oh2_backlog']
-            elif item['oh1_backlog'] is not None:
-                ultimo_backlog = item['oh1_backlog']
+            for i in range(10, 0, -1):
+                backlog_val = item.get(f'oh{i}_backlog')
+                if backlog_val is not None:
+                    ultimo_backlog = backlog_val
+                    break
             
             if ultimo_backlog is None:
                 estado = 'sin_oh'
@@ -1296,36 +1305,30 @@ def dashboard_oh_nuevo(request):
     backlog_data = []
     backlog_colors = []
     
-    # Limitar a las primeras 20 torres para no saturar el gráfico
     for item in historial[:20]:
-        # Crear etiqueta para la torre
         sentido_short = "ASC" if item['sentido'] == 'ASCENDENTE' else "DES"
         etiqueta = f"{item['linea_nombre']} T{item['torre_numero']} {sentido_short}"
         torres_labels.append(etiqueta)
         
-        # Obtener el backlog del último OH
+        # Obtener el último backlog
         ultimo_backlog = None
-        if item['oh4_backlog'] is not None:
-            ultimo_backlog = item['oh4_backlog']
-        elif item['oh3_backlog'] is not None:
-            ultimo_backlog = item['oh3_backlog']
-        elif item['oh2_backlog'] is not None:
-            ultimo_backlog = item['oh2_backlog']
-        elif item['oh1_backlog'] is not None:
-            ultimo_backlog = item['oh1_backlog']
+        for i in range(10, 0, -1):
+            backlog_val = item.get(f'oh{i}_backlog')
+            if backlog_val is not None:
+                ultimo_backlog = backlog_val
+                break
         
         if ultimo_backlog is None:
             backlog_data.append(0)
-            backlog_colors.append('#6c757d')  # Gris para sin OH
+            backlog_colors.append('#6c757d')
         else:
             backlog_data.append(ultimo_backlog)
-            # Color según el valor
             if ultimo_backlog < 0:
-                backlog_colors.append('#dc3545')  # Rojo para crítico
+                backlog_colors.append('#dc3545')
             elif ultimo_backlog < 5000:
-                backlog_colors.append('#ffc107')  # Amarillo para alerta
+                backlog_colors.append('#ffc107')
             else:
-                backlog_colors.append('#28a745')  # Verde para normal
+                backlog_colors.append('#28a745')
     
     # ===== PARTE 6: TOTALES GENERALES =====
     total_balancines = len(historial)
@@ -1344,18 +1347,13 @@ def dashboard_oh_nuevo(request):
     
     # ===== PARTE 7: CONTEXT =====
     context = {
-        # Para filtros
         'lineas': lineas,
         'tipos': tipos,
         'linea_filtro': linea_filtro,
         'torre_filtro': torre_filtro,
         'estado_filtro': estado_filtro,
-        'balancin_filtro': balancin_filtro,  # NUEVO
-        
-        # Para la tabla
+        'balancin_filtro': balancin_filtro,
         'historial': historial,
-        
-        # Totales generales
         'total_balancines': total_balancines,
         'balancines_asc': balancines_asc,
         'balancines_desc': balancines_desc,
@@ -1363,25 +1361,17 @@ def dashboard_oh_nuevo(request):
         'total_oh1': total_oh1,
         'total_oh2': total_oh2,
         'total_oh3': total_oh3,
-        
-        # Estados
         'total_normal': total_normal,
         'total_alerta': total_alerta,
         'total_critico': total_critico,
         'total_sin_oh': total_sin_oh,
-        
-        # Porcentajes
         'porcentaje_normal': porcentaje_normal,
         'porcentaje_alerta': porcentaje_alerta,
         'porcentaje_critico': porcentaje_critico,
-        
-        # Datos para gráfico de barras por línea
         'labels_lineas': json.dumps(labels_lineas),
         'data_normal': json.dumps(data_normal),
         'data_alerta': json.dumps(data_alerta),
         'data_critico': json.dumps(data_critico),
-        
-        # Datos para gráfico de backlog por torre
         'torres_labels': json.dumps(torres_labels),
         'backlog_data': json.dumps(backlog_data),
         'backlog_colors': json.dumps(backlog_colors),
@@ -1394,7 +1384,6 @@ def dashboard_oh_nuevo(request):
 from .forms import NuevoOHForm
 from .models import HistorialOH, Linea, TipoBalancin
 from django.utils import timezone
-
 @login_required
 def registrar_oh_balancin(request, codigo):
     """Registrar una nueva orden de horas para un balancín específico"""
@@ -1468,4 +1457,3 @@ def registrar_oh_balancin(request, codigo):
     }
     
     return render(request, 'balancines/registrar_oh_balancin.html', context)
-
