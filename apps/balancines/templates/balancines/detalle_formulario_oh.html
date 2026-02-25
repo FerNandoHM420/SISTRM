@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Formulario - {{ formulario.codigo_formulario }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">FORMULARIO DE CONTROL DE REACONDICIONAMIENTO DE BALANCINES</h4>
+            <span class="badge bg-light text-dark">{{ formulario.codigo_formulario }}</span>
+        </div>
+        <div class="card-body">
+            
+            <!-- Encabezado Empresa -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h5>EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"</h5>
+                    <h6>TALLER DE REPARACIONES MAYORES</h6>
+                </div>
+            </div>
+            
+            <!-- Información General -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="fw-bold">Tipo:</label>
+                    <p>{{ formulario.tipo_balancin.codigo }}</p>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Código:</label>
+                    <p>{{ formulario.balancin.codigo }}</p>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Horas de funcionamiento:</label>
+                    <p>{{ formulario.horas_funcionamiento|default:"-" }}</p>
+                </div>
+                <div class="col-md-3">
+                    <label class="fw-bold">Fecha:</label>
+                    <p>{{ formulario.fecha|date:"d/m/Y" }}</p>
+                </div>
+            </div>
+            
+            <!-- Posiciones -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">Posición Inicial</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                <strong>Línea:</strong> {{ formulario.posicion_inicial_linea.nombre|default:"-" }}<br>
+                                <strong>Torre:</strong> TOR-{{ formulario.posicion_inicial_torre.numero_torre|stringformat:"02d"|default:"-" }}<br>
+                                <strong>Sentido:</strong> {{ formulario.posicion_inicial_sentido|default:"-" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">Posición Final</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                <strong>Línea:</strong> {{ formulario.posicion_final_linea.nombre|default:"-" }}<br>
+                                <strong>Torre:</strong> TOR-{{ formulario.posicion_final_torre.numero_torre|stringformat:"02d"|default:"-" }}<br>
+                                <strong>Sentido:</strong> {{ formulario.posicion_final_sentido|default:"-" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Análisis Predictivo -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Análisis Predictivo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <strong>Partículas magnéticas:</strong>
+                            <p>{% if formulario.analisis_particulas %}SÍ{% else %}NO{% endif %}</p>
+                        </div>
+                        <div class="col-md-10">
+                            <strong>Observaciones:</strong>
+                            <p>{{ formulario.analisis_observaciones|default:"-" }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>Realizado por:</strong>
+                            <p>{{ formulario.analisis_realizado_por|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Firma:</strong>
+                            <p>{{ formulario.analisis_firma|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Código de informe:</strong>
+                            <p>{{ formulario.analisis_codigo_informe|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recambio de partes y piezas -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Recambio de partes y piezas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Descripción</th>
+                                    <th>Conjunto</th>
+                                    <th>Cant. Total</th>
+                                    <th>Cant. Reemplazada</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detalle in detalles %}
+                                <tr>
+                                    <td>{{ detalle.repuesto.item }}</td>
+                                    <td>{{ detalle.repuesto.descripcion }}</td>
+                                    <td>{{ detalle.conjunto_nombre }}</td>
+                                    <td class="text-center">{{ detalle.cantidad_disponible_en_balancin }}</td>
+                                    <td class="text-center">
+                                        {% if detalle.fue_reemplazado %}
+                                            <span class="badge bg-success">{{ detalle.cantidad_reemplazada }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ detalle.observaciones|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No se registraron repuestos reemplazados</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Firmas -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Realizado por</div>
+                        <div class="card-body">
+                            <p>
+                                <strong>Nombre:</strong> {{ formulario.realizado_usuario.nombre|default:"-" }}<br>
+                                <strong>Firma:</strong> {{ formulario.realizado_firma|default:"-" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">Aprobado por</div>
+                        <div class="card-body">
+                            <p>
+                                <strong>Nombre:</strong> {{ formulario.aprobado_usuario.nombre|default:"-" }}<br>
+                                <strong>Firma:</strong> {{ formulario.aprobado_firma|default:"-" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observaciones generales -->
+            {% if formulario.observaciones_generales %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">Observaciones generales</div>
+                        <div class="card-body">
+                            {{ formulario.observaciones_generales }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Metadatos -->
+            <div class="row">
+                <div class="col-12 text-muted small">
+                    <p>
+                        Creado por: {{ formulario.usuario_creacion.nombre|default:"Sistema" }} - 
+                        Fecha: {{ formulario.fecha_creacion|date:"d/m/Y H:i" }}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="row">
+                <div class="col-12 text-center">
+                    <a href="{% url 'lista_formularios_oh' %}" class="btn btn-secondary">Volver a la lista</a>
+                    <a href="{% url 'detalle_balancin' formulario.balancin.codigo %}" class="btn btn-info">Ver Balancín</a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

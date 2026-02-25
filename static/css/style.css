@@ -1,176 +1,252 @@
- /* static/css/style.css */
+/* ============================= */
+/* ESTILOS GENERALES */
+/* ============================= */
 
- /* Estilos generales */
- body {
-     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-     background-color: #f8f9fa;
-     min-height: 100vh;
-     display: flex;
-     flex-direction: column;
- }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 
- main {
-     flex: 1;
- }
+main {
+    flex: 1;
+}
 
- /* Hero section */
- .hero-section {
-     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-     color: white;
-     border-radius: 15px;
-     padding: 3rem !important;
- }
+/* Scroll suave */
+html {
+    scroll-behavior: smooth;
+}
 
- .hero-section h1 {
-     font-weight: 700;
-     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
- }
+/* ============================= */
+/* NAVBAR */
+/* ============================= */
 
- /* Cards */
- .card {
-     transition: transform 0.3s ease, box-shadow 0.3s ease;
-     border: none;
- }
+.navbar {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
 
- .card:hover {
-     transform: translateY(-5px);
-     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
- }
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.4rem;
+}
 
- /* Navbar */
- .navbar {
-     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
- }
+/* ============================= */
+/* HERO SECTION */
+/* ============================= */
 
- .navbar-brand {
-     font-weight: 700;
-     font-size: 1.5rem;
- }
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 3rem !important;
+}
 
- /* Dashboard */
- .dashboard-header {
-     border-left: 5px solid #007bff;
- }
+.hero-section h1 {
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
 
- /* Formularios */
- .form-control:focus {
-     border-color: #80bdff;
-     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
- }
+/* ============================= */
+/* CARDS */
+/* ============================= */
 
- /* Botones */
- .btn {
-     border-radius: 8px;
-     font-weight: 500;
-     transition: all 0.3s ease;
- }
+.card {
+    border: none;
+    border-radius: 14px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
- .btn-lg {
-     padding: 0.75rem 1.5rem;
- }
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+}
 
- /* Alertas */
- .alert {
-     border-radius: 10px;
-     border: none;
- }
+.hover-card {
+    border-radius: 15px;
+    overflow: hidden;
+}
 
- /* Footer */
- footer {
-     margin-top: auto;
- }
+.hover-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+}
 
- /* Responsive */
- @media (max-width: 768px) {
-     .hero-section {
-         padding: 2rem !important;
-     }
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
 
-     .display-4 {
-         font-size: 2.5rem;
-     }
- }
+/* ============================= */
+/* DASHBOARD */
+/* ============================= */
 
- /* static/css/style.css - Agrega esto al final */
+.dashboard-header {
+    border-left: 5px solid #0d6efd;
+}
 
- /* Estilos para la página de inicio */
- .hover-card {
-     transition: transform 0.3s ease, box-shadow 0.3s ease;
-     border-radius: 15px;
-     overflow: hidden;
- }
+.stat-card {
+    transition: all 0.3s ease;
+}
 
- .hover-card:hover {
-     transform: translateY(-10px);
-     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
- }
+.stat-card:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
 
- .card-header {
-     border-radius: 15px 15px 0 0 !important;
- }
+/* ============================= */
+/* FORMULARIOS */
+/* ============================= */
 
- /* Gradientes personalizados */
- .bg-gradient-primary {
-     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
- }
+.form-control {
+    border-radius: 10px;
+}
 
- .bg-gradient-danger {
-     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
- }
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .25);
+}
 
- .bg-gradient-success {
-     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
- }
+/* ============================= */
+/* BOTONES */
+/* ============================= */
 
- .bg-gradient-warning {
-     background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
- }
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
 
- .bg-gradient-info {
-     background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) !important;
- }
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+}
 
- .bg-gradient-purple {
-     background: linear-gradient(135deg, #9a6bff 0%, #4b2cff 100%) !important;
- }
+.btn-purple {
+    background-color: #9a6bff !important;
+    border-color: #9a6bff !important;
+    color: white !important;
+}
 
- .bg-gradient-secondary {
-     background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important;
- }
+.btn-purple:hover {
+    background-color: #7c4dff !important;
+    border-color: #7c4dff !important;
+}
 
- .bg-gradient-dark {
-     background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%) !important;
- }
+/* ============================= */
+/* ALERTAS */
+/* ============================= */
 
- /* Botón morado */
- .btn-purple {
-     background-color: #9a6bff !important;
-     border-color: #9a6bff !important;
-     color: white !important;
- }
+.alert {
+    border-radius: 10px;
+    border: none;
+}
 
- .btn-purple:hover {
-     background-color: #7c4dff !important;
-     border-color: #7c4dff !important;
-     color: white !important;
- }
+/* ============================= */
+/* GRADIENTES */
+/* ============================= */
 
- /* Tarjetas de estadísticas */
- .stat-card {
-     transition: all 0.3s ease;
- }
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
 
- .stat-card:hover {
-     background-color: rgba(0, 0, 0, 0.05) !important;
- }
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+}
 
- /* Responsive */
- @media (max-width: 768px) {
-     .display-3 {
-         font-size: 2.5rem;
-     }
+.bg-gradient-success {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
 
-     .card {
-         margin-bottom: 1rem;
-     }
- }
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) !important;
+}
+
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #9a6bff 0%, #4b2cff 100%) !important;
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important;
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%) !important;
+}
+
+/* ============================= */
+/* TABLAS RESPONSIVE */
+/* ============================= */
+
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead {
+    background-color: #f1f3f5;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* ============================= */
+/* FOOTER */
+/* ============================= */
+
+footer {
+    margin-top: auto;
+    font-size: 0.9rem;
+}
+
+/* ============================= */
+/* RESPONSIVE MEJORADO */
+/* ============================= */
+
+@media (max-width: 768px) {
+
+    .navbar-brand {
+        font-size: 1rem;
+    }
+
+    .hero-section {
+        padding: 2rem !important;
+        text-align: center;
+    }
+
+    .display-4,
+    .display-3 {
+        font-size: 2rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .table {
+        font-size: 0.85rem;
+    }
+
+    main {
+        padding-bottom: 80px;
+    }
+}
+
+/* Tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .display-4 {
+        font-size: 2.5rem;
+    }
+}

@@ -98,6 +98,7 @@ class Linea(models.Model):
     """Líneas de producción"""
     id = models.AutoField(primary_key=True)
     nombre = models.CharField('Nombre', max_length=100)
+    color = models.CharField('Color Bootstrap', max_length=30, default='secondary')
     descripcion = models.TextField('Descripción', blank=True, null=True)
     fecha_registro = models.DateTimeField('Fecha de registro', auto_now_add=True)
     
@@ -214,7 +215,7 @@ class BalancinIndividual(models.Model):
     )
     rango_horas_cambio_oh = models.PositiveIntegerField(
         'Rango de horas para cambio de OH',
-        default=30000,
+        default=40000,
         help_text='Horas de operación antes de requerir mantenimiento'
     )
     observaciones = models.TextField(
@@ -585,3 +586,212 @@ class HistorialOH(models.Model):
     
     def __str__(self):
         return f"{self.linea_nombre} T{self.torre_numero} {self.sentido} - OH#{self.numero_oh}"
+
+
+
+class ConfiguracionRepuestosPorTipo(models.Model):
+    """
+    Configuración de qué repuestos necesita cada tipo de balancín
+    """
+    tipo_balancin = models.ForeignKey(
+        'TipoBalancin',
+        on_delete=models.CASCADE,
+        related_name='config_repuestos',
+        verbose_name='Tipo de balancín',
+        db_column='tipo_balancin_codigo',
+        to_field='codigo'
+    )
+    
+    repuesto = models.ForeignKey(
+        'RepuestoBalancin',
+        on_delete=models.PROTECT,
+        related_name='configurado_en_tipos',
+        verbose_name='Repuesto',
+        null=True,
+        blank=True
+    )
+    
+    # Datos del Excel
+    id_original = models.CharField('ID Excel', max_length=20, help_text='Ej: 10870308')
+    descripcion = models.TextField('Descripción')
+    cantidad_por_balancin = models.PositiveIntegerField('Cantidad por balancín', default=1)
+    
+    # NUEVOS CAMPOS
+    cantidad_total = models.PositiveIntegerField('Cantidad total', default=0)
+    es_conjunto = models.BooleanField('Es un conjunto', default=False)
+    conjunto_padre = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='componentes',
+        verbose_name='Conjunto padre'
+    )
+    
+    # Agrupación visual
+    GRUPO_CHOICES = [
+        ('POLEAS', 'Poleas'),
+        ('SEGMENTOS_2P', 'Segmentos 2P'),
+        ('SEGMENTOS_4P', 'Segmentos 4P'),
+        ('CONJUNTOS', 'Conjuntos'),
+        ('OTROS', 'Otros'),
+    ]
+    grupo = models.CharField('Grupo', max_length=20, choices=GRUPO_CHOICES, default='OTROS')
+    orden = models.PositiveIntegerField('Orden', default=0)
+    
+    class Meta:
+        db_table = 'app_config_repuestos_tipo'
+        verbose_name = 'Configuración de repuestos por tipo'
+        verbose_name_plural = 'Configuraciones de repuestos por tipo'
+        ordering = ['tipo_balancin', 'grupo', 'orden']
+        unique_together = ['tipo_balancin', 'repuesto']
+    
+    def __str__(self):
+        return f"{self.tipo_balancin.codigo} - {self.id_original}"
+
+class FormularioReacondicionamiento(models.Model):
+    """
+    Cabecera del formulario de control de reacondicionamiento
+    """
+    TIPO_CHOICES = [
+        ('4T-501C', '4T-501C'),
+        ('6T-501C', '6T-501C'),
+        ('8T-501C', '8T-501C'),
+        ('10T-501C', '10T-501C'),
+        ('12T-501C', '12T-501C'),
+        ('8N/4TR-420C', '8N/4TR-420C'),
+        ('10N/4TR-420C', '10N/4TR-420C'),
+        ('12N/4TR-420C', '12N/4TR-420C'),
+        ('14N/4TR-420C', '14N/4TR-420C'),
+        ('16N/4TR-420C', '16N/4TR-420C'),
+        ('4T/4N-420C', '4T/4N-420C'),
+    ]
+    
+    codigo_formulario = models.CharField(
+        'Código formulario',
+        max_length=50,
+        primary_key=True,
+        help_text='Ej: TRM-FCRB-16N-4TR-420C-001'
+    )
+    tipo = models.CharField('Tipo', max_length=20, choices=TIPO_CHOICES)
+    balancin = models.ForeignKey(
+        'BalancinIndividual',
+        on_delete=models.PROTECT,
+        related_name='formularios_reacondicionamiento',
+        verbose_name='Balancín'
+    )
+    historial_oh = models.ForeignKey(
+        'HistorialOH',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='formularios'
+    )
+    
+    # Fechas y horas
+    fecha = models.DateField('Fecha', default=timezone.now)
+    horas_funcionamiento = models.PositiveIntegerField('Horas de funcionamiento')
+    
+    # Posiciones
+    linea_inicial = models.CharField('Línea inicial', max_length=50, blank=True)
+    torre_inicial = models.CharField('Torre inicial', max_length=50, blank=True)
+    linea_final = models.CharField('Línea final', max_length=50, blank=True)
+    torre_final = models.CharField('Torre final', max_length=50, blank=True)
+    
+    # Análisis predictivo
+    control_particulas = models.BooleanField('Control de partículas magnéticas', default=False)
+    codigo_informe = models.CharField('Código de informe', max_length=50, blank=True)
+    
+    # Verificaciones
+    torque_verificado = models.BooleanField('Torque verificado', default=False)
+    limpieza_verificada = models.BooleanField('Limpieza de uniones', default=False)
+    continuidad_verificada = models.BooleanField('Continuidad verificada', default=False)
+    
+    # Responsables
+    realizado_por_analisis = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name='formularios_analisis',
+        verbose_name='Realizado por (análisis)',
+        null=True,
+        blank=True
+    )
+    realizado_por_recambio = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name='formularios_recambio',
+        verbose_name='Realizado por (recambio)',
+        null=True,
+        blank=True
+    )
+    aprobado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.PROTECT,
+        related_name='formularios_aprobados',
+        verbose_name='Aprobado por',
+        null=True,
+        blank=True
+    )
+    
+    # Metadatos
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField('Última actualización', auto_now=True)
+    usuario_creacion = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='formularios_creados'
+    )
+    
+    class Meta:
+        db_table = 'app_formulario_reacondicionamiento'
+        verbose_name = 'Formulario de Reacondicionamiento'
+        verbose_name_plural = 'Formularios de Reacondicionamiento'
+        ordering = ['-fecha', '-fecha_creacion']
+    
+    def __str__(self):
+        return self.codigo_formulario
+
+
+class ItemFormularioReacondicionamiento(models.Model):
+    """
+    Detalle de los repuestos usados en un formulario
+    """
+    formulario = models.ForeignKey(
+        FormularioReacondicionamiento,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    configuracion = models.ForeignKey(
+        'ConfiguracionRepuestosPorTipo',
+        on_delete=models.PROTECT,
+        verbose_name='Configuración original'
+    )
+    repuesto = models.ForeignKey(
+        'RepuestoBalancin',
+        on_delete=models.PROTECT,
+        verbose_name='Repuesto'
+    )
+    
+    # Datos del momento
+    id_original = models.CharField('ID Excel', max_length=20)
+    descripcion = models.TextField('Descripción')
+    cantidad_requerida = models.PositiveIntegerField('Cantidad requerida')
+    cantidad_usada = models.PositiveIntegerField('Cantidad usada', default=0)
+    fue_reemplazado = models.BooleanField('¿Fue reemplazado?', default=False)
+    observaciones = models.TextField('Observaciones', blank=True)
+    
+    # Control de stock
+    stock_antes = models.PositiveIntegerField('Stock antes', null=True, blank=True)
+    stock_despues = models.PositiveIntegerField('Stock después', null=True, blank=True)
+    
+    class Meta:
+        db_table = 'app_item_formulario_reacondicionamiento'
+        verbose_name = 'Item de Formulario'
+        verbose_name_plural = 'Items de Formulario'
+    
+    def __str__(self):
+        return f"{self.formulario.codigo_formulario} - {self.repuesto.item}"
+    
+    
+    

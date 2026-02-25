@@ -55,7 +55,7 @@ urlpatterns = [
     path('inventario/dashboard-oh-nuevo/', views.dashboard_oh_nuevo, name='dashboard_oh_nuevo'),
     
     # ========== NUEVA URL PARA AGREGAR OH ==========
-    path('inventario/registrar_oh_balancin/', views.registrar_oh_balancin, name='registrar_oh_balancin'),  # ← AGREGAR ESTA LÍNEA
+    path('inventario/registrar_oh_balancin/', views.registrar_oh_balancin, name='registrar_oh_balancin'),
     
     # ========== INVENTARIO - REPUESTOS PARA BALANCINES ==========
     path('inventario/repuestos-balancin/', views.lista_repuestos_balancin, name='lista_repuestos_balancin'),
@@ -71,4 +71,8 @@ urlpatterns = [
     path('inventario/repuestos-adicionales/agregar/', views.agregar_repuesto_adicional, name='agregar_repuesto_adicional'),
     path('inventario/repuestos-adicionales/<str:item>/entrada/', views.entrada_stock_adicional, name='entrada_stock_adicional'),
     path('inventario/repuestos-adicionales/<str:item>/salida/', views.salida_stock_adicional, name='salida_stock_adicional'),
+    
+    path('crear-formulario/<path:codigo>/', views.crear_formulario_control, name='crear_formulario_control'),
+    path('formularios/', views.lista_formularios, name='lista_formularios'),
+    path('formulario/<str:codigo>/', views.detalle_formulario, name='detalle_formulario'),
 ]

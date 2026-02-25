@@ -61,6 +61,7 @@ class RegistroForm(UserCreationForm):
             user.save()
         return user
 
+
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(
         label=_('Email'),
@@ -89,6 +90,7 @@ class LoginForm(AuthenticationForm):
                 code='inactive',
             )
 
+
 # ========== FORMULARIO PARA BALANCÍN INDIVIDUAL ==========
 class BalancinIndividualForm(forms.ModelForm):
     """Formulario para balancines instalados en torres"""
@@ -110,7 +112,7 @@ class BalancinIndividualForm(forms.ModelForm):
             'rango_horas_cambio_oh': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 1,
-                'placeholder': '30000'
+                'placeholder': '40000'
             }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -169,6 +171,7 @@ class BalancinIndividualForm(forms.ModelForm):
                 )
         
         return cleaned_data
+
 
 # ========== FORMULARIO PARA SELECCIONAR TORRE POR LÍNEA ==========
 class SeleccionarTorreForm(forms.Form):
@@ -320,9 +323,9 @@ class CambiarEstadoForm(forms.Form):
             'placeholder': 'Motivo del cambio de estado...'
         })
     )
-    
-    # apps/balancines/forms.py - Agrega esto al final
 
+
+# ========== FORMULARIO PARA NUEVO OH ==========
 class NuevoOHForm(forms.Form):
     """Formulario para registrar un nuevo OH"""
     
@@ -382,3 +385,5 @@ class NuevoOHForm(forms.Form):
         torre = obj.torre
         linea = torre.linea.nombre if torre and torre.linea else 'N/A'
         return f"{obj.codigo} - {linea} T{torre.numero_torre} ({obj.get_sentido_display()})"
+
+

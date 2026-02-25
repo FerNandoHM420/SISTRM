@@ -10,6 +10,8 @@
         padding: 2px 4px;
         border-radius: 4px;
         font-weight: 600;
+        color: #856404;
+        border: 1px solid #ffeeba;
     }
     .result-card {
         transition: all 0.2s;
@@ -30,6 +32,46 @@
         padding: 3px 8px;
         border-radius: 12px;
         background-color: #e9ecef;
+    }
+    
+    /* Estilo para grupos de líneas */
+    .linea-group {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .linea-group h5 {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .linea-group .badge {
+        font-size: 0.8rem;
+        vertical-align: middle;
+    }
+    
+    /* Estilo para el filtro rápido */
+    .filtro-rapido {
+        border: 1px solid #17a2b8;
+        transition: all 0.3s;
+        background-color: white;
+    }
+    
+    .filtro-rapido:focus {
+        box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+        border-color: #17a2b8;
+    }
+    
+    /* Contador de resultados */
+    .contador-resultados {
+        font-size: 0.9rem;
+        color: #6c757d;
+        padding: 5px 10px;
+        background-color: #e9ecef;
+        border-radius: 20px;
+        display: inline-block;
     }
 </style>
 {% endblock %}
@@ -62,7 +104,7 @@
         </div>
     </div>
 
-    <!-- Formulario de búsqueda mejorado -->
+    <!-- Formulario de búsqueda principal -->
     <div class="card shadow mb-4">
         <div class="card-body">
             <form method="get" action="{% url 'buscar_inventario' %}" id="searchForm">
@@ -75,7 +117,7 @@
                             <input type="text" 
                                    class="form-control form-control-lg" 
                                    name="q" 
-                                   placeholder="Buscar por código, descripción, ubicación..." 
+                                   placeholder="Buscar por código, número de torre, descripción..." 
                                    value="{{ query }}"
                                    autofocus>
                         </div>
@@ -102,7 +144,7 @@
 
     <!-- Resultados -->
     {% if tiene_resultados %}
-        <!-- Barra de filtros rápidos -->
+        <!-- Barra de filtros rápidos por categoría -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="btn-group w-100" role="group">
@@ -136,7 +178,7 @@
         <!-- Resultados agrupados -->
         <div class="results-container">
             
-            <!-- Tipos de Balancín -->
+            <!-- ===== TIPOS DE BALANCÍN ===== -->
             {% if resultados.tipos %}
             <div class="result-group mb-4" data-category="tipos">
                 <div class="d-flex align-items-center mb-3">
@@ -177,7 +219,7 @@
             </div>
             {% endif %}
 
-            <!-- Balancines Individuales -->
+            <!-- ===== BALANCINES INDIVIDUALES ===== -->
             {% if resultados.balancines %}
             <div class="result-group mb-4" data-category="balancines">
                 <div class="d-flex align-items-center mb-3">
@@ -240,7 +282,7 @@
             </div>
             {% endif %}
 
-            <!-- Torres -->
+            <!-- ===== TORRES - BÚSQUEDA PRINCIPAL ===== -->
             {% if resultados.torres %}
             <div class="result-group mb-4" data-category="torres">
                 <div class="d-flex align-items-center mb-3">
@@ -248,41 +290,89 @@
                         <i class="fas fa-building"></i>
                     </div>
                     <h4 class="mb-0">Torres <span class="badge bg-info ms-2">{{ resultados.torres|length }}</span></h4>
+                    
+                    <!-- FILTRO RÁPIDO DENTRO DE RESULTADOS (opcional) -->
+                    <div class="ms-auto" style="width: 250px;">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-filter text-info"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control filtro-rapido" 
+                                   id="filtroRapidoTorres" 
+                                   placeholder="Filtrar dentro de resultados..."
+                                   onkeyup="filtrarTorresRapido(this.value)">
+                        </div>
+                    </div>
                 </div>
-                <div class="row">
-                    {% for torre in resultados.torres %}
-                    <div class="col-md-6 mb-3">
-                        <div class="card result-card tipo-torres">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h5 class="card-title mb-2">
-                                            <i class="fas fa-industry"></i> 
-                                            {{ torre.linea.nombre }} - Torre {{ torre.numero_torre }}
-                                        </h5>
-                                        <p class="mb-1">
-                                            <small>
-                                                <span class="badge bg-success">ASC: {{ torre.tipo_balancin_ascendente }}</span>
-                                                <span class="badge bg-danger">DESC: {{ torre.tipo_balancin_descendente }}</span>
-                                            </small>
-                                        </p>
-                                        <p class="mb-0 text-muted small">
-                                            <i class="fas fa-cog"></i> {{ torre.ascendentes }} ascendentes / {{ torre.descendentes }} descendentes
-                                        </p>
+                
+                <!-- Agrupar torres por línea (RESULTADOS DE LA BÚSQUEDA PRINCIPAL) -->
+                {% regroup resultados.torres by linea.nombre as torres_por_linea %}
+                
+                {% for linea in torres_por_linea %}
+                <div class="linea-group mb-4" data-linea="{{ linea.grouper|lower }}">
+                    <h5 class="text-primary mb-3 border-bottom pb-2">
+                        <i class="fas fa-industry"></i> Línea {{ linea.grouper }}
+                        <span class="badge bg-info ms-2">{{ linea.list|length }} torres</span>
+                    </h5>
+                    
+                    <div class="row" id="torresContainer{{ forloop.counter }}">
+                        {% for torre in linea.list %}
+                        <div class="col-md-6 mb-3 torre-item" 
+                             data-numero="{{ torre.numero_torre|lower }}"
+                             data-linea="{{ torre.linea.nombre|lower }}">
+                            <div class="card result-card tipo-torres h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="card-title mb-2">
+                                                <i class="fas fa-map-marker-alt text-info"></i> 
+                                                Torre <span class="torre-numero fw-bold fs-5">{{ torre.numero_torre }}</span>
+                                            </h6>
+                                            <p class="mb-1">
+                                                <small>
+                                                    <span class="badge bg-success">ASC: {{ torre.tipo_balancin_ascendente|default:"-" }}</span>
+                                                    <span class="badge bg-danger">DESC: {{ torre.tipo_balancin_descendente|default:"-" }}</span>
+                                                </small>
+                                            </p>
+                                            <p class="mb-0 text-muted small">
+                                                <i class="fas fa-cog"></i> 
+                                                Ascendentes: <span class="badge bg-success">{{ torre.ascendentes|default:"0" }}</span>
+                                                / Descendentes: <span class="badge bg-danger">{{ torre.descendentes|default:"0" }}</span>
+                                            </p>
+                                            {% if torre.seccion %}
+                                            <p class="mb-0 text-muted small mt-1">
+                                                <i class="fas fa-flag"></i> Sección: {{ torre.seccion.nombre }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <a href="{% url 'lista_balancines_individuales' %}?torre={{ torre.numero_torre }}" 
+                                               class="btn btn-sm btn-outline-info"
+                                               title="Ver balancines de esta torre">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
                                     </div>
-                                    <span class="badge bg-info" style="height: fit-content;">
-                                        Secc: {{ torre.seccion.nombre }}
-                                    </span>
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                </div>
+                {% endfor %}
+                
+                <!-- Contador de torres visibles después del filtro rápido -->
+                <div class="text-end mt-2">
+                    <span class="contador-resultados" id="contadorTorres">
+                        <i class="fas fa-filter"></i>
+                        Mostrando <span id="torresVisibles">{{ resultados.torres|length }}</span> de {{ resultados.torres|length }} torres
+                    </span>
                 </div>
             </div>
             {% endif %}
 
-            <!-- Repuestos para Balancines -->
+            <!-- ===== REPUESTOS PARA BALANCINES ===== -->
             {% if resultados.repuestos_balancin %}
             <div class="result-group mb-4" data-category="repuestos">
                 <div class="d-flex align-items-center mb-3">
@@ -328,7 +418,7 @@
             </div>
             {% endif %}
 
-            <!-- Repuestos Adicionales -->
+            <!-- ===== REPUESTOS ADICIONALES ===== -->
             {% if resultados.repuestos_adicionales %}
             <div class="result-group mb-4" data-category="adicionales">
                 <div class="d-flex align-items-center mb-3">
@@ -399,7 +489,7 @@
                 <i class="fas fa-search fa-4x text-muted mb-3"></i>
                 <h3 class="text-muted">¿Qué estás buscando?</h3>
                 <p class="text-muted">
-                    Puedes buscar por código, descripción, ubicación...
+                    Puedes buscar por código, número de torre, descripción...
                 </p>
                 <div class="row justify-content-center mt-4">
                     <div class="col-md-8">
@@ -428,8 +518,9 @@
     {% endif %}
 </div>
 
-<!-- JavaScript para filtros -->
+<!-- JavaScript -->
 <script>
+// Función para filtrar resultados por categoría
 function filterResults(category) {
     // Actualizar botones
     document.querySelectorAll('.btn-group .btn').forEach(btn => {
@@ -438,22 +529,72 @@ function filterResults(category) {
     event.target.classList.add('active');
     
     // Mostrar/ocultar grupos
-    if (category === 'all') {
-        document.querySelectorAll('.result-group').forEach(group => {
+    document.querySelectorAll('.result-group').forEach(group => {
+        if (category === 'all' || group.dataset.category === category) {
             group.style.display = 'block';
-        });
-    } else {
-        document.querySelectorAll('.result-group').forEach(group => {
-            if (group.dataset.category === category) {
-                group.style.display = 'block';
-            } else {
-                group.style.display = 'none';
+        } else {
+            group.style.display = 'none';
+        }
+    });
+}
+
+// Función para filtrar torres rápidamente DENTRO de los resultados
+function filtrarTorresRapido(valor) {
+    const termino = valor.toLowerCase().trim();
+    const torres = document.querySelectorAll('.torre-item');
+    let contador = 0;
+    
+    torres.forEach(torre => {
+        const numeroTorre = torre.dataset.numero;
+        
+        if (termino === '' || numeroTorre.includes(termino)) {
+            torre.style.display = 'block';
+            contador++;
+        } else {
+            torre.style.display = 'none';
+        }
+    });
+    
+    // Mostrar/ocultar grupos de línea según si tienen torres visibles
+    document.querySelectorAll('.linea-group').forEach(grupo => {
+        const torresEnGrupo = grupo.querySelectorAll('.torre-item');
+        let tieneVisibles = false;
+        
+        torresEnGrupo.forEach(torre => {
+            if (torre.style.display !== 'none') {
+                tieneVisibles = true;
             }
         });
-    }
+        
+        grupo.style.display = tieneVisibles ? 'block' : 'none';
+    });
+    
+    // Actualizar contador
+    document.getElementById('torresVisibles').textContent = contador;
 }
+
+// Función para resaltar el término de búsqueda en los resultados
+function highlightSearchTerm() {
+    const termino = document.querySelector('[name="q"]')?.value.toLowerCase().trim();
+    if (!termino) return;
+    
+    document.querySelectorAll('.result-group td, .result-group .card-title, .result-group .torre-numero').forEach(el => {
+        const texto = el.textContent;
+        if (texto.toLowerCase().includes(termino)) {
+            const regex = new RegExp(termino, 'gi');
+            el.innerHTML = texto.replace(regex, match => 
+                `<span class="search-highlight">${match}</span>`
+            );
+        }
+    });
+}
+
+// Ejecutar resaltado cuando carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    highlightSearchTerm();
+});
 </script>
 
-<!-- MODALES (se mantienen igual que en tu código original) -->
+<!-- MODALES (mantén los que ya tienes) -->
 {% include 'balancines/modales_busqueda.html' %}
 {% endblock %}

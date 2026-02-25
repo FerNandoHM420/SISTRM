@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Formulario de Control OH - {{ balancin.codigo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">FORMULARIO DE CONTROL DE REACONDICIONAMIENTO DE BALANCINES</h4>
+        </div>
+        <div class="card-body">
+            
+            <!-- Encabezado Empresa -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <h5>EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"</h5>
+                    <h6>TALLER DE REPARACIONES MAYORES</h6>
+                </div>
+            </div>
+            
+            <form method="post" id="formularioOH">
+                {% csrf_token %}
+                
+                <!-- Información General -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo:</label>
+                        <input type="text" class="form-control" value="{{ balancin.tipo_balancin.codigo }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Código:</label>
+                        <input type="text" class="form-control" value="{{ balancin.codigo }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Horas de funcionamiento:</label>
+                        <input type="number" name="horas_funcionamiento" class="form-control" value="{{ balancin.rango_horas_cambio_oh }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha:</label>
+                        <input type="date" name="fecha" class="form-control" value="{{ fecha_hoy }}">
+                    </div>
+                </div>
+                
+                <!-- Posición Inicial -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Posición Inicial - Línea:</label>
+                        <select name="posicion_inicial_linea" class="form-select" id="id_linea_inicial">
+                            <option value="">Seleccione...</option>
+                            {% for linea in lineas %}
+                                <option value="{{ linea.id }}" {% if balancin.torre.linea.id == linea.id %}selected{% endif %}>
+                                    {{ linea.nombre }} ({{ linea.color }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Posición Inicial - Torre:</label>
+                        <select name="posicion_inicial_torre" class="form-select" id="id_torre_inicial">
+                            <option value="">Seleccione...</option>
+                            {% for torre in torres %}
+                                <option value="{{ torre.id }}" data-linea="{{ torre.linea.id }}" 
+                                    {% if balancin.torre.id == torre.id %}selected{% endif %}>
+                                    TOR-{{ torre.numero_torre|stringformat:"02d" }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Posición Inicial - Sentido:</label>
+                        <select name="posicion_inicial_sentido" class="form-select">
+                            <option value="ASCENDENTE" {% if balancin.sentido == 'ASCENDENTE' %}selected{% endif %}>ASCENDENTE</option>
+                            <option value="DESCENDENTE" {% if balancin.sentido == 'DESCENDENTE' %}selected{% endif %}>DESCENDENTE</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Posición Final -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Posición Final - Línea:</label>
+                        <select name="posicion_final_linea" class="form-select" id="id_linea_final" required>
+                            <option value="">Seleccione...</option>
+                            {% for linea in lineas %}
+                                <option value="{{ linea.id }}">{{ linea.nombre }} ({{ linea.color }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Posición Final - Torre:</label>
+                        <select name="posicion_final_torre" class="form-select" id="id_torre_final" required>
+                            <option value="">Seleccione...</option>
+                            {% for torre in torres %}
+                                <option value="{{ torre.id }}" data-linea="{{ torre.linea.id }}">
+                                    TOR-{{ torre.numero_torre|stringformat:"02d" }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Posición Final - Sentido:</label>
+                        <select name="posicion_final_sentido" class="form-select" required>
+                            <option value="ASCENDENTE">ASCENDENTE</option>
+                            <option value="DESCENDENTE">DESCENDENTE</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Análisis Predictivo -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Análisis Predictivo</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-2">
+                                <div class="form-check">
+                                    <input type="checkbox" name="analisis_particulas" class="form-check-input" id="check_particulas">
+                                    <label class="form-check-label" for="check_particulas">Control de partículas magnéticas</label>
+                                </div>
+                            </div>
+                            <div class="col-md-10">
+                                <textarea name="analisis_observaciones" class="form-control" rows="2" placeholder="Observaciones del análisis..."></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Realizado por:</label>
+                                <input type="text" name="analisis_realizado_por" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Firma:</label>
+                                <input type="text" name="analisis_firma" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Código de informe:</label>
+                                <input type="text" name="analisis_codigo_informe" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recambio de partes y piezas -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Recambio de partes y piezas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" id="tablaRepuestos">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Descripción</th>
+                                        <th>Conjunto</th>
+                                        <th>Cant. Total</th>
+                                        <th>Cant. Reemplazar</th>
+                                        <th>Reemplazo</th>
+                                        <th>Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in composicion %}
+                                    <tr class="{% if item.nivel_jerarquia == 2 %}table-info fw-bold{% endif %}">
+                                        <td>{{ item.item_hijo }}</td>
+                                        <td>{{ item.descripcion_hijo }}</td>
+                                        <td>{{ item.conjunto_principal }}</td>
+                                        <td class="text-center">{{ item.cantidad_total_por_balancin }}</td>
+                                        <td>
+                                            <input type="number" 
+                                                   name="cantidad_{{ item.item_hijo }}" 
+                                                   class="form-control form-control-sm cantidad-input" 
+                                                   min="0" 
+                                                   max="{{ item.cantidad_total_por_balancin }}"
+                                                   value="0"
+                                                   data-item="{{ item.item_hijo }}"
+                                                   data-max="{{ item.cantidad_total_por_balancin }}">
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="checkbox" 
+                                                   name="reemplazo_{{ item.item_hijo }}" 
+                                                   class="form-check-input reemplazo-checkbox"
+                                                   data-item="{{ item.item_hijo }}">
+                                        </td>
+                                        <td>
+                                            <input type="text" 
+                                                   name="obs_{{ item.item_hijo }}" 
+                                                   class="form-control form-control-sm">
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center">No hay repuestos definidos para este tipo de balancín</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Firmas -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Realizado por</div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <label>Nombre:</label>
+                                    <select name="realizado_usuario" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        {% for usuario in usuarios %}
+                                            <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Firma:</label>
+                                    <input type="text" name="realizado_firma" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Aprobado por</div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <label>Nombre:</label>
+                                    <select name="aprobado_usuario" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        {% for usuario in usuarios %}
+                                            <option value="{{ usuario.id }}">{{ usuario.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label>Firma:</label>
+                                    <input type="text" name="aprobado_firma" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Observaciones generales -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label class="form-label">Observaciones generales:</label>
+                        <textarea name="observaciones_generales" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Código de formulario (opcional) -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Código de formulario:</label>
+                        <input type="text" name="codigo_formulario" class="form-control" placeholder="Ej: TRM-FCRB-4T-501C-001">
+                        <small class="text-muted">Si se deja vacío, se generará automáticamente</small>
+                    </div>
+                </div>
+                
+                <!-- Botones -->
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-primary">Guardar Formulario</button>
+                        <a href="{% url 'detalle_balancin' balancin.codigo %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Filtrar torres por línea seleccionada
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtro para posición inicial
+    const lineaInicial = document.getElementById('id_linea_inicial');
+    const torreInicial = document.getElementById('id_torre_inicial');
+    
+    function filtrarTorresInicial() {
+        const lineaId = lineaInicial.value;
+        Array.from(torreInicial.options).forEach(opt => {
+            if (opt.value === '') return;
+            if (opt.dataset.linea === lineaId || lineaId === '') {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+    }
+    
+    lineaInicial.addEventListener('change', filtrarTorresInicial);
+    filtrarTorresInicial();
+    
+    // Filtro para posición final
+    const lineaFinal = document.getElementById('id_linea_final');
+    const torreFinal = document.getElementById('id_torre_final');
+    
+    function filtrarTorresFinal() {
+        const lineaId = lineaFinal.value;
+        Array.from(torreFinal.options).forEach(opt => {
+            if (opt.value === '') return;
+            if (opt.dataset.linea === lineaId || lineaId === '') {
+                opt.style.display = '';
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+    }
+    
+    lineaFinal.addEventListener('change', filtrarTorresFinal);
+    filtrarTorresFinal();
+    
+    // Sincronizar checkbox con cantidad
+    document.querySelectorAll('.reemplazo-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const item = this.dataset.item;
+            const cantidadInput = document.querySelector(`input[name="cantidad_${item}"]`);
+            if (this.checked && cantidadInput.value == 0) {
+                cantidadInput.value = cantidadInput.max;
+            } else if (!this.checked) {
+                cantidadInput.value = 0;
+            }
+        });
+    });
+    
+    document.querySelectorAll('.cantidad-input').forEach(input => {
+        input.addEventListener('input', function() {
+            const item = this.dataset.item;
+            const checkbox = document.querySelector(`input[name="reemplazo_${item}"]`);
+            checkbox.checked = this.value > 0;
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

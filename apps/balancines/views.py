@@ -4,20 +4,24 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Sum, Count, Avg
 from django.utils import timezone
-from .forms import (
-    RegistroForm, BalancinIndividualForm, CambiarEstadoForm, 
-    TipoBalancinForm, SeleccionarTorreForm, RegistrarOHForm
-)
-from .models import (
-    TipoBalancin, BalancinIndividual, HistorialBalancin, BalancinOH,
-    RepuestoBalancin, RepuestoAdicional, HistorialRepuesto, HistorialAdicional,
-    Usuario, Torre, Linea, Seccion, HistorialOH  # ← IMPORTANTE: Agregar HistorialOH
-)
+from datetime import date
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 import json
 import re
+
+from .forms import (
+    RegistroForm, BalancinIndividualForm, CambiarEstadoForm, 
+    TipoBalancinForm, SeleccionarTorreForm, RegistrarOHForm,
+    NuevoOHForm
+)
+from .models import (
+    TipoBalancin, BalancinIndividual, HistorialBalancin, BalancinOH,
+    RepuestoBalancin, RepuestoAdicional, HistorialRepuesto, HistorialAdicional,
+    Usuario, Torre, Linea, Seccion, HistorialOH, ActivityLog
+)
 
 
 # ========== VISTAS PRINCIPALES ==========
@@ -152,6 +156,9 @@ def lista_tipos_balancin(request):
         'soporte_total': soporte_total,
     }
     return render(request, 'balancines/tipos_balancin.html', context)
+
+
+
 @login_required
 def detalle_tipo_balancin(request, codigo):
     """Detalle de un tipo de balancín con sus balancines individuales en torres."""
@@ -166,7 +173,7 @@ def detalle_tipo_balancin(request, codigo):
         'torre__linea', 
         'torre__seccion'
     ).prefetch_related(
-        'historial_oh_completo'  # CAMBIADO: antes era 'ordenes_horas'
+        'historial_oh_completo'
     ).order_by('torre__linea_id', 'torre__numero_torre')
     
     balancines_asc = [b for b in balancines if b.sentido == 'ASCENDENTE']
@@ -248,11 +255,17 @@ def detalle_balancin(request, codigo):
     historial = balancin.historial.all().order_by('-fecha_cambio')[:10]
     ordenes_horas = balancin.ordenes_horas.all().order_by('-numero_oh')[:5]
     
+    # Obtener formularios de control asociados
+    formularios = FormularioControlOH.objects.filter(
+        balancin=balancin
+    ).order_by('-fecha')[:5]
+    
     context = {
         'title': f'Balancín {codigo}',
         'balancin': balancin,
         'historial': historial,
         'ordenes_horas': ordenes_horas,
+        'formularios': formularios,
         'tipo_codigo': balancin.tipo_balancin_codigo,
     }
     return render(request, 'balancines/detalle_balancin.html', context)
@@ -812,6 +825,7 @@ def dashboard_inventario(request):
     }
     return render(request, 'balancines/dashboard_inventario.html', context)
 
+
 @login_required
 def buscar_inventario(request):
     """Búsqueda mejorada en todo el inventario."""
@@ -872,19 +886,25 @@ def buscar_inventario(request):
         
         # ===== 3. BÚSQUEDA EN TORRES =====
         if not tipo or tipo == 'torres':
-            resultados['torres'] = Torre.objects.filter(
-                Q(numero_torre__icontains=query) |
-                Q(tipo_balancin_ascendente__icontains=query_upper) |
-                Q(tipo_balancin_descendente__icontains=query_upper)
-            ).select_related('linea', 'seccion')[:20]
+            palabras = query.split()
             
-            # Contar balancines por torre
-            for torre in resultados['torres']:
+            filtros = Q()
+            for palabra in palabras:
+                if palabra.isdigit():
+                    filtros |= Q(numero_torre=palabra)
+                else:
+                    filtros |= Q(tipo_balancin_ascendente__icontains=palabra) | \
+                               Q(tipo_balancin_descendente__icontains=palabra)
+            
+            torres_query = Torre.objects.filter(filtros).select_related('linea', 'seccion')
+            
+            for torre in torres_query:
                 torre.total_balancines = BalancinIndividual.objects.filter(torre=torre).count()
                 torre.ascendentes = BalancinIndividual.objects.filter(torre=torre, sentido='ASCENDENTE').count()
                 torre.descendentes = torre.total_balancines - torre.ascendentes
             
-            total_resultados += len(resultados['torres'])
+            resultados['torres'] = torres_query
+            total_resultados += torres_query.count()
         
         # ===== 4. BÚSQUEDA EN REPUESTOS PARA BALANCINES =====
         if not tipo or tipo == 'repuestos':
@@ -1132,6 +1152,8 @@ def exportar_oh_excel(request):
     wb.save(response)
     
     return response
+
+
 @login_required
 def dashboard_oh_nuevo(request):
     """Dashboard con gráficos de estado por torre y listado detallado"""
@@ -1176,7 +1198,6 @@ def dashboard_oh_nuevo(request):
         FROM app_historial_oh
     """
     
-    # Agregar filtro por balancín si viene especificado
     if balancin_filtro:
         query += f" WHERE balancin_codigo = '{balancin_filtro}'"
     
@@ -1207,10 +1228,8 @@ def dashboard_oh_nuevo(request):
         for row in cursor.fetchall():
             item = dict(zip(columns, row))
             
-            # Convertir el JSON string a lista de diccionarios
             todos_oh_str = item['todos_oh']
             if todos_oh_str:
-                # Si es string, convertirlo a lista
                 if isinstance(todos_oh_str, str):
                     todos_oh = json.loads(todos_oh_str)
                 else:
@@ -1218,25 +1237,10 @@ def dashboard_oh_nuevo(request):
             else:
                 todos_oh = []
             
-            # Asignar cada OH a variables individuales (hasta 10)
-            for i, oh in enumerate(todos_oh[:10], 1):
-                item[f'oh{i}_fecha'] = oh.get('fecha', '')
-                item[f'oh{i}_anio'] = oh.get('anio', '')
-                item[f'oh{i}_horas'] = oh.get('horas', '')
-                item[f'oh{i}_backlog'] = oh.get('backlog', '')
-                item[f'oh{i}_dia'] = oh.get('dia', '')
-            
-            # Limpiar variables para OH que no existen
-            for i in range(len(todos_oh) + 1, 11):
-                item[f'oh{i}_fecha'] = None
-                item[f'oh{i}_anio'] = None
-                item[f'oh{i}_horas'] = None
-                item[f'oh{i}_backlog'] = None
-                item[f'oh{i}_dia'] = None
-            
+            item['todos_oh'] = todos_oh
             historial.append(item)
     
-    # ===== APLICAR FILTROS ADICIONALES (en Python) =====
+    # ===== APLICAR FILTROS ADICIONALES =====
     if linea_filtro:
         historial = [item for item in historial if item['linea_nombre'] == linea_filtro]
     if torre_filtro:
@@ -1253,13 +1257,8 @@ def dashboard_oh_nuevo(request):
             estado = 'sin_oh'
             total_sin_oh += 1
         else:
-            # Obtener el último backlog
-            ultimo_backlog = None
-            for i in range(10, 0, -1):
-                backlog_val = item.get(f'oh{i}_backlog')
-                if backlog_val is not None:
-                    ultimo_backlog = backlog_val
-                    break
+            ultimo_oh = item['todos_oh'][-1] if item['todos_oh'] else None
+            ultimo_backlog = ultimo_oh.get('backlog') if ultimo_oh else None
             
             if ultimo_backlog is None:
                 estado = 'sin_oh'
@@ -1276,11 +1275,10 @@ def dashboard_oh_nuevo(request):
         
         item['estado'] = estado
     
-    # ===== APLICAR FILTRO POR ESTADO =====
     if estado_filtro:
         historial = [item for item in historial if item['estado'] == estado_filtro]
     
-    # ===== PARTE 4: DATOS PARA GRÁFICO DE BARRAS POR LÍNEA =====
+    # ===== PARTE 4: DATOS PARA GRÁFICOS =====
     labels_lineas = []
     data_normal = []
     data_alerta = []
@@ -1300,23 +1298,17 @@ def dashboard_oh_nuevo(request):
             data_alerta.append(count_alerta)
             data_critico.append(count_critico)
     
-    # ===== PARTE 5: DATOS PARA GRÁFICO DE BACKLOG POR TORRE =====
     torres_labels = []
     backlog_data = []
     backlog_colors = []
     
-    for item in historial[:20]:
+    for item in historial:
         sentido_short = "ASC" if item['sentido'] == 'ASCENDENTE' else "DES"
         etiqueta = f"{item['linea_nombre']} T{item['torre_numero']} {sentido_short}"
         torres_labels.append(etiqueta)
         
-        # Obtener el último backlog
-        ultimo_backlog = None
-        for i in range(10, 0, -1):
-            backlog_val = item.get(f'oh{i}_backlog')
-            if backlog_val is not None:
-                ultimo_backlog = backlog_val
-                break
+        ultimo_oh = item['todos_oh'][-1] if item['todos_oh'] else None
+        ultimo_backlog = ultimo_oh.get('backlog') if ultimo_oh else None
         
         if ultimo_backlog is None:
             backlog_data.append(0)
@@ -1330,12 +1322,12 @@ def dashboard_oh_nuevo(request):
             else:
                 backlog_colors.append('#28a745')
     
-    # ===== PARTE 6: TOTALES GENERALES =====
     total_balancines = len(historial)
-    total_oh = HistorialOH.objects.count()
-    total_oh1 = HistorialOH.objects.filter(numero_oh=1).count()
-    total_oh2 = HistorialOH.objects.filter(numero_oh=2).count()
-    total_oh3 = HistorialOH.objects.filter(numero_oh=3).count()
+    total_oh = sum(item['total_ohs'] for item in historial)
+    
+    total_oh1 = sum(1 for item in historial for oh in item['todos_oh'] if oh['numero'] == 1)
+    total_oh2 = sum(1 for item in historial for oh in item['todos_oh'] if oh['numero'] == 2)
+    total_oh3 = sum(1 for item in historial for oh in item['todos_oh'] if oh['numero'] == 3)
     
     balancines_asc = sum(1 for item in historial if item['sentido'] == 'ASCENDENTE')
     balancines_desc = total_balancines - balancines_asc
@@ -1345,7 +1337,6 @@ def dashboard_oh_nuevo(request):
     porcentaje_alerta = (total_alerta / total_con_oh * 100) if total_con_oh > 0 else 0
     porcentaje_critico = (total_critico / total_con_oh * 100) if total_con_oh > 0 else 0
     
-    # ===== PARTE 7: CONTEXT =====
     context = {
         'lineas': lineas,
         'tipos': tipos,
@@ -1379,11 +1370,7 @@ def dashboard_oh_nuevo(request):
     
     return render(request, 'balancines/dashboard_oh_nuevo.html', context)
 
-# apps/balancines/views.py - Agrega esta función
 
-from .forms import NuevoOHForm
-from .models import HistorialOH, Linea, TipoBalancin
-from django.utils import timezone
 @login_required
 def registrar_oh_balancin(request, codigo):
     """Registrar una nueva orden de horas para un balancín específico"""
@@ -1398,24 +1385,19 @@ def registrar_oh_balancin(request, codigo):
             horas_operacion = form.cleaned_data['horas_operacion']
             observaciones = form.cleaned_data['observaciones']
             
-            # Verificar que no exista ya ese número de OH
             if HistorialOH.objects.filter(balancin=balancin, numero_oh=numero_oh).exists():
                 messages.error(request, f'❌ Ya existe la OH #{numero_oh} para este balancín.')
             else:
-                # Obtener datos de la torre y línea
                 torre = balancin.torre
                 linea_nombre = torre.linea.nombre if torre and torre.linea else 'N/A'
                 
-                # Determinar tipo de balancín según sentido
                 if balancin.sentido == 'ASCENDENTE':
                     tipo = torre.tipo_balancin_ascendente if torre else 'Desconocido'
                 else:
                     tipo = torre.tipo_balancin_descendente if torre else 'Desconocido'
                 
-                # Calcular backlog
                 backlog = balancin.rango_horas_cambio_oh - horas_operacion
                 
-                # Crear el nuevo registro OH
                 nuevo_oh = HistorialOH.objects.create(
                     balancin=balancin,
                     linea_nombre=linea_nombre,
@@ -1423,8 +1405,8 @@ def registrar_oh_balancin(request, codigo):
                     sentido=balancin.sentido,
                     tipo_balancin=tipo,
                     rango_oh_horas=balancin.rango_horas_cambio_oh,
-                    inicio_oc='2014-05-01',  # Valor por defecto
-                    horas_promedio_dia=16,    # Valor por defecto
+                    inicio_oc='2014-05-01',
+                    horas_promedio_dia=16,
                     factor_correccion=1.00,
                     numero_oh=numero_oh,
                     fecha_oh=fecha_oh,
@@ -1441,7 +1423,6 @@ def registrar_oh_balancin(request, codigo):
         else:
             messages.error(request, '❌ Por favor corrige los errores en el formulario.')
     else:
-        # GET - Mostrar formulario con datos pre-cargados
         ultimo_oh = HistorialOH.objects.filter(balancin=balancin).order_by('-numero_oh').first()
         siguiente_oh = (ultimo_oh.numero_oh + 1) if ultimo_oh else 1
         
@@ -1457,3 +1438,156 @@ def registrar_oh_balancin(request, codigo):
     }
     
     return render(request, 'balancines/registrar_oh_balancin.html', context)
+
+from django.shortcuts import render, get_object_or_404
+from .models import BalancinIndividual, HistorialOH, Linea, Usuario
+from .models import ConfiguracionRepuestosPorTipo, FormularioReacondicionamiento, ItemFormularioReacondicionamiento
+
+
+def crear_formulario_control(request, codigo):
+    # Obtener el balancín
+    balancin = get_object_or_404(BalancinIndividual, codigo=codigo)
+    
+    # Obtener el último OH
+    ultimo_oh = HistorialOH.objects.filter(balancin=balancin).order_by('-numero_oh').first()
+    
+    # ===== PROCESAR POST (GUARDAR) =====
+    if request.method == 'POST':
+        # ... (tu código POST existente) ...
+        pass
+    
+    # ===== CÓDIGO PARA GET (mostrar formulario) =====
+    lineas = Linea.objects.all().order_by('nombre')
+    usuarios_tecnicos = Usuario.objects.filter(rol__in=['tecnico', 'supervisor'])
+    usuarios_supervisores = Usuario.objects.filter(rol__in=['supervisor', 'jefe'])
+    
+    # Datos del balancín
+    torre = balancin.torre
+    linea_actual = torre.linea.nombre if torre and torre.linea else 'N/A'
+    torre_actual = torre.numero_torre if torre else 'N/A'
+    horas_actuales = ultimo_oh.horas_operacion if ultimo_oh else 0
+    
+    # Obtener repuestos configurados
+    tipo_codigo = balancin.tipo_balancin_codigo
+    config_repuestos = ConfiguracionRepuestosPorTipo.objects.filter(
+        tipo_balancin__codigo=tipo_codigo
+    ).select_related('repuesto').order_by('grupo', 'orden')
+    
+    # ===== NUEVA ESTRUCTURA: Agrupar por grupo y detectar conjuntos =====
+    from collections import OrderedDict
+    
+    # Palabras clave para detectar conjuntos
+    CONJUNTOS_KEYWORDS = ['POLEA', 'SEGMENTO', 'CONJ', 'RB-', 'KIT', 'SET']
+    
+    repuestos_agrupados = OrderedDict()
+    
+    for config in config_repuestos:
+        grupo = config.grupo
+        if grupo not in repuestos_agrupados:
+            repuestos_agrupados[grupo] = []
+        
+        # Detectar si es un conjunto por palabras clave en la descripción
+        descripcion_upper = config.descripcion.upper()
+        es_conjunto = any(keyword in descripcion_upper for keyword in CONJUNTOS_KEYWORDS)
+        
+        # Los conjuntos no tienen cantidad (se muestra vacío)
+        cantidad_mostrar = '' if es_conjunto else config.cantidad_por_balancin
+        
+        repuestos_agrupados[grupo].append({
+            'id': config.id,
+            'repuesto_id': config.repuesto.item if config.repuesto else '',
+            'id_original': config.id_original,
+            'descripcion': config.descripcion,
+            'cantidad': cantidad_mostrar,
+            'cantidad_total': config.cantidad_total,
+            'stock_actual': config.repuesto.cantidad if config.repuesto else 0,
+            'es_conjunto': es_conjunto,
+        })
+    
+    context = {
+        'balancin': balancin,
+        'tipo_balancin': tipo_codigo,
+        'linea_actual': linea_actual,
+        'torre_actual': torre_actual,
+        'sentido': balancin.sentido,
+        'horas_actuales': horas_actuales,
+        'ultimo_oh': ultimo_oh,
+        'lineas': lineas,
+        'usuarios_tecnicos': usuarios_tecnicos,
+        'usuarios_supervisores': usuarios_supervisores,
+        'repuestos_agrupados': repuestos_agrupados,
+        'total_repuestos': config_repuestos.count(),
+    }
+    
+    return render(request, 'balancines/crear_formulario_control.html', context)
+
+def generar_codigo_formulario(tipo):
+    """
+    Genera un código de formulario automático
+    Ej: TRM-FCRB-16N/4TR-420C-001
+    """
+    from django.db.models import Max
+    
+    # Limpiar el tipo para el código (reemplazar / por -)
+    tipo_limpio = tipo.replace('/', '-')
+    
+    # Buscar el último número
+    ultimo = FormularioReacondicionamiento.objects.filter(
+        codigo_formulario__startswith=f"TRM-FCRB-{tipo_limpio}-"
+    ).aggregate(Max('codigo_formulario'))['codigo_formulario__max']
+    
+    if ultimo:
+        # Extraer el número (ej: 001)
+        try:
+            numero = int(ultimo.split('-')[-1]) + 1
+        except:
+            numero = 1
+    else:
+        numero = 1
+    
+    return f"TRM-FCRB-{tipo_limpio}-{numero:03d}"
+
+@login_required
+def lista_formularios(request):
+    """
+    Lista todos los formularios de reacondicionamiento guardados
+    """
+    formularios = FormularioReacondicionamiento.objects.all().select_related(
+        'balancin', 'historial_oh', 'realizado_por_analisis', 'realizado_por_recambio', 'aprobado_por'
+    ).order_by('-fecha_creacion')
+    
+    # Estadísticas - CORREGIDO: usar Sum directamente
+    total_formularios = formularios.count()
+    total_repuestos_usados = ItemFormularioReacondicionamiento.objects.filter(
+        fue_reemplazado=True
+    ).aggregate(total=Sum('cantidad_usada'))['total'] or 0
+    
+    context = {
+        'formularios': formularios,
+        'total_formularios': total_formularios,
+        'total_repuestos_usados': total_repuestos_usados,
+    }
+    return render(request, 'balancines/lista_formularios.html', context)
+
+@login_required
+def detalle_formulario(request, codigo):
+    """
+    Detalle de un formulario específico
+    """
+    formulario = get_object_or_404(
+        FormularioReacondicionamiento.objects.select_related(
+            'balancin', 'historial_oh', 'realizado_por_analisis', 
+            'realizado_por_recambio', 'aprobado_por', 'usuario_creacion'
+        ).prefetch_related('items__repuesto'),
+        codigo_formulario=codigo
+    )
+    
+    items_usados = formulario.items.filter(fue_reemplazado=True)
+    total_items = formulario.items.count()
+    
+    context = {
+        'formulario': formulario,
+        'items_usados': items_usados,
+        'total_items': total_items,
+    }
+    return render(request, 'balancines/detalle_formulario.html', context)

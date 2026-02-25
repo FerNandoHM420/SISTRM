@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Formulario de Control - {{ balancin.codigo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ESTILO EXACTAMENTE COMO EL EXCEL */
+    body {
+        font-family: 'Calibri', 'Arial', sans-serif;
+        background: white;
+        margin: 0;
+        padding: 20px;
+    }
+    
+    .excel-container {
+        max-width: 1300px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border: 1px solid #999;
+    }
+    
+    /* Encabezados */
+    .excel-header {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: bold;
+        font-size: 14pt;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+    }
+    
+    .excel-subheader {
+        font-weight: bold;
+        font-size: 12pt;
+        margin: 15px 0 10px 0;
+        background-color: #e0e0e0;
+        padding: 5px;
+        border: 1px solid #999;
+    }
+    
+    /* Tablas estilo Excel */
+    .excel-table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 15px;
+        border: 1px solid #000;
+        font-size: 10pt;
+    }
+    
+    .excel-table th {
+        background-color: #c0c0c0;
+        border: 1px solid #000;
+        padding: 6px 4px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 10pt;
+    }
+    
+    .excel-table td {
+        border: 1px solid #999;
+        padding: 4px;
+        vertical-align: middle;
+    }
+    
+    /* Títulos de grupo */
+    .grupo-titulo {
+        background-color: #808080;
+        color: white;
+        padding: 6px;
+        margin: 20px 0 5px 0;
+        font-weight: bold;
+        font-size: 12pt;
+        border: 1px solid #000;
+    }
+    
+    /* Filas de conjunto */
+    .conjunto-row {
+        background-color: #e6f0ff;
+        font-weight: bold;
+    }
+    
+    .conjunto-row td {
+        border: 1px solid #000;
+    }
+    
+    /* Componentes con sangría */
+    .componente-row td:first-child {
+        padding-left: 20px;
+    }
+    
+    /* Inputs como en Excel */
+    .excel-input {
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #999;
+        background: transparent;
+        padding: 2px;
+        font-family: 'Calibri', 'Arial', sans-serif;
+        font-size: 10pt;
+    }
+    
+    .excel-input:focus {
+        outline: none;
+        border-bottom: 2px solid #000;
+    }
+    
+    .excel-select {
+        width: 100%;
+        border: 1px solid #999;
+        padding: 2px;
+        font-family: 'Calibri', 'Arial', sans-serif;
+        font-size: 10pt;
+        background: white;
+    }
+    
+    /* Checkbox estilo Excel */
+    .excel-checkbox {
+        width: 18px;
+        height: 18px;
+        margin: 0 auto;
+        display: block;
+        cursor: pointer;
+    }
+    
+    /* Columnas SI/NO */
+    .si-no {
+        font-size: 8pt;
+        text-align: center;
+        color: #333;
+    }
+    
+    /* Sección de firmas */
+    .firmas-section {
+        margin-top: 30px;
+        border-top: 2px solid #000;
+        padding-top: 20px;
+    }
+    
+    /* Botones solo para web (no se imprimen) */
+    .no-print {
+        margin-top: 30px;
+        text-align: center;
+    }
+    
+    @media print {
+        .no-print {
+            display: none;
+        }
+        body {
+            padding: 0;
+        }
+        .excel-container {
+            border: none;
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="excel-container">
+    <!-- ===== ENCABEZADO PRINCIPAL ===== -->
+    <div class="excel-header">
+        <div>EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"</div>
+        <div>TALLER DE REPARACIONES MAYORES</div>
+        <div style="font-size: 16pt; margin-top: 10px;">FORMULARIO DE CONTROL DE REACONDICIONAMIENTO DE BALANCINES</div>
+        <div style="font-size: 8pt; margin-top: 5px;">{{ tipo_balancin }} - {{ balancin.codigo }}</div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- ===== DATOS GENERALES ===== -->
+        <table class="excel-table">
+            <tr>
+                <td style="width: 12%; background-color: #f0f0f0;"><strong>Tipo:</strong></td>
+                <td style="width: 23%;">{{ tipo_balancin }}</td>
+                <td style="width: 15%; background-color: #f0f0f0;"><strong>Posición Inicial:</strong></td>
+                <td style="width: 25%;">{{ linea_actual }} - Torre {{ torre_actual }}</td>
+                <td style="width: 10%; background-color: #f0f0f0;"><strong>Fecha:</strong></td>
+                <td style="width: 15%;">{% now "d/m/Y" %}</td>
+            </tr>
+            <tr>
+                <td style="background-color: #f0f0f0;"><strong>Código:</strong></td>
+                <td>{{ balancin.codigo }}</td>
+                <td style="background-color: #f0f0f0;"><strong>Línea (Pos. Final):</strong></td>
+                <td>
+                    <select name="linea_final" class="excel-select" id="linea_final">
+                        <option value="">Seleccione</option>
+                        {% for linea in lineas %}
+                            <option value="{{ linea.nombre }}">{{ linea.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td style="background-color: #f0f0f0;"><strong>Torre:</strong></td>
+                <td>
+                    <input type="text" name="torre_final" id="torre_final" class="excel-input" placeholder="N° torre" disabled>
+                </td>
+            </tr>
+            <tr>
+                <td style="background-color: #f0f0f0;"><strong>Horas funcionamiento:</strong></td>
+                <td colspan="5">{{ horas_actuales }} h</td>
+            </tr>
+        </table>
+
+        <!-- ===== ANÁLISIS PREDICTIVO ===== -->
+        <div class="excel-subheader">ANÁLISIS PREDICTIVO</div>
+        <table class="excel-table">
+            <tr>
+                <td style="width: 60%;">
+                    <input type="checkbox" name="control_particulas" id="cp" class="excel-checkbox" style="display: inline-block; width: auto;">
+                    <label for="cp"> Control de partículas magnéticas en uniones soldadas</label>
+                </td>
+                <td style="width: 15%; background-color: #f0f0f0;"><strong>Realizado por:</strong></td>
+                <td style="width: 25%;">
+                    <select name="realizado_analisis" class="excel-select">
+                        <option value="">Seleccione</option>
+                        {% for user in usuarios_tecnicos %}
+                            <option value="{{ user.id }}">{{ user.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="background-color: #f0f0f0;"><strong>Código de informe:</strong></td>
+                <td>
+                    <input type="text" name="codigo_informe" class="excel-input" placeholder="INF-XXXX">
+                </td>
+            </tr>
+        </table>
+
+        <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
+        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">RECAMBIO DE PARTES Y PIEZAS</div>
+        
+        {% for grupo, items in repuestos_agrupados.items %}
+            <!-- Título del grupo -->
+            <div class="grupo-titulo">{{ grupo }}</div>
+            
+            <!-- Tabla de repuestos -->
+            <table class="excel-table">
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">ID</th>
+                        <th style="width: 40%;">DESCRIPCIÓN</th>
+                        <th style="width: 7%;">CANT.</th>
+                        <th style="width: 8%;">CANT. TOTAL</th>
+                        <th style="width: 8%;">RECAMBIO</th>
+                        <th style="width: 5%;">SI</th>
+                        <th style="width: 5%;">NO</th>
+                        <th style="width: 17%;">OBSERVACIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr class="{% if item.es_conjunto %}conjunto-row{% else %}componente-row{% endif %}">
+                            <!-- ID -->
+                            <td style="text-align: center;">
+                                <code>{{ item.id_original }}</code>
+                            </td>
+                            
+                            <!-- DESCRIPCIÓN -->
+                            <td>
+                                {% if item.es_conjunto %}
+                                    <strong>{{ item.descripcion }}</strong>
+                                {% else %}
+                                    &nbsp;&nbsp;&nbsp;&nbsp;{{ item.descripcion }}
+                                {% endif %}
+                            </td>
+                            
+                            <!-- CANTIDAD -->
+                            <td style="text-align: center;">
+                                {{ item.cantidad }}
+                            </td>
+                            
+                            <!-- CANTIDAD TOTAL -->
+                            <td style="text-align: center;">
+                                {{ item.cantidad_total }}
+                            </td>
+                            
+                            <!-- RECAMBIO (checkbox) -->
+                            <td style="text-align: center;">
+                                {% if not item.es_conjunto %}
+                                    <input type="checkbox" 
+                                           name="reemplazado_{{ item.id }}" 
+                                           class="excel-checkbox reemplazado-check"
+                                           data-id="{{ item.id }}">
+                                {% endif %}
+                            </td>
+                            
+                            <!-- SI (decorativo) -->
+                            <td class="si-no">
+                                {% if not item.es_conjunto %}SI{% endif %}
+                            </td>
+                            
+                            <!-- NO (decorativo) -->
+                            <td class="si-no">
+                                {% if not item.es_conjunto %}NO{% endif %}
+                            </td>
+                            
+                            <!-- OBSERVACIONES -->
+                            <td>
+                                {% if not item.es_conjunto %}
+                                    <input type="text" 
+                                           name="obs_{{ item.id }}" 
+                                           class="excel-input"
+                                           placeholder="">
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+
+        <!-- ===== VERIFICACIONES ===== -->
+        <div style="margin-top: 20px; border: 1px solid #000; padding: 10px;">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="width: 33%;">
+                        <input type="checkbox" name="torque_verificado" id="torque" class="excel-checkbox" style="display: inline-block; width: auto;">
+                        <label for="torque"><strong>Torque, marcado de pernos y tuercas.</strong></label>
+                    </td>
+                    <td style="width: 33%;">
+                        <input type="checkbox" name="limpieza_verificada" id="limpieza" class="excel-checkbox" style="display: inline-block; width: auto;">
+                        <label for="limpieza"><strong>Limpieza de uniones</strong></label>
+                    </td>
+                    <td style="width: 34%;">
+                        <input type="checkbox" name="continuidad_verificada" id="continuidad" class="excel-checkbox" style="display: inline-block; width: auto;">
+                        <label for="continuidad"><strong>Verificación de continuidad</strong></label>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ===== FIRMAS Y APROBACIÓN ===== -->
+        <div class="firmas-section">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="width: 35%;">
+                        <strong>Realizado por (Recambio):</strong><br>
+                        <select name="realizado_recambio" class="excel-select" style="width: 95%; margin-top: 5px;">
+                            <option value="">Seleccione</option>
+                            {% for user in usuarios_tecnicos %}
+                                <option value="{{ user.id }}">{{ user.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td style="width: 35%;">
+                        <strong>Aprobado por:</strong><br>
+                        <select name="aprobado" class="excel-select" style="width: 95%; margin-top: 5px;">
+                            <option value="">Seleccione</option>
+                            {% for user in usuarios_supervisores %}
+                                <option value="{{ user.id }}">{{ user.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td style="width: 15%;">
+                        <strong>Firma:</strong><br>
+                        <span style="font-size: 9pt; color: #666;">_________________</span>
+                    </td>
+                    <td style="width: 15%;">
+                        <strong>Posición Final:</strong><br>
+                        <span id="posicion_final_display" style="font-size: 10pt;"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ===== BOTONES (solo web, no se imprimen) ===== -->
+        <div class="no-print">
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-save"></i> GUARDAR FORMULARIO
+            </button>
+            <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-times"></i> CANCELAR
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ===== Lógica para posición final =====
+    const lineaSelect = document.getElementById('linea_final');
+    const torreInput = document.getElementById('torre_final');
+    const posicionDisplay = document.getElementById('posicion_final_display');
+    
+    function actualizarPosicionFinal() {
+        if (lineaSelect.value && torreInput.value) {
+            posicionDisplay.textContent = lineaSelect.value + ' - Torre ' + torreInput.value;
+        } else {
+            posicionDisplay.textContent = '';
+        }
+    }
+    
+    lineaSelect.addEventListener('change', function() {
+        torreInput.disabled = !this.value;
+        if (this.value) {
+            torreInput.focus();
+        } else {
+            torreInput.value = '';
+        }
+        actualizarPosicionFinal();
+    });
+    
+    torreInput.addEventListener('input', actualizarPosicionFinal);
+    
+    // ===== Lógica para checkboxes de repuestos =====
+    document.querySelectorAll('.reemplazado-check').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Aquí puedes agregar lógica adicional si es necesaria
+            console.log('Checkbox cambiado:', this.checked);
+        });
+    });
+});
+</script>
+{% endblock %}

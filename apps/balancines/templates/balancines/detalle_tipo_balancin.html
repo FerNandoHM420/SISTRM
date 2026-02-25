@@ -21,6 +21,8 @@
                 - Balancines instalados en torres
             </p>
         </div>
+
+        
         <div>
             <a href="{% url 'lista_tipos_balancin' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
@@ -56,10 +58,10 @@
                             </td>
                         </tr>
                         <tr>
-                            <th>Stock en taller:</th>
+                            <th>Cantidad:</th>
                             <td>
                                 <span class="badge {% if tipo.cantidad_total > 0 %}bg-success{% else %}bg-danger{% endif %} fs-6">
-                                    {{ tipo.cantidad_total }} unidades
+                                    {{ tipo.cantidad_total }} 
                                 </span>
                             </td>
                         </tr>
@@ -132,44 +134,47 @@
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle">
                     <thead class="table-light">
-                        <tr>
+                        <tr class="text-center">
                             <th>Código Balancín</th>
                             <th>Línea</th>
                             <th>Torre</th>
                             <th>Sección</th>
                             <th>Sentido</th>
-                            <th>Rango OH</th>
+                            <th>Cambio de OH de 
+                                balancines</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for b in balancines %}
                         <tr>
-                            <td>
+                            <td class="text-center">
                                 <strong>{{ b.codigo }}</strong>
                             </td>
-                            <td>
-                                <span class="badge bg-secondary">Línea {{ b.torre.linea.nombre }}</span>
-                            </td>
-                            <td>
+                         <td class="text-center align-middle">
+    <span class="badge bg-{{ b.torre.linea.color }} px-3 py-2">
+        Línea {{ b.torre.linea.nombre }}
+    </span>
+</td>
+                            <td class="text-center"> 
                                 <span class="badge bg-dark">Torre {{ b.torre.numero_torre }}</span>
                             </td>
                             <td>
                                 <small>{{ b.torre.seccion.nombre }}</small>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 {% if b.sentido == 'ASCENDENTE' %}
                                 <span class="badge bg-success">
                                     <i class="fas fa-arrow-up"></i> Ascendente
                                 </span>
                                 {% else %}
-                                <span class="badge bg-danger">
+                                <span class="badge bg-danger" >
                                     <i class="fas fa-arrow-down"></i> Descendente
                                 </span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <span class="badge bg-info">
+                            <td class="text-center">
+                                <span class="badge bg-info" >
                                     {{ b.rango_horas_cambio_oh }} hrs
                                 </span>
                             </td>
@@ -232,7 +237,7 @@
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
                                     <thead>
-                                        <tr>
+                                        <tr class="text-center">
                                             <th>Línea</th>
                                             <th>Torre</th>
                                             <th>Sección</th>
@@ -240,10 +245,12 @@
                                             <th>Acción</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="text-center">
                                         {% for torre in torres_ascendentes %}
                                         <tr>
-                                            <td>Línea {{ torre.linea.nombre }}</td>
+                                            <td>  <span class="badge bg-{{ torre.linea.color }} px-3 py-2">
+        Línea {{ torre.linea.nombre }}
+    </span></td>
                                             <td><strong>{{ torre.numero_torre }}</strong></td>
                                             <td>{{ torre.seccion.nombre }}</td>
                                             <td>
@@ -284,7 +291,7 @@
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
                                     <thead>
-                                        <tr>
+                                        <tr class="text-center">
                                             <th>Línea</th>
                                             <th>Torre</th>
                                             <th>Sección</th>
@@ -292,10 +299,12 @@
                                             <th>Acción</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody class="text-center">
                                         {% for torre in torres_descendentes %}
                                         <tr>
-                                            <td>Línea {{ torre.linea.nombre }}</td>
+                                            <td>  <span class="badge bg-{{ torre.linea.color }} px-3 py-2">
+        Línea {{ torre.linea.nombre }}
+    </span></td>
                                             <td><strong>{{ torre.numero_torre }}</strong></td>
                                             <td>{{ torre.seccion.nombre }}</td>
                                             <td>
@@ -358,5 +367,24 @@
     .table td {
         vertical-align: middle;
     }
+
+    .bg-purple {
+    background-color: #6f42c1 !important;
+    color: white;
+}
+
+.bg-brown {
+    background-color: #8B4513 !important;
+    color: white;
+}
+.bg-orange {
+    background-color: #fd7e14 !important;
+    color: white;
+}
+.bg-white-custom {
+    background-color: #f8f9fa !important;
+    color: #333 !important;
+    border: 1px solid #dee2e6;
+}
 </style>
 {% endblock %}
