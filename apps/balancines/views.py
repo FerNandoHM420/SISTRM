@@ -1443,7 +1443,150 @@ from django.shortcuts import render, get_object_or_404
 from .models import BalancinIndividual, HistorialOH, Linea, Usuario
 from .models import ConfiguracionRepuestosPorTipo, FormularioReacondicionamiento, ItemFormularioReacondicionamiento
 
+def obtener_config_torque(tipo):
+    configs = {
+        # ===== SERIE T (501C) =====
+        '4T-501C': {
+            'poleas': 4,
+            'segmentos_2p': 2,
+            'segmentos_4p': 1,
+            'seg_SE' : 2,
+            'consola': 0,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2],
+                'cs': [1]
+            }
+        },
+        '6T-501C': {
+            'poleas': 6,
+            'segmentos_2p': 3,
+            'segmentos_4p': 1,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6],
+                's4p': [1,2],
+                'cs': [1]
+            }
+        },
+        '8T-501C': {
+            'poleas': 8,
+            'segmentos_2p': 4,
+            'segmentos_4p': 1,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        '10T-501C': {
+            'poleas': 10,
+            'segmentos_2p': 3,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5],
+                's4p': [1,2],
+                'cs': [1]
+            }
+        },
+        '12T-501C': {
+            'poleas': 12,
+            'segmentos_2p': 3,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6],
+                's4p': [1,2],
+                'cs': [1]
+            }
+        },
+        
+        # ===== SERIE N/4TR (420C) =====
+        '8N/4TR-420C': {
+            'poleas': 16,
+            'segmentos_2p': 4,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        '10N/4TR-420C': {
+            'poleas': 16,
+            'segmentos_2p': 4,
+            'segmentos_4p': 8,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        '12N/4TR-420C': {
+            'poleas': 16,
+            'segmentos_2p': 4,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        '14N/4TR-420C': {
+            'poleas': 16,
+            'segmentos_2p': 4,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        '16N/4TR-420C': {
+            'poleas': 16,
+            'segmentos_2p': 4,
+            'segmentos_4p': 4,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        
+        # ===== HÍBRIDOS =====
+        '4T/4N-420C': {
+            'poleas': 8,
+            'segmentos_2p': 4,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+        '8T/8N-420C': {
+            'poleas': 8,
+            'segmentos_2p': 4,
+            'segmentos_4p': 2,
+            'consola': 2,
+            'lubricacion': {
+                's2p': [1,2,3,4,5,6,7,8],
+                's4p': [1,2,3,4],
+                'cs': [1]
+            }
+        },
+    }
+    return configs.get(tipo, configs['4T-501C'])
 
+@login_required
 def crear_formulario_control(request, codigo):
     # Obtener el balancín
     balancin = get_object_or_404(BalancinIndividual, codigo=codigo)
@@ -1453,13 +1596,90 @@ def crear_formulario_control(request, codigo):
     
     # ===== PROCESAR POST (GUARDAR) =====
     if request.method == 'POST':
-        # ... (tu código POST existente) ...
-        pass
+        # Generar código de formulario
+        tipo_codigo = balancin.tipo_balancin_codigo
+        codigo_formulario = generar_codigo_formulario(tipo_codigo)
+        
+        # Crear el formulario
+        formulario = FormularioReacondicionamiento.objects.create(
+            codigo_formulario=codigo_formulario,
+            tipo=tipo_codigo,
+            balancin=balancin,
+            historial_oh=ultimo_oh,
+            fecha=request.POST.get('fecha', timezone.now().date()),
+            horas_funcionamiento=request.POST.get('horas_funcionamiento', 0),
+            linea_inicial=request.POST.get('linea_inicial', ''),
+            torre_inicial=request.POST.get('torre_inicial', ''),
+            linea_final=request.POST.get('linea_final', ''),
+            torre_final=request.POST.get('torre_final', ''),
+            control_particulas=request.POST.get('control_particulas') == 'on',
+            codigo_informe=request.POST.get('codigo_informe', ''),
+            torque_verificado=request.POST.get('torque_verificado') == 'on',
+            limpieza_verificada=request.POST.get('limpieza_verificada') == 'on',
+            continuidad_verificada=request.POST.get('continuidad_verificada') == 'on',
+            realizado_por_analisis_id=request.POST.get('realizado_analisis'),
+            realizado_por_recambio_id=request.POST.get('realizado_recambio'),
+            aprobado_por_id=request.POST.get('aprobado'),
+            usuario_creacion=request.user if request.user.is_authenticated else None
+        )
+        
+        # Procesar cada repuesto
+        items_procesados = 0
+        for key, value in request.POST.items():
+            if key.startswith('reemplazado_'):
+                item_id = key.replace('reemplazado_', '')
+                reemplazado = value == 'on'
+                
+                if reemplazado:
+                    cantidad_key = f'cantidad_{item_id}'
+                    cantidad = int(request.POST.get(cantidad_key, 0))
+                    
+                    if cantidad > 0:
+                        # Obtener la configuración
+                        config = ConfiguracionRepuestosPorTipo.objects.get(id=item_id)
+                        repuesto = config.repuesto
+                        
+                        # Guardar stock antes
+                        stock_antes = repuesto.cantidad
+                        
+                        # Descontar stock
+                        repuesto.cantidad -= cantidad
+                        repuesto.fecha_ultimo_movimiento = timezone.now()
+                        repuesto.fecha_ultima_salida = timezone.now()
+                        repuesto.save()
+                        
+                        # Registrar en historial
+                        HistorialRepuesto.objects.create(
+                            repuesto=repuesto,
+                            tipo_movimiento='salida',
+                            cantidad=cantidad,
+                            stock_restante=repuesto.cantidad,
+                            observaciones=f"Salida por formulario {codigo_formulario}"
+                        )
+                        
+                        # Crear el item del formulario
+                        ItemFormularioReacondicionamiento.objects.create(
+                            formulario=formulario,
+                            configuracion=config,
+                            repuesto=repuesto,
+                            id_original=config.id_original,
+                            descripcion=config.descripcion,
+                            cantidad_requerida=config.cantidad_por_balancin,
+                            cantidad_usada=cantidad,
+                            fue_reemplazado=True,
+                            stock_antes=stock_antes,
+                            stock_despues=repuesto.cantidad
+                        )
+                        items_procesados += 1
+        
+        messages.success(request, f'✅ Formulario {codigo_formulario} guardado correctamente. {items_procesados} repuestos procesados.')
+        return redirect('dashboard_oh_nuevo')
     
     # ===== CÓDIGO PARA GET (mostrar formulario) =====
     lineas = Linea.objects.all().order_by('nombre')
     usuarios_tecnicos = Usuario.objects.filter(rol__in=['tecnico', 'supervisor'])
     usuarios_supervisores = Usuario.objects.filter(rol__in=['supervisor', 'jefe'])
+   
     
     # Datos del balancín
     torre = balancin.torre
@@ -1473,36 +1693,78 @@ def crear_formulario_control(request, codigo):
         tipo_balancin__codigo=tipo_codigo
     ).select_related('repuesto').order_by('grupo', 'orden')
     
-    # ===== NUEVA ESTRUCTURA: Agrupar por grupo y detectar conjuntos =====
+    # ===== ESTRUCTURA CON CONJUNTOS Y COMPONENTES (CORREGIDA) =====
     from collections import OrderedDict
     
-    # Palabras clave para detectar conjuntos
-    CONJUNTOS_KEYWORDS = ['POLEA', 'SEGMENTO', 'CONJ', 'RB-', 'KIT', 'SET']
+    # Obtener todos los grupos únicos que existen en los datos
+    grupos_existentes = set(config_repuestos.values_list('grupo', flat=True))
     
+    # Definir el orden deseado de los grupos (prioritario)
+    orden_prioritario = ['POLEAS', 'SEGMENTOS', 'SEGMENTOS_2P', 'SEGMENTOS_4P', 'CONJUNTOS', 'OTROS']
+    
+    # Crear lista final de grupos: primero los prioritarios que existen, luego el resto
+    orden_grupos = []
+    for grupo in orden_prioritario:
+        if grupo in grupos_existentes and grupo not in orden_grupos:
+            orden_grupos.append(grupo)
+    
+    # Agregar cualquier otro grupo que no esté en la lista prioritaria
+    for grupo in grupos_existentes:
+        if grupo not in orden_grupos:
+            orden_grupos.append(grupo)
+    
+    # Inicializar el diccionario con todos los grupos
     repuestos_agrupados = OrderedDict()
+    for grupo in orden_grupos:
+        repuestos_agrupados[grupo] = []
     
+    # Procesar cada configuración
     for config in config_repuestos:
         grupo = config.grupo
+        
+        # Asegurar que el grupo existe en el diccionario
         if grupo not in repuestos_agrupados:
             repuestos_agrupados[grupo] = []
         
-        # Detectar si es un conjunto por palabras clave en la descripción
-        descripcion_upper = config.descripcion.upper()
-        es_conjunto = any(keyword in descripcion_upper for keyword in CONJUNTOS_KEYWORDS)
-        
-        # Los conjuntos no tienen cantidad (se muestra vacío)
-        cantidad_mostrar = '' if es_conjunto else config.cantidad_por_balancin
-        
-        repuestos_agrupados[grupo].append({
-            'id': config.id,
-            'repuesto_id': config.repuesto.item if config.repuesto else '',
-            'id_original': config.id_original,
-            'descripcion': config.descripcion,
-            'cantidad': cantidad_mostrar,
-            'cantidad_total': config.cantidad_total,
-            'stock_actual': config.repuesto.cantidad if config.repuesto else 0,
-            'es_conjunto': es_conjunto,
-        })
+        # Si es un conjunto, lo agregamos directamente
+        if config.es_conjunto:
+            repuestos_agrupados[grupo].append({
+                'id': config.id,
+                'id_original': config.id_original,
+                'descripcion': config.descripcion,
+                'es_conjunto': True,
+                'componentes': []
+            })
+        else:
+            # Si es un componente, buscar a qué conjunto pertenece
+            encontrado = False
+            for item in repuestos_agrupados[grupo]:
+                if item['es_conjunto'] and len(item['componentes']) < 4:  # Máximo 4 componentes por conjunto
+                    item['componentes'].append({
+                        'id': config.id,
+                        'id_original': config.id_original,
+                        'descripcion': config.descripcion,
+                        'cantidad': config.cantidad_por_balancin,
+                        'cantidad_total': config.cantidad_total,
+                    })
+                    encontrado = True
+                    break
+            
+            # Si no encontró conjunto, lo agregamos como item suelto
+            if not encontrado:
+                repuestos_agrupados[grupo].append({
+                    'id': config.id,
+                    'id_original': config.id_original,
+                    'descripcion': config.descripcion,
+                    'es_conjunto': False,
+                    'cantidad': config.cantidad_por_balancin,
+                    'cantidad_total': config.cantidad_total,
+                })
+    
+    # Eliminar grupos vacíos
+    repuestos_agrupados = OrderedDict([
+        (grupo, items) for grupo, items in repuestos_agrupados.items() if items
+    ])
     
     context = {
         'balancin': balancin,
@@ -1517,9 +1779,11 @@ def crear_formulario_control(request, codigo):
         'usuarios_supervisores': usuarios_supervisores,
         'repuestos_agrupados': repuestos_agrupados,
         'total_repuestos': config_repuestos.count(),
+        'config': obtener_config_torque(tipo_codigo),
     }
     
     return render(request, 'balancines/crear_formulario_control.html', context)
+
 
 def generar_codigo_formulario(tipo):
     """

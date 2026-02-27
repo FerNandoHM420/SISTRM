@@ -1,11 +1,16 @@
-{% extends 'base.html' %}
+ {% extends 'base.html' %}
 {% load static %}
+{% load matriz_filters %}
 
 {% block title %}Formulario de Control - {{ balancin.codigo }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* ESTILO EXACTAMENTE COMO EL EXCEL */
+    /* ===== ESTILOS BASE ===== */
+    * {
+        box-sizing: border-box;
+    }
+    
     body {
         font-family: 'Calibri', 'Arial', sans-serif;
         background: white;
@@ -21,7 +26,7 @@
         border: 1px solid #999;
     }
     
-    /* Encabezados */
+    /* ===== ENCABEZADOS ===== */
     .excel-header {
         text-align: center;
         margin-bottom: 20px;
@@ -31,129 +36,387 @@
         padding-bottom: 10px;
     }
     
+    .excel-header div:first-child {
+        font-size: 16pt;
+    }
+    
+    .excel-header div:nth-child(2) {
+        font-size: 14pt;
+    }
+    
+    .excel-header div:nth-child(3) {
+        font-size: 18pt;
+        margin: 10px 0;
+    }
+    
     .excel-subheader {
         font-weight: bold;
         font-size: 12pt;
         margin: 15px 0 10px 0;
         background-color: #e0e0e0;
-        padding: 5px;
-        border: 1px solid #999;
+        padding: 8px;
+        border: 1px solid #000000;
     }
     
-    /* Tablas estilo Excel */
+    /* ===== TABLAS ===== */
     .excel-table {
         border-collapse: collapse;
         width: 100%;
         margin-bottom: 15px;
-        border: 1px solid #000;
+        border: 2px solid #000;
         font-size: 10pt;
+        background: white;
     }
     
     .excel-table th {
-        background-color: #c0c0c0;
+        background-color: #bcbcbc;
         border: 1px solid #000;
-        padding: 6px 4px;
+        padding: 8px 4px;
         text-align: center;
         font-weight: bold;
         font-size: 10pt;
+        white-space: nowrap;
     }
     
-    .excel-table td {
-        border: 1px solid #999;
-        padding: 4px;
-        vertical-align: middle;
-    }
-    
-    /* Títulos de grupo */
-    .grupo-titulo {
-        background-color: #808080;
-        color: white;
-        padding: 6px;
-        margin: 20px 0 5px 0;
-        font-weight: bold;
-        font-size: 12pt;
+    .excel-table td,
+    .excel-table th {
         border: 1px solid #000;
     }
     
-    /* Filas de conjunto */
+    .excel-table {
+        table-layout: fixed;
+    }
+    
+    /* ===== GRUPOS ===== */
+    .grupo-titulo {
+        background-color: #808080;
+        color: white;
+        padding: 8px;
+        margin: 25px 0 10px 0;
+        font-weight: bold;
+        font-size: 13pt;
+        border: 1px solid #000;
+    }
+    
+    /* ===== FILA DE CONJUNTO (GRIS) ===== */
     .conjunto-row {
-        background-color: #e6f0ff;
+        background-color: #f0f0f0;
         font-weight: bold;
     }
     
     .conjunto-row td {
-        border: 1px solid #000;
+        background-color: #f0f0f0;
+        border: 1px solid #999;
     }
     
-    /* Componentes con sangría */
-    .componente-row td:first-child {
-        padding-left: 20px;
-    }
-    
-    /* Inputs como en Excel */
+    /* ===== INPUTS ===== */
     .excel-input {
         width: 100%;
-        border: none;
-        border-bottom: 1px solid #999;
+        border: 1px solid #ccc;
         background: transparent;
-        padding: 2px;
+        padding: 2px 4px;
         font-family: 'Calibri', 'Arial', sans-serif;
         font-size: 10pt;
     }
     
     .excel-input:focus {
         outline: none;
-        border-bottom: 2px solid #000;
+        border: 1px solid #000;
     }
     
     .excel-select {
         width: 100%;
         border: 1px solid #999;
-        padding: 2px;
+        padding: 4px;
         font-family: 'Calibri', 'Arial', sans-serif;
         font-size: 10pt;
         background: white;
     }
     
-    /* Checkbox estilo Excel */
     .excel-checkbox {
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
         margin: 0 auto;
         display: block;
         cursor: pointer;
     }
     
-    /* Columnas SI/NO */
-    .si-no {
-        font-size: 8pt;
-        text-align: center;
-        color: #333;
+    .excel-radio {
+        margin: 0;
+        width: auto;
+        transform: scale(1);
     }
     
-    /* Sección de firmas */
+    .excel-table code {
+        font-family: 'Calibri', 'Arial', sans-serif;
+        background: none;
+        padding: 0;
+        color: #000;
+    }
+    
+    /* ===== FIRMAS ===== */
     .firmas-section {
         margin-top: 30px;
         border-top: 2px solid #000;
         padding-top: 20px;
     }
     
-    /* Botones solo para web (no se imprimen) */
+    .firma-line {
+        display: inline-block;
+        width: 150px;
+        border-bottom: 2px solid #000;
+        margin-left: 10px;
+    }
+    
+    /* ===== BOTONES ===== */
     .no-print {
         margin-top: 30px;
         text-align: center;
     }
     
+    .no-print .btn {
+        margin: 0 5px;
+        padding: 10px 25px;
+        font-size: 12pt;
+    }
+    
+    /* ===== ESTILOS DE TORQUE ===== */
+    .torque-box {
+        border: 2px solid #000;
+        padding: 15px;
+        font-size: 10pt;
+        font-family: 'Calibri', 'Arial', sans-serif;
+        margin: 20px 0;
+    }
+    
+    .torque-title {
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-size: 12pt;
+    }
+    
+    .torque-row {
+        display: flex;
+        margin-bottom: 1px;
+        min-height: 28px;
+    }
+    
+    .torque-label {
+        width: 140px;
+        font-weight: bold;
+        font-style: italic;
+        padding-left: 5px;
+        display: flex;
+        align-items: center;
+        border: 1px solid #000;
+        background-color: #f0f0f0;
+    }
+    
+    .torque-cell {
+        width: 60px;
+        border: 1px solid #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #bfbfbf;
+        font-weight: bold;
+    }
+    
+    .torque-subcell {
+        width: 30px;
+        border: 1px solid #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .torque-empty {
+        width: 30px;
+        border: 1px solid #000;
+    }
+    
+    .section-title {
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 11pt;
+    }
+    
+    /* ===== ESTILOS DE LUBRICACIÓN ===== */
+    .lube-header {
+        display: flex;
+        margin-left: 140px;
+        margin-bottom: 1px;
+    }
+    
+    .lube-header-cell {
+        width: 120px;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid #000;
+        background-color: #bcbcbc;
+        padding: 4px 0;
+    }
+    
+    .lube-numbers {
+        display: flex;
+        margin-left: 140px;
+        margin-bottom: 1px;
+    }
+    
+    .lube-number {
+        width: 30px;
+        text-align: center;
+        border: 1px solid #000;
+    }
+    
+    .lube-row {
+        display: flex;
+        margin-bottom: 1px;
+    }
+    
+    .lube-label {
+        width: 140px;
+        border: 1px solid #000;
+        padding-left: 5px;
+        display: flex;
+        align-items: center;
+        background-color: #f0f0f0;
+    }
+    
+    .lube-empty {
+        width: 30px;
+        border: 1px solid #000;
+    }
+    
+    .lube-group {
+        display: flex;
+    }
+    
+    /* ===== VERIFICACIONES ===== */
+    .check-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-top: 25px;
+        flex-wrap: wrap;
+    }
+    
+    .check-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .check-box {
+        border: 1px solid #000;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+    }
+    
+    .check-box input {
+        width: 20px;
+        height: 20px;
+        margin: 0;
+        cursor: pointer;
+    }
+    
+    /* ===== POSICIÓN FINAL ===== */
+    .posicion-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid #000;
+        margin-top: 25px;
+    }
+    
+    .posicion-table td {
+        border: 1px solid #000;
+        padding: 8px;
+    }
+    
+    .posicion-label {
+        background-color: #c0c0c0;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    /* ===== FIRMAS ===== */
+    .firma-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 2px solid #000;
+        margin-top: 25px;
+    }
+    
+    .firma-table th {
+        background-color: #c0c0c0;
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: center;
+        font-weight: bold;
+    }
+    
+    .firma-table td {
+        border: 1px solid #000;
+        padding: 4px;
+    }
+    
+    .firma-footer {
+        background-color: #f0f0f0;
+        text-align: center;
+        padding: 8px;
+    }
+    
+    /* ===== ESTILOS DE IMPRESIÓN ===== */
     @media print {
-        .no-print {
-            display: none;
-        }
         body {
-            padding: 0;
+            padding: 0.5cm;
+            background: white;
         }
+        
         .excel-container {
-            border: none;
+            max-width: 100%;
             padding: 0;
+            border: none;
+        }
+        
+        .excel-table th,
+        .lube-header-cell,
+        .posicion-label,
+        .firma-table th {
+            background-color: #bcbcbc !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .torque-cell,
+        .conjunto-row td {
+            background-color: #bfbfbf !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .torque-label,
+        .lube-label {
+            background-color: #f0f0f0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        thead {
+            display: table-header-group;
+        }
+        
+        tr, td, th {
+            page-break-inside: avoid;
         }
     }
 </style>
@@ -165,8 +428,10 @@
     <div class="excel-header">
         <div>EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"</div>
         <div>TALLER DE REPARACIONES MAYORES</div>
-        <div style="font-size: 16pt; margin-top: 10px;">FORMULARIO DE CONTROL DE REACONDICIONAMIENTO DE BALANCINES</div>
-        <div style="font-size: 8pt; margin-top: 5px;">{{ tipo_balancin }} - {{ balancin.codigo }}</div>
+        <div>FORMULARIO DE CONTROL DE REACONDICIONAMIENTO DE BALANCINES</div>
+        <div style="font-size: 12pt; margin-top: 10px;">
+            {{ tipo_balancin }} | {{ balancin.codigo }} | {{ linea_actual }} - Torre {{ torre_actual }} | {% now "d/m/Y" %}
+        </div>
     </div>
 
     <form method="post">
@@ -175,46 +440,47 @@
         <!-- ===== DATOS GENERALES ===== -->
         <table class="excel-table">
             <tr>
-                <td style="width: 12%; background-color: #f0f0f0;"><strong>Tipo:</strong></td>
-                <td style="width: 23%;">{{ tipo_balancin }}</td>
-                <td style="width: 15%; background-color: #f0f0f0;"><strong>Posición Inicial:</strong></td>
-                <td style="width: 25%;">{{ linea_actual }} - Torre {{ torre_actual }}</td>
-                <td style="width: 10%; background-color: #f0f0f0;"><strong>Fecha:</strong></td>
-                <td style="width: 15%;">{% now "d/m/Y" %}</td>
+                <td style="text-align:center;width: 15%; background-color: #bcbcbc;"><strong>Tipo</strong></td>
+                <td style="text-align:center;width: 15%;">{{ tipo_balancin }}</td>
+                <td style="text-align:center; width: 40%; background-color: #bcbcbc;" colspan="2"><strong>Posición Inicial</strong></td>
+                <td style="width: 30%;text-align:center; background-color: #bcbcbc;" colspan="2"><strong>Fecha</strong></td>
             </tr>
             <tr>
-                <td style="background-color: #f0f0f0;"><strong>Código:</strong></td>
-                <td>{{ balancin.codigo }}</td>
-                <td style="background-color: #f0f0f0;"><strong>Línea (Pos. Final):</strong></td>
-                <td>
-                    <select name="linea_final" class="excel-select" id="linea_final">
-                        <option value="">Seleccione</option>
-                        {% for linea in lineas %}
-                            <option value="{{ linea.nombre }}">{{ linea.nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td style="background-color: #f0f0f0;"><strong>Torre:</strong></td>
-                <td>
-                    <input type="text" name="torre_final" id="torre_final" class="excel-input" placeholder="N° torre" disabled>
-                </td>
+                <td style="text-align:center;width: 15%;background-color: #bcbcbc;"><strong>Código</strong></td>
+                <td style="text-align:center;width:;">{{ balancin.codigo }}</td>
+                <td style="text-align:center;width: 7%;background-color: #bcbcbc;"><strong>Línea</strong></td>
+                <td style="text-align:center;width: 7%;">{{ linea_actual }}</td>
+                <td style="text-align:center;width: 8%;background-color: #ffffff;"><strong>La Paz,</strong></td>
+                <td style="text-align:center;width: 10%;">{% now "d/m/Y" %}</td>
             </tr>
             <tr>
-                <td style="background-color: #f0f0f0;"><strong>Horas funcionamiento:</strong></td>
-                <td colspan="5">{{ horas_actuales }} h</td>
+                <td style="text-align:center;width: 15%;background-color: #bcbcbc;"><strong>Horas de funcionamiento</strong></td>
+                <td style="text-align:center;width:;">{{ horas_actuales }}</td>
+                <td style="text-align:center;width: 15%;background-color: #bcbcbc;"><strong>Posición</strong></td>
+                <td style="text-align:center;width: 25%;">LINEA {{ linea_actual }}/TORRE-{{ torre_actual }}/{{ balancin.sentido }}</td>
+                <td style="text-align:center;width: 9%;background-color: #bcbcbc;"><strong>Check</strong></td>
+                <td style="text-align:center;width:;">FCRB-{{ tipo_balancin }}-</td>
             </tr>
         </table>
 
         <!-- ===== ANÁLISIS PREDICTIVO ===== -->
-        <div class="excel-subheader">ANÁLISIS PREDICTIVO</div>
         <table class="excel-table">
             <tr>
-                <td style="width: 60%;">
-                    <input type="checkbox" name="control_particulas" id="cp" class="excel-checkbox" style="display: inline-block; width: auto;">
-                    <label for="cp"> Control de partículas magnéticas en uniones soldadas</label>
+                <td style="width: 35%; background-color: #bcbcbc; font-weight: bold; text-align: center;">Análisis Predictivo</td>
+                <td style="width: 65%; background-color: #bcbcbc; font-weight: bold; text-align: center;">Observaciones</td>
+            </tr>
+            <tr style="height: 100px;">
+                <td style="text-align: center; vertical-align: middle;">Control de partículas magnéticas en uniones soldadas</td>
+                <td>
+                    <input type="text" name="analisis_observaciones" class="excel-input" placeholder="">
                 </td>
-                <td style="width: 15%; background-color: #f0f0f0;"><strong>Realizado por:</strong></td>
-                <td style="width: 25%;">
+            </tr>
+        </table>
+        
+        <table class="excel-table">
+            <tr>
+                <td style="text-align: center;width:10%; vertical-align: middle;"><strong>Realizado por:</strong></td>
+                <td style="vertical-align: middle; width:20%;">
                     <select name="realizado_analisis" class="excel-select">
                         <option value="">Seleccione</option>
                         {% for user in usuarios_tecnicos %}
@@ -222,159 +488,503 @@
                         {% endfor %}
                     </select>
                 </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td style="background-color: #f0f0f0;"><strong>Código de informe:</strong></td>
-                <td>
-                    <input type="text" name="codigo_informe" class="excel-input" placeholder="INF-XXXX">
+                <td style="text-align: center; vertical-align: middle;width:10%;"><strong>Firma:</strong></td>
+                <td style="vertical-align: middle;width:20%;"></td>
+                <td style="text-align: center; vertical-align: middle;width:25%;"><strong>Código de informe:</strong></td>
+                <td style="vertical-align: middle; width:15%;">
+                    <input type="text" name="codigo_informe" class="excel-input" placeholder="">
                 </td>
             </tr>
         </table>
-
+        
         <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
-        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">RECAMBIO DE PARTES Y PIEZAS</div>
+        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
+            RECAMBIO DE PARTES Y PIEZAS
+        </div>
         
         {% for grupo, items in repuestos_agrupados.items %}
-            <!-- Título del grupo -->
-            <div class="grupo-titulo">{{ grupo }}</div>
-            
-            <!-- Tabla de repuestos -->
-            <table class="excel-table">
+            <table class="excel-table" style="margin-bottom: 25px;">
                 <thead>
                     <tr>
                         <th style="width: 10%;">ID</th>
                         <th style="width: 40%;">DESCRIPCIÓN</th>
-                        <th style="width: 7%;">CANT.</th>
-                        <th style="width: 8%;">CANT. TOTAL</th>
-                        <th style="width: 8%;">RECAMBIO</th>
-                        <th style="width: 5%;">SI</th>
-                        <th style="width: 5%;">NO</th>
-                        <th style="width: 17%;">OBSERVACIONES</th>
+                        <th style="width: 7%;">UNIT</th>
+                        <th style="width: 8%;">TOTAL</th>
+                        <th style="width: 7%;">SI</th>
+                        <th style="width: 8%;">NO</th>
+                        <th style="width: 20%;">OBSERVACIONES</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in items %}
-                        <tr class="{% if item.es_conjunto %}conjunto-row{% else %}componente-row{% endif %}">
-                            <!-- ID -->
-                            <td style="text-align: center;">
-                                <code>{{ item.id_original }}</code>
-                            </td>
-                            
-                            <!-- DESCRIPCIÓN -->
-                            <td>
-                                {% if item.es_conjunto %}
-                                    <strong>{{ item.descripcion }}</strong>
-                                {% else %}
-                                    &nbsp;&nbsp;&nbsp;&nbsp;{{ item.descripcion }}
-                                {% endif %}
-                            </td>
-                            
-                            <!-- CANTIDAD -->
-                            <td style="text-align: center;">
-                                {{ item.cantidad }}
-                            </td>
-                            
-                            <!-- CANTIDAD TOTAL -->
-                            <td style="text-align: center;">
-                                {{ item.cantidad_total }}
-                            </td>
-                            
-                            <!-- RECAMBIO (checkbox) -->
-                            <td style="text-align: center;">
-                                {% if not item.es_conjunto %}
-                                    <input type="checkbox" 
-                                           name="reemplazado_{{ item.id }}" 
-                                           class="excel-checkbox reemplazado-check"
-                                           data-id="{{ item.id }}">
-                                {% endif %}
-                            </td>
-                            
-                            <!-- SI (decorativo) -->
-                            <td class="si-no">
-                                {% if not item.es_conjunto %}SI{% endif %}
-                            </td>
-                            
-                            <!-- NO (decorativo) -->
-                            <td class="si-no">
-                                {% if not item.es_conjunto %}NO{% endif %}
-                            </td>
-                            
-                            <!-- OBSERVACIONES -->
-                            <td>
-                                {% if not item.es_conjunto %}
-                                    <input type="text" 
-                                           name="obs_{{ item.id }}" 
-                                           class="excel-input"
-                                           placeholder="">
-                                {% endif %}
-                            </td>
-                        </tr>
+                        {% if item.es_conjunto %}
+                            <tr class="conjunto-row">
+                                <td><code>{{ item.id_original }}</code></td>
+                                <td colspan="6"><strong>{{ item.descripcion }}</strong></td>
+                            </tr>
+                            {% for comp in item.componentes %}
+                            <tr>
+                                <td><code>{{ comp.id_original }}</code></td>
+                                <td>{{ comp.descripcion }}</td>
+                                <td style="text-align: center;">{{ comp.cantidad }}</td>
+                                <td style="text-align: center;">{{ comp.cantidad_total }}</td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="recambio_{{ comp.id }}" value="NO" class="excel-radio" checked>
+                                </td>
+                                <td>
+                                    <input type="text" name="obs_{{ comp.id }}" class="excel-input" placeholder="">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td><code>{{ item.id_original }}</code></td>
+                                <td>{{ item.descripcion }}</td>
+                                <td style="text-align: center;">{{ item.cantidad }}</td>
+                                <td style="text-align: center;">{{ item.cantidad_total }}</td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="recambio_{{ item.id }}" value="SI" class="excel-radio">
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="recambio_{{ item.id }}" value="NO" class="excel-radio" checked>
+                                </td>
+                                <td>
+                                    <input type="text" name="obs_{{ item.id }}" class="excel-input" placeholder="">
+                                </td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
         {% endfor %}
 
-        <!-- ===== VERIFICACIONES ===== -->
-        <div style="margin-top: 20px; border: 1px solid #000; padding: 10px;">
-            <table style="width: 100%;">
-                <tr>
-                    <td style="width: 33%;">
-                        <input type="checkbox" name="torque_verificado" id="torque" class="excel-checkbox" style="display: inline-block; width: auto;">
-                        <label for="torque"><strong>Torque, marcado de pernos y tuercas.</strong></label>
-                    </td>
-                    <td style="width: 33%;">
-                        <input type="checkbox" name="limpieza_verificada" id="limpieza" class="excel-checkbox" style="display: inline-block; width: auto;">
-                        <label for="limpieza"><strong>Limpieza de uniones</strong></label>
-                    </td>
-                    <td style="width: 34%;">
-                        <input type="checkbox" name="continuidad_verificada" id="continuidad" class="excel-checkbox" style="display: inline-block; width: auto;">
-                        <label for="continuidad"><strong>Verificación de continuidad</strong></label>
-                    </td>
-                </tr>
-            </table>
+        <!-- ===== OTRAS PIEZAS REEMPLAZADAS ===== -->
+        <table class="excel-table" style="margin-top:25px;">
+            <tr>
+                <th colspan="5" style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center;">
+                    OTRAS PIEZAS REEMPLAZADAS
+                </th>
+            </tr>
+            <tr style="background:#c0c0c0; text-align:center; font-weight:bold;">
+                <th style="width:8%;">ID</th>
+                <th style="width:42%;">Descripción</th>
+                <th style="width:10%;">Cant.</th>
+                <th style="width:10%;">Cant. Total</th>
+                <th style="width:30%;">OBSERVACIONES</th>
+            </tr>
+            {% for i in "1234"|make_list %}
+            <tr style="height:28px;">
+                <td><input type="text" name="otro_id_{{ i }}" class="excel-input"></td>
+                <td><input type="text" name="otro_desc_{{ i }}" class="excel-input"></td>
+                <td><input type="number" name="otro_cant_{{ i }}" class="excel-input" min="0"></td>
+                <td><input type="number" name="otro_total_{{ i }}" class="excel-input" min="0"></td>
+                <td><input type="text" name="otro_obs_{{ i }}" class="excel-input"></td>
+            </tr>
+            {% endfor %}
+        </table>
+<!-- ===== SECCIÓN P Y S2P CON ESPACIO ENTRE ELLAS ===== -->
+<div style="display: flex; gap: 200px; width: fit-content; margin-bottom: 40px;">
+    
+    <!-- ===== SECCIÓN P (IZQUIERDA) ===== -->
+    <div style="border: 1px solid #000; width: 550px;">
+        <!-- Fila 1: Encabezado P -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
+           
+            <div style="width: 480px; text-align: center; padding: 12px 0; font-weight: bold; font-size: 16px;">P</div>
         </div>
-
-        <!-- ===== FIRMAS Y APROBACIÓN ===== -->
-        <div class="firmas-section">
-            <table style="width: 100%;">
-                <tr>
-                    <td style="width: 35%;">
-                        <strong>Realizado por (Recambio):</strong><br>
-                        <select name="realizado_recambio" class="excel-select" style="width: 95%; margin-top: 5px;">
-                            <option value="">Seleccione</option>
-                            {% for user in usuarios_tecnicos %}
-                                <option value="{{ user.id }}">{{ user.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td style="width: 35%;">
-                        <strong>Aprobado por:</strong><br>
-                        <select name="aprobado" class="excel-select" style="width: 95%; margin-top: 5px;">
-                            <option value="">Seleccione</option>
-                            {% for user in usuarios_supervisores %}
-                                <option value="{{ user.id }}">{{ user.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td style="width: 15%;">
-                        <strong>Firma:</strong><br>
-                        <span style="font-size: 9pt; color: #666;">_________________</span>
-                    </td>
-                    <td style="width: 15%;">
-                        <strong>Posición Final:</strong><br>
-                        <span id="posicion_final_display" style="font-size: 10pt;"></span>
-                    </td>
-                </tr>
-            </table>
+        
+        <!-- Fila 2: Números 1-16 -->
+        <div style="display: flex; border-bottom: 1px solid #000;">
+            <div style="width: 120px; border-right: 1px solid #000; padding: 10px; background-color: #f8f9fa;">&nbsp;</div>
+            {% for i in "1234567890123456"|make_list %}
+                <div style="width: 30px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: 500;">{{ forloop.counter }}</div>
+            {% endfor %}
         </div>
+        
+        <!-- Fila 3: Poleas con checkboxes -->
+        <div style="display: flex;">
+            <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold;">
+                Poleas
+            </div>
+            {% for i in "1234567890123456"|make_list %}
+                <div style="width: 30px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
+                    {% if forloop.counter > config.poleas %}background-color: #e0e0e0;{% endif %}">
+                    {% if forloop.counter <= config.poleas %}
+                        <input type="checkbox" name="polea_{{ forloop.counter }}" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- ===== SECCIÓN S2P (DERECHA) ===== -->
+    <div style="border: 1px solid #000; width: 360px;">
+        <!-- Fila 1: Encabezado S2P -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
+                <div style="width: 240px; text-align: center; padding: 12px 0; font-weight: bold; font-size: 16px;">S2P</div>
+        </div>
+        
+        <!-- Fila 2: Números 1-8 -->
+        <div style="display: flex; border-bottom: 1px solid #000;">
+            <div style="width: 120px; border-right: 1px solid #000; padding: 10px; background-color: #f8f9fa;">&nbsp;</div>
+            {% for i in "12345678"|make_list %}
+                <div style="width: 30px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: 500;">{{ forloop.counter }}</div>
+            {% endfor %}
+        </div>
+        
+        <!-- Fila 3: Segmentos 2P con checkboxes -->
+        <div style="display: flex;">
+            <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold;">
+                Segmentos 2P
+            </div>
+            {% with total_editables=config.segmentos_2p %}
+                {% for i in "12345678"|make_list %}
+                    <div style="width: 30px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
+                        {% if forloop.counter > total_editables %}background-color: #e0e0e0;{% endif %}">
+                        {% if forloop.counter <= total_editables %}
+                            <input type="checkbox" name="seg2p_{{ forloop.counter }}" style="width: 22px; height: 22px; cursor: pointer;">
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+        </div>
+    </div>
+    
+</div>
 
-        <!-- ===== BOTONES (solo web, no se imprimen) ===== -->
+
+
+    
+
+   <!-- ===== SECCIÓN S4P, SE Y CONSOLA CON ESPACIADO CONSISTENTE ===== -->
+<div style="display: flex; gap: 40px; width: fit-content; margin-top: 50px;">
+
+    <!-- ===== SECCIÓN S4P (SEGMENTOS 4P) ===== -->
+    <div style="border: 1px solid #000; width: 400px;">
+        <!-- Título -->
+        <div style="background-color: #bcbcbc; padding: 12px; font-weight: bold; text-align: center; border-bottom: 1px solid #000; font-size: 14px;">
+            Segmentos 4P
+        </div>
+        
+        <!-- Encabezados PR1-PR4 -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">PR1</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">PR2</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">PR3</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; font-weight: bold;">PR4</div>
+        </div>
+        
+        <!-- Números -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #f8f9fa;">
+            <!-- PR1 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+            <!-- PR2 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+            <!-- PR3 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">4</div>
+            <!-- PR4 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">5</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0;">6</div>
+        </div>
+        
+        <!-- Checkboxes S4P -->
+        <div style="display: flex;">
+            <!-- PR1 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000;">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;">
+                    <input type="checkbox" name="s4p_pr1_1" style="width: 22px; height: 22px; cursor: pointer;">
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                    <input type="checkbox" name="s4p_pr1_2" style="width: 22px; height: 22px; cursor: pointer;">
+                </div>
+            </div>
+            
+            <!-- PR2 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000; 
+                {% if config.segmentos_4p < 2 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.segmentos_4p < 2 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.segmentos_4p >= 2 %}
+                        <input type="checkbox" name="s4p_pr2_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.segmentos_4p < 2 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.segmentos_4p >= 2 %}
+                        <input type="checkbox" name="s4p_pr2_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- PR3 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000;
+                {% if config.segmentos_4p < 3 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.segmentos_4p < 3 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.segmentos_4p >= 3 %}
+                        <input type="checkbox" name="s4p_pr3_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.segmentos_4p < 3 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.segmentos_4p >= 3 %}
+                        <input type="checkbox" name="s4p_pr3_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- PR4 -->
+            <div style="width: 80px; height: 45px; display: flex;
+                {% if config.segmentos_4p < 4 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.segmentos_4p < 4 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.segmentos_4p >= 4 %}
+                        <input type="checkbox" name="s4p_pr4_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.segmentos_4p < 4 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.segmentos_4p >= 4 %}
+                        <input type="checkbox" name="s4p_pr4_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SECCIÓN SE (CONTROLADA POR seg_SE) ===== -->
+    <div style="border: 1px solid #000; width: 400px;">
+        <!-- Título vacío (para mantener alineación) -->
+        <div style="background-color: #bcbcbc; padding: 12px; border-bottom: 1px solid #000; text-align: center; font-weight: bold;">&nbsp;</div>
+        
+        <!-- Encabezados SE1-SE4 -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">SE1</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">SE3</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; font-weight: bold;">SE4</div>
+        </div>
+        
+        <!-- Números -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #f8f9fa;">
+            <!-- SE1 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+            <!-- SE2 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+            <!-- SE3 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+            <!-- SE4 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0;">2</div>
+        </div>
+        
+        <!-- Checkboxes SE -->
+        <div style="display: flex;">
+            <!-- SE1 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000;
+                {% if config.seg_SE < 1 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.seg_SE < 1 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 1 %}
+                        <input type="checkbox" name="se1_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.seg_SE < 1 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 1 %}
+                        <input type="checkbox" name="se1_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SE2 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000;
+                {% if config.seg_SE < 2 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.seg_SE < 2 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 2 %}
+                        <input type="checkbox" name="se2_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.seg_SE < 2 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 2 %}
+                        <input type="checkbox" name="se2_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SE3 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000;
+                {% if config.seg_SE < 3 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.seg_SE < 3 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 3 %}
+                        <input type="checkbox" name="se3_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.seg_SE < 3 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 3 %}
+                        <input type="checkbox" name="se3_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SE4 -->
+            <div style="width: 80px; height: 45px; display: flex;
+                {% if config.seg_SE < 4 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.seg_SE < 4 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 4 %}
+                        <input type="checkbox" name="se4_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.seg_SE < 4 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.seg_SE >= 4 %}
+                        <input type="checkbox" name="se4_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SECCIÓN CONSOLA ===== -->
+    <div style="border: 1px solid #000; width: 200px;">
+        <!-- Título Consola -->
+        <div style="background-color: #bcbcbc; padding: 12px; font-weight: bold; text-align: center; border-bottom: 1px solid #000; font-size: 14px;">
+            Consola
+        </div>
+        
+        <!-- Encabezados CS-SE1, CS-SE2 -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
+            <div style="width: 80px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">CS-SE1</div>
+            <div style="width: 80px; text-align: center; padding: 10px 0; font-weight: bold;">CS-SE2</div>
+        </div>
+        
+        <!-- Números -->
+        <div style="display: flex; border-bottom: 1px solid #000; background-color: #f8f9fa;">
+            <!-- CS-SE1 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+            <!-- CS-SE2 -->
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0;">2</div>
+        </div>
+        
+        <!-- Checkboxes Consola -->
+        <div style="display: flex;">
+            <!-- CS-SE1 -->
+            <div style="width: 80px; height: 45px; display: flex; border-right: 1px solid #000;
+                {% if config.consola < 1 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.consola < 1 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.consola >= 1 %}
+                        <input type="checkbox" name="consola_csse1_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.consola < 1 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.consola >= 1 %}
+                        <input type="checkbox" name="consola_csse1_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- CS-SE2 -->
+            <div style="width: 80px; height: 45px; display: flex;
+                {% if config.consola < 2 %}background-color: #e0e0e0;{% endif %}">
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #000;
+                    {% if config.consola < 2 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.consola >= 2 %}
+                        <input type="checkbox" name="consola_csse2_1" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+                <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center;
+                    {% if config.consola < 2 %}background-color: #e0e0e0;{% endif %}">
+                    {% if config.consola >= 2 %}
+                        <input type="checkbox" name="consola_csse2_2" style="width: 22px; height: 22px; cursor: pointer;">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>  
+
+        <!-- ===== POSICIÓN FINAL ===== -->
+        <table class="posicion-table">
+            <tr>
+                <td style="width:30%;" class="posicion-label">Posición Final</td>
+                <td style="width:20%;" class="posicion-label">Línea</td>
+                <td style="width:50%;">
+                    <select name="linea_final" id="linea_final" class="excel-select">
+                        <option value="">Seleccione línea</option>
+                        {% for linea in lineas %}
+                            <option value="{{ linea.nombre }}">{{ linea.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="posicion-label">Posición</td>
+                <td>
+                    <input type="text" name="posicion_final" id="posicion_final" class="excel-input" 
+                           placeholder="Ej: LRO/TOR-01/DESC">
+                </td>
+            </tr>
+        </table>
+
+        <!-- ===== FIRMAS ===== -->
+        <table class="firma-table">
+            <tr>
+                <th>Firma</th>
+                <th>Nombre</th>
+                <th>Cargo</th>
+            </tr>
+            <tr>
+                <td><input type="text" name="firma_1" class="excel-input" placeholder="Firma"></td>
+                <td><input type="text" name="nombre_1" class="excel-input" placeholder="Nombre"></td>
+                <td><input type="text" name="cargo_1" class="excel-input" placeholder="Cargo"></td>
+            </tr>
+            <tr>
+                <td colspan="3" class="firma-footer">Realizado</td>
+            </tr>
+        </table>
+
+        <table class="firma-table" style="margin-top:10px;">
+            <tr>
+                <th>Firma</th>
+                <th>Nombre</th>
+                <th>Cargo</th>
+            </tr>
+            <tr>
+                <td><input type="text" name="firma_2" class="excel-input" placeholder="Firma"></td>
+                <td><input type="text" name="nombre_2" class="excel-input" placeholder="Nombre"></td>
+                <td><input type="text" name="cargo_2" class="excel-input" placeholder="Cargo"></td>
+            </tr>
+            <tr>
+                <td colspan="3" class="firma-footer">Aprobado</td>
+            </tr>
+        </table>
+
+        <!-- ===== BOTONES ===== -->
         <div class="no-print">
-            <button type="submit" class="btn btn-success btn-lg">
+            <button type="submit" class="btn btn-success">
                 <i class="fas fa-save"></i> GUARDAR FORMULARIO
             </button>
-            <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-secondary btn-lg">
+            <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> CANCELAR
             </a>
         </div>
@@ -387,36 +997,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     // ===== Lógica para posición final =====
     const lineaSelect = document.getElementById('linea_final');
-    const torreInput = document.getElementById('torre_final');
-    const posicionDisplay = document.getElementById('posicion_final_display');
+    const posicionInput = document.getElementById('posicion_final');
     
-    function actualizarPosicionFinal() {
-        if (lineaSelect.value && torreInput.value) {
-            posicionDisplay.textContent = lineaSelect.value + ' - Torre ' + torreInput.value;
-        } else {
-            posicionDisplay.textContent = '';
-        }
+    if (lineaSelect) {
+        lineaSelect.addEventListener('change', function() {
+            console.log('Línea seleccionada:', this.value);
+        });
     }
     
-    lineaSelect.addEventListener('change', function() {
-        torreInput.disabled = !this.value;
-        if (this.value) {
-            torreInput.focus();
-        } else {
-            torreInput.value = '';
-        }
-        actualizarPosicionFinal();
-    });
-    
-    torreInput.addEventListener('input', actualizarPosicionFinal);
-    
-    // ===== Lógica para checkboxes de repuestos =====
-    document.querySelectorAll('.reemplazado-check').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            // Aquí puedes agregar lógica adicional si es necesaria
-            console.log('Checkbox cambiado:', this.checked);
+    if (posicionInput) {
+        posicionInput.addEventListener('input', function() {
+            console.log('Posición:', this.value);
         });
-    });
+    }
 });
 </script>
 {% endblock %}
