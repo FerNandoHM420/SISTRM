@@ -75,4 +75,11 @@ urlpatterns = [
     path('crear-formulario/<path:codigo>/', views.crear_formulario_control, name='crear_formulario_control'),
     path('formularios/', views.lista_formularios, name='lista_formularios'),
     path('formulario/<str:codigo>/', views.detalle_formulario, name='detalle_formulario'),
+    
+    # ========== API PARA BÚSQUEDA DE REPUESTOS ==========
+path('api/buscar-repuestos/', views.buscar_repuestos_api, name='buscar_repuestos_api'),
+
+path('api/buscar-usuarios/', views.buscar_usuarios_api, name='buscar_usuarios_api'),
+
+path('api/buscar-jefes/', views.buscar_jefes_api, name='buscar_jefes_api'),
 ]

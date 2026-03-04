@@ -1450,56 +1450,82 @@ def obtener_config_torque(tipo):
             'poleas': 4,
             'segmentos_2p': 2,
             'segmentos_4p': 1,
-            'seg_SE' : 2,
-            'consola': 0,
+            'seg_SE': 2,
+            'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
-                's2p': [1,2,3,4,5,6,7,8],
+                's2p': [1,2],
                 's4p': [1,2],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '6T-501C': {
             'poleas': 6,
             'segmentos_2p': 3,
             'segmentos_4p': 1,
+            'seg_SE': 3,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6],
                 's4p': [1,2],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '8T-501C': {
             'poleas': 8,
             'segmentos_2p': 4,
             'segmentos_4p': 1,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '10T-501C': {
             'poleas': 10,
             'segmentos_2p': 3,
             'segmentos_4p': 2,
+            'seg_SE': 4,  # SE1, SE2, SE3, SE4
             'consola': 2,
+            'tiene_bastidor_6p': True,
             'lubricacion': {
                 's2p': [1,2,3,4,5],
                 's4p': [1,2],
                 'cs': [1]
+            },
+            'lubricacion_extra': {
+                's4p_extra': [1,2],  # Segundo PL-S4P
+                'etiqueta': 'Bastidor 6P',
+                'posicion': 'despues_s4p'  # Va después del primer PL-S4P
             }
         },
+        
         '12T-501C': {
             'poleas': 12,
             'segmentos_2p': 3,
             'segmentos_4p': 2,
+            'seg_SE': 4,  # SE1, SE2, SE3, SE4
             'consola': 2,
+            'tiene_bastidor_6p': True,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6],
                 's4p': [1,2],
                 'cs': [1]
+            },
+            'lubricacion_extra': {
+                's4p_extra': [1,2],  # Segundo PL-S4P
+                'etiqueta': 'Bastidor 6P',
+                'posicion': 'despues_s4p'
             }
         },
         
@@ -1508,56 +1534,75 @@ def obtener_config_torque(tipo):
             'poleas': 16,
             'segmentos_2p': 4,
             'segmentos_4p': 2,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '10N/4TR-420C': {
             'poleas': 16,
             'segmentos_2p': 4,
             'segmentos_4p': 8,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '12N/4TR-420C': {
             'poleas': 16,
             'segmentos_2p': 4,
             'segmentos_4p': 2,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '14N/4TR-420C': {
             'poleas': 16,
             'segmentos_2p': 4,
             'segmentos_4p': 2,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '16N/4TR-420C': {
             'poleas': 16,
             'segmentos_2p': 4,
             'segmentos_4p': 4,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
         
         # ===== HÍBRIDOS =====
@@ -1565,23 +1610,30 @@ def obtener_config_torque(tipo):
             'poleas': 8,
             'segmentos_2p': 4,
             'segmentos_4p': 2,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
+        
         '8T/8N-420C': {
             'poleas': 8,
             'segmentos_2p': 4,
             'segmentos_4p': 2,
+            'seg_SE': 4,
             'consola': 2,
+            'tiene_bastidor_6p': False,
             'lubricacion': {
                 's2p': [1,2,3,4,5,6,7,8],
                 's4p': [1,2,3,4],
                 'cs': [1]
-            }
+            },
+            'lubricacion_extra': None
         },
     }
     return configs.get(tipo, configs['4T-501C'])
@@ -1679,7 +1731,9 @@ def crear_formulario_control(request, codigo):
     lineas = Linea.objects.all().order_by('nombre')
     usuarios_tecnicos = Usuario.objects.filter(rol__in=['tecnico', 'supervisor'])
     usuarios_supervisores = Usuario.objects.filter(rol__in=['supervisor', 'jefe'])
-   
+    
+    # 👇 AGREGADO: Obtener solo usuarios con rol de jefe
+    jefes = Usuario.objects.filter(rol='jefe').order_by('nombre')
     
     # Datos del balancín
     torre = balancin.torre
@@ -1693,7 +1747,7 @@ def crear_formulario_control(request, codigo):
         tipo_balancin__codigo=tipo_codigo
     ).select_related('repuesto').order_by('grupo', 'orden')
     
-    # ===== ESTRUCTURA CON CONJUNTOS Y COMPONENTES (CORREGIDA) =====
+    # ===== ESTRUCTURA CON CONJUNTOS Y COMPONENTES =====
     from collections import OrderedDict
     
     # Obtener todos los grupos únicos que existen en los datos
@@ -1777,12 +1831,14 @@ def crear_formulario_control(request, codigo):
         'lineas': lineas,
         'usuarios_tecnicos': usuarios_tecnicos,
         'usuarios_supervisores': usuarios_supervisores,
+        'jefes': jefes,  # 👈 LISTA DE JEFES AGREGADA
         'repuestos_agrupados': repuestos_agrupados,
         'total_repuestos': config_repuestos.count(),
         'config': obtener_config_torque(tipo_codigo),
     }
     
-    return render(request, 'balancines/crear_formulario_control.html', context)
+    template_name = f'balancines/formularios/formulario_{tipo_codigo.replace("/", "-")}.html'
+    return render(request, template_name, context)
 
 
 def generar_codigo_formulario(tipo):
@@ -1855,3 +1911,112 @@ def detalle_formulario(request, codigo):
         'total_items': total_items,
     }
     return render(request, 'balancines/detalle_formulario.html', context)
+
+
+
+from django.http import JsonResponse
+from django.db.models import Q
+
+@login_required
+def buscar_repuestos_api(request):
+    """API para buscar repuestos en ambas tablas"""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    resultados = []
+    query_upper = query.upper()
+    
+    # Buscar en RepuestoBalancin
+    repuestos_balancin = RepuestoBalancin.objects.filter(
+        Q(item__icontains=query_upper) | 
+        Q(descripcion__icontains=query)
+    )[:10]
+    
+    for r in repuestos_balancin:
+        resultados.append({
+            'id': r.item,
+            'item': r.item,
+            'descripcion': r.descripcion,
+            'tipo': 'Balancín',
+            'cantidad': r.cantidad,
+            'origen': 'balancin'
+        })
+    
+    # Buscar en RepuestoAdicional
+    repuestos_adicionales = RepuestoAdicional.objects.filter(
+        Q(item__icontains=query_upper) | 
+        Q(descripcion__icontains=query)
+    )[:10]
+    
+    for r in repuestos_adicionales:
+        resultados.append({
+            'id': r.item,
+            'item': r.item,
+            'descripcion': r.descripcion,
+            'tipo': 'Adicional',
+            'cantidad': r.cantidad,
+            'origen': 'adicional'
+        })
+    
+    # Ordenar por item
+    resultados = sorted(resultados, key=lambda x: x['item'])[:15]
+    
+    return JsonResponse({'results': resultados})
+
+
+from django.http import JsonResponse
+from .models import Usuario
+
+@login_required
+def buscar_usuarios_api(request):
+    """API para buscar usuarios por nombre o email"""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    usuarios = Usuario.objects.filter(
+        Q(nombre__icontains=query) | 
+        Q(email__icontains=query)
+    )[:10]
+    
+    results = []
+    for user in usuarios:
+        results.append({
+            'id': user.id,
+            'nombre': user.nombre,
+            'email': user.email,
+            'rol': user.get_rol_display(),  # Esto muestra "Jefe", "Supervisor", "Técnico"
+            'rol_value': user.rol  # Esto guarda 'jefe', 'supervisor', 'tecnico'
+        })
+    
+    return JsonResponse({'results': results})
+
+
+@login_required
+def buscar_jefes_api(request):
+    """API para buscar solo usuarios con rol de jefe"""
+    query = request.GET.get('q', '').strip()
+    
+    usuarios = Usuario.objects.filter(rol='jefe')
+    
+    if len(query) >= 2:
+        usuarios = usuarios.filter(
+            Q(nombre__icontains=query) | 
+            Q(email__icontains=query)
+        )
+    
+    usuarios = usuarios[:10]
+    
+    results = []
+    for user in usuarios:
+        results.append({
+            'id': user.id,
+            'nombre': user.nombre,
+            'email': user.email,
+            'rol': user.get_rol_display(),
+        })
+    
+    return JsonResponse({'results': results})

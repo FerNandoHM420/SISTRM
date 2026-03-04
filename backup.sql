@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fIGoJy5n4EHrBXfjw9qD48PWdsxTOJMDU10iQwcoaBbSYa1I1QWAzECtCDDcNyk
+\restrict VJESG568Wm4EGcqtNwXaXODT6Ut3SFfmhsTowT9jG9ggcwOC8Kue3uqXJAvGBuq
 
 -- Dumped from database version 15.15
 -- Dumped by pg_dump version 15.15
@@ -3090,6 +3090,8 @@ COPY public.django_admin_log (id, action_time, object_id, object_repr, action_fl
 10	2026-02-27 14:37:47.137929+00	16N-4TR-420C	16N-4TR-420C (Soporte)	3		22	4
 11	2026-02-27 14:37:47.139981+00	4T-4N-420C	4T-4N-420C (Soporte)	3		22	4
 12	2026-02-27 14:37:47.141888+00	8N-4TR-420C	8N-4TR-420C (Soporte)	3		22	4
+13	2026-03-04 18:42:31.214896+00	8N-4TR-420C	8N-4TR-420C (Compresión)	2	[{"changed": {"fields": ["C\\u00f3digo"]}}]	22	4
+14	2026-03-04 18:43:18.723614+00	8N-4TR-420C	8N-4TR-420C (Compresión)	3		22	4
 \.
 
 
@@ -3307,7 +3309,7 @@ SELECT pg_catalog.setval('public.auth_permission_id_seq', 136, true);
 -- Name: django_admin_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: proyecto_user
 --
 
-SELECT pg_catalog.setval('public.django_admin_log_id_seq', 12, true);
+SELECT pg_catalog.setval('public.django_admin_log_id_seq', 14, true);
 
 
 --
@@ -4310,5 +4312,5 @@ ALTER TABLE ONLY public.app_balancinindividual
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fIGoJy5n4EHrBXfjw9qD48PWdsxTOJMDU10iQwcoaBbSYa1I1QWAzECtCDDcNyk
+\unrestrict VJESG568Wm4EGcqtNwXaXODT6Ut3SFfmhsTowT9jG9ggcwOC8Kue3uqXJAvGBuq
 

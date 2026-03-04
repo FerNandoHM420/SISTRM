@@ -498,30 +498,40 @@
         </table>
         
         <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
+      <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
         <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
             RECAMBIO DE PARTES Y PIEZAS
         </div>
         
         {% for grupo, items in repuestos_agrupados.items %}
+            <!-- Título del grupo -->
+           
+            <!-- Tabla para cada grupo -->
             <table class="excel-table" style="margin-bottom: 25px;">
                 <thead>
                     <tr>
                         <th style="width: 10%;">ID</th>
                         <th style="width: 40%;">DESCRIPCIÓN</th>
+                        <th style="width: 15%;" colspan="2">CANTIDAD</th>
+                        <th style="width: 15%;" colspan="2">RECAMBIO</th>
+                        <th style="width: 20%;">OBSERVACIONES</th>
+                    </tr>
+                    <tr>
+                        {% for item in items %}
+                        {% if item.es_conjunto %}
+                        <th><code>{{ item.id_original }}</code></th>
+                        <th>{{ item.descripcion }}</th>
                         <th style="width: 7%;">UNIT</th>
                         <th style="width: 8%;">TOTAL</th>
                         <th style="width: 7%;">SI</th>
                         <th style="width: 8%;">NO</th>
-                        <th style="width: 20%;">OBSERVACIONES</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in items %}
-                        {% if item.es_conjunto %}
-                            <tr class="conjunto-row">
-                                <td><code>{{ item.id_original }}</code></td>
-                                <td colspan="6"><strong>{{ item.descripcion }}</strong></td>
-                            </tr>
+                    
+                            
+                            <!-- COMPONENTES DEL CONJUNTO -->
                             {% for comp in item.componentes %}
                             <tr>
                                 <td><code>{{ comp.id_original }}</code></td>
@@ -539,7 +549,8 @@
                                 </td>
                             </tr>
                             {% endfor %}
-                        {% else %}
+                        {% else %}  
+                            <!-- ITEMS SUELTOS -->
                             <tr>
                                 <td><code>{{ item.id_original }}</code></td>
                                 <td>{{ item.descripcion }}</td>
@@ -561,32 +572,58 @@
             </table>
         {% endfor %}
 
-        <!-- ===== OTRAS PIEZAS REEMPLAZADAS ===== -->
-        <table class="excel-table" style="margin-top:25px;">
-            <tr>
-                <th colspan="5" style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center;">
-                    OTRAS PIEZAS REEMPLAZADAS
-                </th>
-            </tr>
+<!-- ===== OTRAS PIEZAS REEMPLAZADAS CON BUSCADOR ===== -->
+<div style="margin-top: 25px; border: 1px solid #000;">
+    <div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
+        OTRAS PIEZAS REEMPLAZADAS
+    </div>
+    
+    <!-- Buscador -->
+    <div style="display: flex; padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #000;">
+        <input type="text" id="buscador-repuestos" placeholder="Buscar por ID o descripción (mínimo 2 caracteres)..." 
+               style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
+        <button type="button" id="btn-agregar" class="btn btn-primary" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" disabled>Agregar</button>
+    </div>
+    
+    <!-- Resultados de búsqueda -->
+    <div id="resultados-busqueda" style="display: none; max-height: 200px; overflow-y: auto; border-bottom: 1px solid #000; background-color: white;"></div>
+    
+    <!-- Tabla de repuestos agregados -->
+    <table id="tabla-otros" class="excel-table" style="margin-top:0; width: 100%;">
+        <thead>
             <tr style="background:#c0c0c0; text-align:center; font-weight:bold;">
                 <th style="width:8%;">ID</th>
-                <th style="width:42%;">Descripción</th>
-                <th style="width:10%;">Cant.</th>
-                <th style="width:10%;">Cant. Total</th>
-                <th style="width:30%;">OBSERVACIONES</th>
+                <th style="width:37%;">Descripción</th>
+                <th style="width:8%;">Cant.</th>
+                <th style="width:8%;">Cant. Total</th>
+                <th style="width:24%;">OBSERVACIONES</th>
+                <th style="width:5%;">Acción</th>
             </tr>
-            {% for i in "1234"|make_list %}
-            <tr style="height:28px;">
-                <td><input type="text" name="otro_id_{{ i }}" class="excel-input"></td>
-                <td><input type="text" name="otro_desc_{{ i }}" class="excel-input"></td>
-                <td><input type="number" name="otro_cant_{{ i }}" class="excel-input" min="0"></td>
-                <td><input type="number" name="otro_total_{{ i }}" class="excel-input" min="0"></td>
-                <td><input type="text" name="otro_obs_{{ i }}" class="excel-input"></td>
+        </thead>
+        <tbody id="tbody-otros">
+            <!-- Fila inicial (vacía) -->
+            <tr class="fila-repuesto">
+                <td><input type="text" name="otro_id_0" class="excel-input" value=""></td>
+                <td><input type="text" name="otro_desc_0" class="excel-input" value=""></td>
+                <td><input type="number" name="otro_cant_0" class="excel-input" min="0" value="1"></td>
+                <td><input type="number" name="otro_total_0" class="excel-input" min="0" value="4"></td>
+                <td><input type="text" name="otro_obs_0" class="excel-input" placeholder="Observaciones"></td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn-eliminar" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer;">X</button>
+                </td>
             </tr>
-            {% endfor %}
-        </table>
+        </tbody>
+    </table>
+    
+    <!-- Input oculto para llevar el conteo de filas -->
+    <input type="hidden" id="total-filas" name="total_filas_otros" value="1">
+</div>
 <!-- ===== SECCIÓN P Y S2P CON ESPACIO ENTRE ELLAS ===== -->
+<div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
+       Torque, marcado de pernos y tuercas.
+    </div>
 <div style="display: flex; gap: 200px; width: fit-content; margin-bottom: 40px;">
+    
     
     <!-- ===== SECCIÓN P (IZQUIERDA) ===== -->
     <div style="border: 1px solid #000; width: 550px;">
@@ -922,6 +959,74 @@
 
 </div>  
 
+
+<!-- ===== PUNTOS DE LUBRICACIÓN ===== -->
+<div style="margin-top: 30px; border: 1px solid #000; width: 100%">
+    <div style="background-color: #bcbcbc; padding: 12px; font-weight: bold; text-align: center; border-bottom: 1px solid #000; font-size: 14px;">
+        Puntos de lubricación (gramos)
+    </div>
+    
+    <!-- Fila 1: Encabezados PL -->
+    <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
+        <div style="width: 120px; border-right: 1px solid #000; padding: 10px;">&nbsp;</div>
+        <div style="width: 240px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">PL-S2P</div>
+        <div style="width: 120px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">PL-S4P</div>
+        <div style="width: 30px; text-align: center; padding: 10px 0; font-weight: bold;">PL-CS</div>
+    </div>
+    
+    <!-- Fila 2: Números de lubricación -->
+    <div style="display: flex; border-bottom: 1px solid #000; background-color: #f8f9fa;">
+        <div style="width: 120px; border-right: 1px solid #000; padding: 10px;">&nbsp;</div>
+        <!-- PL-S2P: 8 números -->
+        {% for i in config.lubricacion.s2p %}
+            <div style="width: 30px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">{{ i }}</div>
+        {% endfor %}
+        <!-- PL-S4P: 4 números -->
+        {% for i in config.lubricacion.s4p %}
+            <div style="width: 30px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">{{ i }}</div>
+        {% endfor %}
+        <!-- PL-CS: 1 número -->
+        {% for i in config.lubricacion.cs %}
+            <div style="width: 30px; text-align: center; padding: 8px 0;">{{ i }}</div>
+        {% endfor %}
+    </div>
+    
+    <!-- Fila 3: Checkboxes de lubricación -->
+    <div style="display: flex;">
+        <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold;">
+            Puntos
+        </div>
+        
+        <!-- Checkboxes PL-S2P -->
+        {% for i in config.lubricacion.s2p %}
+            <div style="width: 30px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
+                <input type="checkbox" name="lube_s2p_{{ i }}" style="width: 22px; height: 22px; cursor: pointer;">
+            </div>
+        {% endfor %}
+        
+        <!-- Checkboxes PL-S4P -->
+        {% for i in config.lubricacion.s4p %}
+            <div style="width: 30px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
+                <input type="checkbox" name="lube_s4p_{{ i }}" style="width: 22px; height: 22px; cursor: pointer;">
+            </div>
+        {% endfor %}
+        
+        <!-- Checkboxes PL-CS -->
+        {% for i in config.lubricacion.cs %}
+            <div style="width: 30px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                <input type="checkbox" name="lube_cs_{{ i }}" style="width: 22px; height: 22px; cursor: pointer;">
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Fila 4: Etiquetas de secciones -->
+    <div style="display: flex; border-top: 1px solid #000; background-color: #f0f0f0;">
+        <div style="width: 120px; border-right: 1px solid #000; padding: 10px;">&nbsp;</div>
+        <div style="width: 240px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">Segmentos 2P</div>
+        <div style="width: 120px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">Segmentos 4P</div>
+        <div style="width: 30px; text-align: center; padding: 10px 0; font-weight: bold;">Consola</div>
+    </div>
+</div>
         <!-- ===== POSICIÓN FINAL ===== -->
         <table class="posicion-table">
             <tr>
@@ -991,11 +1096,21 @@
     </form>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ===== Lógica para posición final =====
+    // ===== VARIABLES GLOBALES =====
+    let contadorFilas = 1;
+    let repuestoSeleccionado = null;
+    
+    // Elementos del DOM
+    const buscador = document.getElementById('buscador-repuestos');
+    const btnAgregar = document.getElementById('btn-agregar');
+    const resultadosDiv = document.getElementById('resultados-busqueda');
+    const tbody = document.getElementById('tbody-otros');
+    const totalFilasInput = document.getElementById('total-filas');
+    
+    // ===== LÓGICA PARA POSICIÓN FINAL =====
     const lineaSelect = document.getElementById('linea_final');
     const posicionInput = document.getElementById('posicion_final');
     
@@ -1010,6 +1125,162 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Posición:', this.value);
         });
     }
+    
+    // ===== FUNCIÓN PARA VERIFICAR SI UN REPUESTO YA ESTÁ AGREGADO =====
+    function repuestoYaAgregado(itemId) {
+        const filas = document.querySelectorAll('.fila-repuesto');
+        for (let fila of filas) {
+            const inputId = fila.querySelector('input[name^="otro_id_"]');
+            if (inputId && inputId.value === itemId) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // ===== BUSCADOR DE REPUESTOS =====
+    let timeoutId = null;
+    
+    buscador.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        
+        if (query.length < 2) {
+            resultadosDiv.style.display = 'none';
+            btnAgregar.disabled = true;
+            repuestoSeleccionado = null;
+            return;
+        }
+        
+        timeoutId = setTimeout(() => {
+            fetch(`/api/buscar-repuestos/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    mostrarResultados(data.results);
+                })
+                .catch(error => {
+                    console.error('Error en la búsqueda:', error);
+                    resultadosDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #dc3545;">Error al buscar</div>';
+                    resultadosDiv.style.display = 'block';
+                });
+        }, 300);
+    });
+    
+    function mostrarResultados(resultados) {
+        resultadosDiv.innerHTML = '';
+        
+        if (resultados.length === 0) {
+            resultadosDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #666;">No se encontraron resultados</div>';
+            resultadosDiv.style.display = 'block';
+            btnAgregar.disabled = true;
+            repuestoSeleccionado = null;
+            return;
+        }
+        
+        resultados.forEach(repuesto => {
+            const itemDiv = document.createElement('div');
+            itemDiv.style.cssText = 'padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer; display: flex; justify-content: space-between;';
+            itemDiv.innerHTML = `
+                <div><strong>${repuesto.item}</strong> - ${repuesto.descripcion}</div>
+                <div style="color: #666;">${repuesto.tipo} (Stock: ${repuesto.cantidad})</div>
+            `;
+            
+            itemDiv.addEventListener('click', function() {
+                seleccionarRepuesto(repuesto);
+            });
+            
+            resultadosDiv.appendChild(itemDiv);
+        });
+        
+        resultadosDiv.style.display = 'block';
+    }
+    
+    function seleccionarRepuesto(repuesto) {
+        // Verificar si ya está agregado
+        if (repuestoYaAgregado(repuesto.item)) {
+            alert('Este repuesto ya está agregado a la lista.');
+            buscador.value = '';
+            btnAgregar.disabled = true;
+            repuestoSeleccionado = null;
+            resultadosDiv.style.display = 'none';
+            return;
+        }
+        
+        repuestoSeleccionado = repuesto;
+        buscador.value = `${repuesto.item} - ${repuesto.descripcion}`;
+        resultadosDiv.style.display = 'none';
+        btnAgregar.disabled = false;
+    }
+    
+    // ===== AGREGAR NUEVA FILA =====
+    btnAgregar.addEventListener('click', function() {
+        if (!repuestoSeleccionado) return;
+        
+        // Crear nueva fila
+        const nuevaFila = document.createElement('tr');
+        nuevaFila.className = 'fila-repuesto';
+        nuevaFila.innerHTML = `
+            <td><input type="text" name="otro_id_${contadorFilas}" class="excel-input" value="${repuestoSeleccionado.item}" readonly style="background-color: #f0f0f0;"></td>
+            <td><input type="text" name="otro_desc_${contadorFilas}" class="excel-input" value="${repuestoSeleccionado.descripcion}" readonly style="background-color: #f0f0f0;"></td>
+            <td><input type="number" name="otro_cant_${contadorFilas}" class="excel-input" min="0" value="1"></td>
+            <td><input type="number" name="otro_total_${contadorFilas}" class="excel-input" min="0" value="4"></td>
+            <td><input type="text" name="otro_obs_${contadorFilas}" class="excel-input" placeholder="Observaciones"></td>
+            <td style="text-align: center;">
+                <button type="button" class="btn-eliminar" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer;">X</button>
+            </td>
+        `;
+        
+        tbody.appendChild(nuevaFila);
+        
+        contadorFilas++;
+        totalFilasInput.value = contadorFilas;
+        
+        // Limpiar buscador
+        buscador.value = '';
+        btnAgregar.disabled = true;
+        repuestoSeleccionado = null;
+        
+        // Agregar evento al botón eliminar
+        nuevaFila.querySelector('.btn-eliminar').addEventListener('click', function() {
+            eliminarFila(this);
+        });
+    });
+    
+    // ===== ELIMINAR FILA =====
+    function eliminarFila(boton) {
+        const fila = boton.closest('tr');
+        const filas = document.querySelectorAll('.fila-repuesto');
+        
+        if (filas.length <= 1) {
+            // Si es la única fila, solo limpiar sus valores
+            const inputs = fila.querySelectorAll('input');
+            inputs[0].value = '';  // ID
+            inputs[1].value = '';  // Descripción
+            inputs[2].value = '1'; // Cantidad
+            inputs[3].value = '4'; // Cantidad Total
+            inputs[4].value = '';  // Observaciones
+            return;
+        }
+        
+        fila.remove();
+    }
+    
+    // Asignar eventos a los botones eliminar existentes
+    document.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            eliminarFila(this);
+        });
+    });
+    
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        if (!buscador.contains(event.target) && !resultadosDiv.contains(event.target)) {
+            resultadosDiv.style.display = 'none';
+        }
+    });
 });
 </script>
 {% endblock %}
