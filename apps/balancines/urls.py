@@ -82,4 +82,9 @@ path('api/buscar-repuestos/', views.buscar_repuestos_api, name='buscar_repuestos
 path('api/buscar-usuarios/', views.buscar_usuarios_api, name='buscar_usuarios_api'),
 
 path('api/buscar-jefes/', views.buscar_jefes_api, name='buscar_jefes_api'),
+
+#=== para historial torre ==== 
+
+path('historial-torre/', views.historial_torre_con_filtros, name='historial_torre_filtros'),
+
 ]

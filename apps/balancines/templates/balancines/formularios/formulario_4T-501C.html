@@ -724,12 +724,14 @@
             </tr>
         </table>
         
-        <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
+         <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
         <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
             RECAMBIO DE PARTES Y PIEZAS
         </div>
         
         {% for grupo, items in repuestos_agrupados.items %}
+            <!-- Título del grupo -->
+           
             <!-- Tabla para cada grupo -->
             <table class="excel-table" style="margin-bottom: 25px;">
                 <thead>
@@ -740,14 +742,22 @@
                         <th style="width: 15%;" colspan="2">RECAMBIO</th>
                         <th style="width: 20%;">OBSERVACIONES</th>
                     </tr>
+                    <tr>
+                        {% for item in items %}
+                        {% if item.es_conjunto %}
+                        <th><code>{{ item.id_original }}</code></th>
+                        <th>{{ item.descripcion }}</th>
+                        <th style="width: 7%;">UNIT</th>
+                        <th style="width: 8%;">TOTAL</th>
+                        <th style="width: 7%;">SI</th>
+                        <th style="width: 8%;">NO</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
-                    {% for item in items %}
-                        {% if item.es_conjunto %}
-                            <tr class="conjunto-row">
-                                <td><code>{{ item.id_original }}</code></td>
-                                <td colspan="6"><strong>{{ item.descripcion }}</strong></td>
-                            </tr>
+                    
+                            
+                            <!-- COMPONENTES DEL CONJUNTO -->
                             {% for comp in item.componentes %}
                             <tr>
                                 <td><code>{{ comp.id_original }}</code></td>
@@ -766,6 +776,7 @@
                             </tr>
                             {% endfor %}
                         {% else %}  
+                            <!-- ITEMS SUELTOS -->
                             <tr>
                                 <td><code>{{ item.id_original }}</code></td>
                                 <td>{{ item.descripcion }}</td>

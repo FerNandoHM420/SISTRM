@@ -2020,3 +2020,130 @@ def buscar_jefes_api(request):
         })
     
     return JsonResponse({'results': results})
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import Torre, BalancinIndividual, HistorialOH, Linea, TipoBalancin
+from django.conf import settings
+
+@login_required
+def historial_torre_con_filtros(request):
+    """
+    Vista con filtros para buscar torres por línea, número y tipo de balancín
+    """
+    # Obtener todas las líneas para el filtro
+    lineas = Linea.objects.all()
+    
+    # Obtener todos los tipos de balancín para el filtro
+    tipos_balancin = TipoBalancin.objects.all().values_list('codigo', flat=True)
+    
+    # Inicializar variables
+    torre_seleccionada = None
+    balancines_data = []
+    total_oh_torre = 0
+    ultimo_oh_torre = None
+    torres_linea = []
+    linea_seleccionada = None
+    
+    # Procesar filtros si vienen del formulario
+    linea_id = request.GET.get('linea')
+    numero_torre = request.GET.get('numero_torre')
+    tipo_balancin = request.GET.get('tipo_balancin')
+    
+    # 🔹 Si hay línea seleccionada, obtener todas sus torres (ordenadas)
+    if linea_id:
+        try:
+            linea_seleccionada = Linea.objects.get(id=linea_id)
+            # Obtener todas las torres de la línea
+            torres_query = Torre.objects.filter(
+                linea_id=linea_id
+            ).select_related('linea', 'seccion')
+            
+            # Ordenar numéricamente (maneja texto y números)
+            torres_linea = sorted(
+                torres_query, 
+                key=lambda t: (
+                    int(t.numero_torre) if t.numero_torre.isdigit() else float('inf'),
+                    t.numero_torre
+                )
+            )
+            
+        except Linea.DoesNotExist:
+            pass
+    
+    # 🔹 Si hay torre seleccionada, mostrar su detalle
+    if linea_id and numero_torre:
+        try:
+            torre_seleccionada = Torre.objects.select_related('linea', 'seccion').get(
+                linea_id=linea_id,
+                numero_torre=numero_torre
+            )
+            
+            # Obtener los balancines de esta torre
+            balancines = BalancinIndividual.objects.filter(
+                torre=torre_seleccionada
+            ).order_by('sentido')
+            
+            # Preparar datos de balancines
+            for balancin in balancines:
+                # Determinar el tipo de balancín según el sentido
+                if balancin.sentido == 'ASCENDENTE':
+                    tipo_codigo = torre_seleccionada.tipo_balancin_ascendente
+                else:
+                    tipo_codigo = torre_seleccionada.tipo_balancin_descendente
+                
+                # Si hay filtro por tipo, saltar si no coincide
+                if tipo_balancin and tipo_codigo != tipo_balancin:
+                    continue
+                
+                # Obtener historial de OH
+                historial = HistorialOH.objects.filter(
+                    balancin=balancin
+                ).order_by('-fecha_oh')
+                
+                balancin_dict = {
+                    'objeto': balancin,
+                    'codigo': balancin.codigo,
+                    'sentido': balancin.sentido,
+                    'sentido_display': balancin.get_sentido_display(),
+                    'rango_horas_cambio_oh': balancin.rango_horas_cambio_oh,
+                    'observaciones': balancin.observaciones,
+                    'fecha_registro': balancin.fecha_registro,
+                    'tipo_codigo': tipo_codigo,
+                    'oh_historial': historial,
+                    'total_oh': historial.count(),
+                    'ultimo_oh': historial.first() if historial.exists() else None
+                }
+                
+                balancines_data.append(balancin_dict)
+                
+                # Actualizar estadísticas
+                if historial.exists():
+                    total_oh_torre += balancin_dict['total_oh']
+                    if not ultimo_oh_torre or historial.first().fecha_oh > ultimo_oh_torre.fecha_oh:
+                        ultimo_oh_torre = historial.first()
+            
+        except Torre.DoesNotExist:
+            # Si no existe la torre, solo mostrar la lista
+            pass
+    
+    context = {
+        'lineas': lineas,
+        'tipos_balancin': tipos_balancin,
+        'torre': torre_seleccionada,
+        'balancines': balancines_data,
+        'total_oh_torre': total_oh_torre,
+        'ultimo_oh_torre': ultimo_oh_torre,
+        'total_balancines': len(balancines_data),
+        'filtros': {
+            'linea': linea_id,
+            'numero_torre': numero_torre,
+            'tipo_balancin': tipo_balancin,
+        },
+        # Lista de torres ordenadas
+        'torres_linea': torres_linea,
+        'linea_seleccionada': linea_seleccionada,
+        'MEDIA_URL': settings.MEDIA_URL,
+    }
+    
+    return render(request, 'balancines/historial_torre.html', context)
