@@ -1640,6 +1640,9 @@ def obtener_config_torque(tipo):
 
 @login_required
 def crear_formulario_control(request, codigo):
+    """
+    Vista para crear formulario de control de reacondicionamiento
+    """
     # Obtener el balancín
     balancin = get_object_or_404(BalancinIndividual, codigo=codigo)
     
@@ -1648,6 +1651,15 @@ def crear_formulario_control(request, codigo):
     
     # ===== PROCESAR POST (GUARDAR) =====
     if request.method == 'POST':
+        # 🔴 DEBUG: Ver todos los datos que llegan
+        import sys
+        print("=" * 50)
+        print("DATOS RECIBIDOS DEL FORMULARIO:")
+        for key, value in request.POST.items():
+            print(f"  {key}: {value}")
+        print("=" * 50)
+        sys.stdout.flush()
+        
         # Generar código de formulario
         tipo_codigo = balancin.tipo_balancin_codigo
         codigo_formulario = generar_codigo_formulario(tipo_codigo)
@@ -1675,55 +1687,97 @@ def crear_formulario_control(request, codigo):
             usuario_creacion=request.user if request.user.is_authenticated else None
         )
         
-        # Procesar cada repuesto
+        # ===== PROCESAR REPUESTOS (CORREGIDO) =====
         items_procesados = 0
         for key, value in request.POST.items():
-            if key.startswith('reemplazado_'):
-                item_id = key.replace('reemplazado_', '')
-                reemplazado = value == 'on'
+            # Buscar campos que empiecen con 'recambio_'
+            if key.startswith('recambio_'):
+                item_id = key.replace('recambio_', '')
+                print(f"🔍 Encontrado recambio para item_id: {item_id}, valor: {value}")
+                sys.stdout.flush()
+                
+                reemplazado = value == 'SI'
                 
                 if reemplazado:
+                    print(f"  ✅ Repuesto {item_id} será reemplazado")
+                    sys.stdout.flush()
+                    
+                    # Buscar la cantidad
                     cantidad_key = f'cantidad_{item_id}'
                     cantidad = int(request.POST.get(cantidad_key, 0))
+                    print(f"  📦 Cantidad: {cantidad}")
+                    sys.stdout.flush()
                     
                     if cantidad > 0:
-                        # Obtener la configuración
-                        config = ConfiguracionRepuestosPorTipo.objects.get(id=item_id)
-                        repuesto = config.repuesto
-                        
-                        # Guardar stock antes
-                        stock_antes = repuesto.cantidad
-                        
-                        # Descontar stock
-                        repuesto.cantidad -= cantidad
-                        repuesto.fecha_ultimo_movimiento = timezone.now()
-                        repuesto.fecha_ultima_salida = timezone.now()
-                        repuesto.save()
-                        
-                        # Registrar en historial
-                        HistorialRepuesto.objects.create(
-                            repuesto=repuesto,
-                            tipo_movimiento='salida',
-                            cantidad=cantidad,
-                            stock_restante=repuesto.cantidad,
-                            observaciones=f"Salida por formulario {codigo_formulario}"
-                        )
-                        
-                        # Crear el item del formulario
-                        ItemFormularioReacondicionamiento.objects.create(
-                            formulario=formulario,
-                            configuracion=config,
-                            repuesto=repuesto,
-                            id_original=config.id_original,
-                            descripcion=config.descripcion,
-                            cantidad_requerida=config.cantidad_por_balancin,
-                            cantidad_usada=cantidad,
-                            fue_reemplazado=True,
-                            stock_antes=stock_antes,
-                            stock_despues=repuesto.cantidad
-                        )
-                        items_procesados += 1
+                        try:
+                            # 🔴 FORZAR la carga del repuesto con select_related
+                            config = ConfiguracionRepuestosPorTipo.objects.select_related('repuesto').get(id=item_id)
+                            
+                            # Verificar que el repuesto existe
+                            if not config.repuesto:
+                                print(f"  ❌ ERROR: La configuración {item_id} no tiene repuesto asociado")
+                                sys.stdout.flush()
+                                continue
+                            
+                            repuesto = config.repuesto
+                            
+                            print(f"  🔧 Config encontrada: {config.id_original} - {config.descripcion[:30]}")
+                            print(f"  📊 Stock antes: {repuesto.cantidad}")
+                            sys.stdout.flush()
+                            
+                            # Guardar stock antes
+                            stock_antes = repuesto.cantidad
+                            
+                            # Descontar stock
+                            repuesto.cantidad -= cantidad
+                            repuesto.fecha_ultimo_movimiento = timezone.now()
+                            repuesto.fecha_ultima_salida = timezone.now()
+                            repuesto.save()
+                            
+                            print(f"  📊 Stock después: {repuesto.cantidad}")
+                            sys.stdout.flush()
+                            
+                            # Registrar en historial
+                            HistorialRepuesto.objects.create(
+                                repuesto=repuesto,
+                                tipo_movimiento='salida',
+                                cantidad=cantidad,
+                                stock_restante=repuesto.cantidad,
+                                observaciones=f"Salida por formulario {codigo_formulario}"
+                            )
+                            
+                            # Crear el item del formulario
+                            ItemFormularioReacondicionamiento.objects.create(
+                                formulario=formulario,
+                                configuracion=config,
+                                repuesto=repuesto,
+                                id_original=config.id_original,
+                                descripcion=config.descripcion,
+                                cantidad_requerida=config.cantidad_por_balancin,
+                                cantidad_usada=cantidad,
+                                fue_reemplazado=True,
+                                stock_antes=stock_antes,
+                                stock_despues=repuesto.cantidad
+                            )
+                            items_procesados += 1
+                            print(f"  ✅ Item creado, total procesados: {items_procesados}")
+                            sys.stdout.flush()
+                            
+                        except ConfiguracionRepuestosPorTipo.DoesNotExist:
+                            print(f"  ❌ ERROR: No existe configuración con id {item_id}")
+                            sys.stdout.flush()
+                        except Exception as e:
+                            print(f"  ❌ ERROR: {str(e)}")
+                            sys.stdout.flush()
+                    else:
+                        print(f"  ⚠️ Cantidad es 0, no se procesa")
+                        sys.stdout.flush()
+                else:
+                    print(f"  ❌ Repuesto {item_id} NO será reemplazado (valor: {value})")
+                    sys.stdout.flush()
         
+        print(f"🎯 TOTAL PROCESADOS: {items_procesados}")
+        sys.stdout.flush()
         messages.success(request, f'✅ Formulario {codigo_formulario} guardado correctamente. {items_procesados} repuestos procesados.')
         return redirect('dashboard_oh_nuevo')
     
@@ -1732,7 +1786,7 @@ def crear_formulario_control(request, codigo):
     usuarios_tecnicos = Usuario.objects.filter(rol__in=['tecnico', 'supervisor'])
     usuarios_supervisores = Usuario.objects.filter(rol__in=['supervisor', 'jefe'])
     
-    # 👇 AGREGADO: Obtener solo usuarios con rol de jefe
+    # Obtener solo usuarios con rol de jefe
     jefes = Usuario.objects.filter(rol='jefe').order_by('nombre')
     
     # Datos del balancín
@@ -1741,85 +1795,143 @@ def crear_formulario_control(request, codigo):
     torre_actual = torre.numero_torre if torre else 'N/A'
     horas_actuales = ultimo_oh.horas_operacion if ultimo_oh else 0
     
-    # Obtener repuestos configurados
+    # ===== OBTENER REPUESTOS CONFIGURADOS =====
+    from collections import OrderedDict, defaultdict
+    
     tipo_codigo = balancin.tipo_balancin_codigo
     config_repuestos = ConfiguracionRepuestosPorTipo.objects.filter(
         tipo_balancin__codigo=tipo_codigo
     ).select_related('repuesto').order_by('grupo', 'orden')
     
-    # ===== ESTRUCTURA CON CONJUNTOS Y COMPONENTES =====
-    from collections import OrderedDict
+    print(f"Procesando {config_repuestos.count()} repuestos para {tipo_codigo}")
     
-    # Obtener todos los grupos únicos que existen en los datos
-    grupos_existentes = set(config_repuestos.values_list('grupo', flat=True))
-    
-    # Definir el orden deseado de los grupos (prioritario)
-    orden_prioritario = ['POLEAS', 'SEGMENTOS', 'SEGMENTOS_2P', 'SEGMENTOS_4P', 'CONJUNTOS', 'OTROS']
-    
-    # Crear lista final de grupos: primero los prioritarios que existen, luego el resto
-    orden_grupos = []
-    for grupo in orden_prioritario:
-        if grupo in grupos_existentes and grupo not in orden_grupos:
-            orden_grupos.append(grupo)
-    
-    # Agregar cualquier otro grupo que no esté en la lista prioritaria
-    for grupo in grupos_existentes:
-        if grupo not in orden_grupos:
-            orden_grupos.append(grupo)
-    
-    # Inicializar el diccionario con todos los grupos
-    repuestos_agrupados = OrderedDict()
-    for grupo in orden_grupos:
-        repuestos_agrupados[grupo] = []
-    
-    # Procesar cada configuración
-    for config in config_repuestos:
-        grupo = config.grupo
+    # ===== LÓGICA ESPECIAL PARA 14N/4TR-420C (LISTA PLANA SIN GRUPOS) =====
+    if tipo_codigo == '14N/4TR-420C':
+        print("🔧 Tipo 14N/4TR-420C detectado - Mostrando como lista plana")
         
-        # Asegurar que el grupo existe en el diccionario
-        if grupo not in repuestos_agrupados:
-            repuestos_agrupados[grupo] = []
+        # Crear lista de items sueltos
+        items_sueltos = []
         
-        # Si es un conjunto, lo agregamos directamente
-        if config.es_conjunto:
-            repuestos_agrupados[grupo].append({
+        for config in config_repuestos:
+            items_sueltos.append({
                 'id': config.id,
                 'id_original': config.id_original,
                 'descripcion': config.descripcion,
-                'es_conjunto': True,
-                'componentes': []
+                'es_conjunto': False,
+                'cantidad': config.cantidad_por_balancin,
+                'cantidad_total': config.cantidad_total,
+                'orden': config.orden
             })
-        else:
-            # Si es un componente, buscar a qué conjunto pertenece
-            encontrado = False
-            for item in repuestos_agrupados[grupo]:
-                if item['es_conjunto'] and len(item['componentes']) < 4:  # Máximo 4 componentes por conjunto
-                    item['componentes'].append({
+            print(f"  Item agregado: {config.id_original} - {config.descripcion[:30]}")
+        
+        # Ordenar por orden
+        items_sueltos.sort(key=lambda x: x['orden'])
+        
+        print(f"Total items procesados: {len(items_sueltos)}")
+        
+        # Crear diccionario con un grupo vacío
+        repuestos_agrupados = OrderedDict()
+        repuestos_agrupados[''] = items_sueltos  # Grupo sin nombre para que no muestre título
+        
+    else:
+        # ===== LÓGICA NORMAL PARA OTROS TIPOS (con grupos y conjuntos) =====
+        
+        # PASO 1: Identificar TODOS los conjuntos (es_conjunto=True)
+        conjuntos = {}
+        items_sueltos = defaultdict(list)
+        componentes_asignados = set()
+        
+        print("PASO 1: Identificando conjuntos...")
+        for config in config_repuestos:
+            if config.es_conjunto:
+                conjuntos[config.id_original] = {
+                    'id': config.id,
+                    'id_original': config.id_original,
+                    'descripcion': config.descripcion,
+                    'grupo': config.grupo,
+                    'es_conjunto': True,
+                    'componentes': [],
+                    'orden': config.orden
+                }
+                print(f"  Conjunto encontrado: {config.id_original} - {config.descripcion[:30]}...")
+        
+        # PASO 2: Identificar componentes y asignarlos a sus conjuntos
+        print("PASO 2: Asignando componentes a conjuntos...")
+        for config in config_repuestos:
+            if not config.es_conjunto:
+                if config.conjunto_padre_id and config.conjunto_padre_id in conjuntos:
+                    # Es componente de un conjunto
+                    conjuntos[config.conjunto_padre_id]['componentes'].append({
                         'id': config.id,
                         'id_original': config.id_original,
                         'descripcion': config.descripcion,
                         'cantidad': config.cantidad_por_balancin,
                         'cantidad_total': config.cantidad_total,
+                        'orden': config.orden
                     })
-                    encontrado = True
-                    break
-            
-            # Si no encontró conjunto, lo agregamos como item suelto
-            if not encontrado:
-                repuestos_agrupados[grupo].append({
-                    'id': config.id,
-                    'id_original': config.id_original,
-                    'descripcion': config.descripcion,
-                    'es_conjunto': False,
-                    'cantidad': config.cantidad_por_balancin,
-                    'cantidad_total': config.cantidad_total,
-                })
+                    componentes_asignados.add(config.id)
+                    print(f"  Componente {config.id_original} asignado a conjunto {config.conjunto_padre_id}")
+                else:
+                    # Es item suelto (sin conjunto padre)
+                    items_sueltos[config.grupo].append({
+                        'id': config.id,
+                        'id_original': config.id_original,
+                        'descripcion': config.descripcion,
+                        'es_conjunto': False,
+                        'cantidad': config.cantidad_por_balancin,
+                        'cantidad_total': config.cantidad_total,
+                        'orden': config.orden
+                    })
+                    print(f"  Item suelto: {config.id_original} en grupo {config.grupo}")
     
-    # Eliminar grupos vacíos
-    repuestos_agrupados = OrderedDict([
-        (grupo, items) for grupo, items in repuestos_agrupados.items() if items
-    ])
+        # PASO 3: Orden de grupos según el tipo de balancín
+        if tipo_codigo in ['4T-501C', '6T-501C', '8T-501C', '10T-501C', '12T-501C']:
+            orden_grupos = ['POLEAS', 'SEGMENTOS_2P', 'SEGMENTOS_4P', 'CONJUNTOS', 'OTROS']
     
+        elif tipo_codigo in ['8N/4TR-420C', '10N/4TR-420C', '14N/4TR-420C']:
+            orden_grupos = ['POLEAS', 'SEGMENTOS_2N', 'SEGMENTOS_4N', 'SEGMENTOS_4N/TR', 'CONJUNTOS', 'OTROS']
+    
+        elif tipo_codigo == '16N/4TR-420C':
+            orden_grupos = ['POLEAS', 'SEGMENTOS_2S', 'SEGMENTOS_2P', 'CONJUNTOS_4P4S', 'OTROS']
+    
+        elif tipo_codigo == '12N/4TR-420C':
+            orden_grupos = ['POLEAS', 'POLEAS_SENSOR', 'SEGMENTOS_2S', 'SEGMENTOS_4N/TR', 'SEGMENTOS_4N/TR_2', 'CONJUNTOS', 'OTROS']
+    
+        elif tipo_codigo in ['4T/4N-420C', '8T/8N-420C']:
+            orden_grupos = ['POLEAS', 'SEGMENTOS', 'SEGMENTOS_2S', 'SEGMENTOS_2P', 'SEGMENTOS_2N', 'SEGMENTOS_4N', 'CONJUNTOS', 'OTROS']
+    
+        else:
+            orden_grupos = ['POLEAS', 'SEGMENTOS', 'CONJUNTOS', 'OTROS']
+        
+        repuestos_agrupados = OrderedDict()
+        
+        # Inicializar todos los grupos
+        for grupo in orden_grupos:
+            repuestos_agrupados[grupo] = []
+        
+        # PASO 4: Agregar conjuntos a sus grupos
+        print("PASO 4: Agregando conjuntos a grupos...")
+        for conjunto in conjuntos.values():
+            grupo = conjunto['grupo']
+            if grupo in repuestos_agrupados:
+                conjunto['componentes'].sort(key=lambda x: x['orden'])
+                repuestos_agrupados[grupo].append(conjunto)
+                print(f"  Conjunto {conjunto['id_original']} agregado a grupo {grupo} con {len(conjunto['componentes'])} componentes")
+        
+        # PASO 5: Agregar items sueltos a sus grupos
+        print("PASO 5: Agregando items sueltos...")
+        for grupo, items in items_sueltos.items():
+            if grupo in repuestos_agrupados:
+                items.sort(key=lambda x: x['orden'])
+                repuestos_agrupados[grupo].extend(items)
+                print(f"  {len(items)} items sueltos agregados a grupo {grupo}")
+        
+        # PASO 6: Eliminar grupos vacíos
+        repuestos_agrupados = OrderedDict([
+            (grupo, items) for grupo, items in repuestos_agrupados.items() if items
+        ])
+    
+    # ===== CONTEXTO PARA EL TEMPLATE =====
     context = {
         'balancin': balancin,
         'tipo_balancin': tipo_codigo,
@@ -1831,15 +1943,15 @@ def crear_formulario_control(request, codigo):
         'lineas': lineas,
         'usuarios_tecnicos': usuarios_tecnicos,
         'usuarios_supervisores': usuarios_supervisores,
-        'jefes': jefes,  # 👈 LISTA DE JEFES AGREGADA
+        'jefes': jefes,
         'repuestos_agrupados': repuestos_agrupados,
         'total_repuestos': config_repuestos.count(),
         'config': obtener_config_torque(tipo_codigo),
     }
     
+    # Renderizar el template específico para este tipo
     template_name = f'balancines/formularios/formulario_{tipo_codigo.replace("/", "-")}.html'
     return render(request, template_name, context)
-
 
 def generar_codigo_formulario(tipo):
     """
@@ -2026,6 +2138,9 @@ from django.contrib.auth.decorators import login_required
 from .models import Torre, BalancinIndividual, HistorialOH, Linea, TipoBalancin
 from django.conf import settings
 
+
+
+
 @login_required
 def historial_torre_con_filtros(request):
     """
@@ -2044,11 +2159,13 @@ def historial_torre_con_filtros(request):
     ultimo_oh_torre = None
     torres_linea = []
     linea_seleccionada = None
+    torres_duplicadas = []
     
     # Procesar filtros si vienen del formulario
     linea_id = request.GET.get('linea')
     numero_torre = request.GET.get('numero_torre')
     tipo_balancin = request.GET.get('tipo_balancin')
+    seccion_id = request.GET.get('seccion_id')
     
     # 🔹 Si hay línea seleccionada, obtener todas sus torres (ordenadas)
     if linea_id:
@@ -2071,14 +2188,31 @@ def historial_torre_con_filtros(request):
         except Linea.DoesNotExist:
             pass
     
-    # 🔹 Si hay torre seleccionada, mostrar su detalle
+    # 🔹 Si hay torre seleccionada, mostrar su detalle (manejando duplicados)
     if linea_id and numero_torre:
-        try:
-            torre_seleccionada = Torre.objects.select_related('linea', 'seccion').get(
-                linea_id=linea_id,
-                numero_torre=numero_torre
-            )
-            
+        # Buscar todas las torres que coincidan con línea y número
+        torres_coincidentes = Torre.objects.select_related('linea', 'seccion').filter(
+            linea_id=linea_id,
+            numero_torre=numero_torre
+        )
+        
+        if torres_coincidentes.count() > 1:
+            # Si hay múltiples torres con el mismo número
+            if seccion_id:
+                # Si se especificó una sección, buscar esa torre específica
+                try:
+                    torre_seleccionada = torres_coincidentes.get(seccion_id=seccion_id)
+                except Torre.DoesNotExist:
+                    torres_duplicadas = torres_coincidentes
+            else:
+                # Si no se especificó sección, mostrar todas para que el usuario elija
+                torres_duplicadas = torres_coincidentes
+        elif torres_coincidentes.count() == 1:
+            # Si hay una sola torre, seleccionarla directamente
+            torre_seleccionada = torres_coincidentes.first()
+        
+        # Si hay una torre seleccionada (única o específica), mostrar sus balancines
+        if torre_seleccionada:
             # Obtener los balancines de esta torre
             balancines = BalancinIndividual.objects.filter(
                 torre=torre_seleccionada
@@ -2122,10 +2256,6 @@ def historial_torre_con_filtros(request):
                     total_oh_torre += balancin_dict['total_oh']
                     if not ultimo_oh_torre or historial.first().fecha_oh > ultimo_oh_torre.fecha_oh:
                         ultimo_oh_torre = historial.first()
-            
-        except Torre.DoesNotExist:
-            # Si no existe la torre, solo mostrar la lista
-            pass
     
     context = {
         'lineas': lineas,
@@ -2139,10 +2269,11 @@ def historial_torre_con_filtros(request):
             'linea': linea_id,
             'numero_torre': numero_torre,
             'tipo_balancin': tipo_balancin,
+            'seccion_id': seccion_id,
         },
-        # Lista de torres ordenadas
         'torres_linea': torres_linea,
         'linea_seleccionada': linea_seleccionada,
+        'torres_duplicadas': torres_duplicadas,
         'MEDIA_URL': settings.MEDIA_URL,
     }
     

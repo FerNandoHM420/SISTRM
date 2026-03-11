@@ -568,9 +568,7 @@
             </tr>
         </table>
         
-        <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
-         <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
-        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
+         <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
             RECAMBIO DE PARTES Y PIEZAS
         </div>
         
@@ -607,8 +605,12 @@
                             <tr>
                                 <td><code>{{ comp.id_original }}</code></td>
                                 <td>{{ comp.descripcion }}</td>
-                                <td style="text-align: center;">{{ comp.cantidad }}</td>
-                                <td style="text-align: center;">{{ comp.cantidad_total }}</td>
+                               <td style="text-align: center;">
+    <input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" readonly>
+</td> 
+                            <td style="text-align: center;">
+    <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" readonly>
+</td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
                                 </td>
@@ -625,8 +627,12 @@
                             <tr>
                                 <td><code>{{ item.id_original }}</code></td>
                                 <td>{{ item.descripcion }}</td>
-                                <td style="text-align: center;">{{ item.cantidad }}</td>
-                                <td style="text-align: center;">{{ item.cantidad_total }}</td>
+                                <td style="text-align: center;">
+    <input type="number" name="cantidad_{{ item.id }}" value="{{ item.cantidad }}" min="0" class="excel-input" readonly>
+</td>
+                                <td style="text-align: center;">
+    <input type="number" name="cantidad_total_{{ item.id }}" value="{{ item.cantidad_total }}" min="0" class="excel-input" readonly>
+</td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ item.id }}" value="SI" class="excel-radio">
                                 </td>
@@ -710,8 +716,8 @@
                     <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Poleas</div>
                     {% for i in "1234567890123456"|make_list %}
                         <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
-                            {% if forloop.counter > 4 %}background-color: #e0e0e0;{% endif %}">
-                            {% if forloop.counter <= 4 %}
+                            {% if forloop.counter > 12 %}background-color: #e0e0e0;{% endif %}">
+                            {% if forloop.counter <= 12 %}
                                 <input type="checkbox" name="polea_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
                             {% endif %}
                         </div>
@@ -732,8 +738,8 @@
                     <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Segmentos 2P</div>
                     {% for i in "12345678"|make_list %}
                         <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
-                            {% if forloop.counter > 2 %}background-color: #e0e0e0;{% endif %}">
-                            {% if forloop.counter <= 2  %}
+                            {% if forloop.counter > 6 %}background-color: #e0e0e0;{% endif %}">
+                            {% if forloop.counter <= 6  %}
                                 <input type="checkbox" name="seg2p_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
                             {% endif %}
                         </div>
@@ -771,8 +777,8 @@
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
                         <input type="checkbox" name="pr1_2" style="width: 22px; height: 22px;">
                     </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
@@ -811,10 +817,10 @@
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
                         <input type="checkbox" name="se2_2" style="width: 22px; height: 22px;">
                     </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                 </div>
             </div>
 
@@ -834,10 +840,10 @@
                 </div>
                 <div style="display: flex;">
                     <div style="width: 200px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Consola de suspencion</div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                 </div>
             </div>
         </div>
@@ -847,16 +853,20 @@
             Puntos de lubricacion (gramos)
         </div>
 
-        <div style="display: flex; gap: 250px; margin-bottom: 40px;">
+        <div style="display: flex; gap: 150px; margin-bottom: 40px;">
             <!-- PL-S2P -->
-            <div style="border: 2px solid #000; width: 280px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+            <div style="border: 2px solid #000; width: 425px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
                 <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S2P</div>
                 <div style="display: flex; border-bottom: 1px solid #000;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">4</div>
+                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">4</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">5</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">6</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">7</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0;">8</div>
                 </div>
                 <div style="display: flex;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 2P</div>
@@ -868,16 +878,23 @@
                     </div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                       <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                       <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    
                 </div>
             </div>
 
             <!-- PL-S4P -->
-            <div style="border: 2px solid #000; width: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+            <div style="border: 2px solid #000; width: 350px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
                 <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S4P</div>
                 <div style="display: flex; border-bottom: 1px solid #000;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">2</div>
+                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+                      <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0;">4</div>
                 </div>
                 <div style="display: flex;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</div>
@@ -885,6 +902,10 @@
                         <input type="checkbox" style="width: 22px; height: 22px;">
                     </div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 60px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    
+                    
                 </div>
             </div>
 

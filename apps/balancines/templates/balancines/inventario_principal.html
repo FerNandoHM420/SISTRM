@@ -32,13 +32,29 @@
                         <a href="{% url 'lista_tipos_balancin' %}" class="btn btn-outline-primary">
                             <i class="fas fa-eye"></i> Ver Lista
                         </a>
-                        
                     </div>
                 </div>
             </div>
         </div>
 
-       
+        <!-- NUEVA TARJETA: Historial de Torres (estilo similar) -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-gradient-info text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-tower"></i> Historial de Torres</h4>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Consulta el historial completo de overhauls por torre.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{% url 'historial_torre_filtros' %}" class="btn btn-outline-info">
+                            <i class="fas fa-search"></i> Ver Historial
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Repuestos para Balancines -->
         <div class="col-xl-4 col-lg-6">
@@ -55,7 +71,6 @@
                         <a href="{% url 'lista_repuestos_balancin' %}" class="btn btn-outline-warning">
                             <i class="fas fa-eye"></i> Ver Lista
                         </a>
-                        
                     </div>
                 </div>
             </div>
@@ -76,7 +91,6 @@
                         <a href="{% url 'lista_repuestos_adicionales' %}" class="btn btn-outline-info">
                             <i class="fas fa-eye"></i> Ver Lista
                         </a>
-                       
                     </div>
                 </div>
             </div>
@@ -102,61 +116,61 @@
             </div>
         </div>
 
-     <!-- Búsqueda Rápida -->
-<div class="col-xl-4 col-lg-6">
-    <div class="card h-100 shadow-lg border-0 hover-card">
-        <div class="card-header bg-gradient-purple text-white py-4">
-            <h4 class="mb-0"><i class="fas fa-search"></i> Búsqueda Rápida</h4>
-        </div>
-        <div class="card-body">
-            <form method="get" action="{% url 'buscar_inventario' %}">
-                <div class="mb-3">
-                    <label class="form-label">Buscar en inventario:</label>
-                    <input type="text" 
-                           class="form-control" 
-                           name="q" 
-                           placeholder="Serial, código, descripción..."
-                           value="{{ request.GET.q|default:'' }}"
-                           autofocus>
+        <!-- Búsqueda Rápida -->
+        <div class="col-xl-4 col-lg-6">
+            <div class="card h-100 shadow-lg border-0 hover-card">
+                <div class="card-header bg-gradient-primary text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-search"></i> Búsqueda Rápida</h4>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Tipo:</label>
-                    <select class="form-select" name="tipo">
-                        <option value="">Todo el inventario</option>
-                        <option value="tipos" {% if request.GET.tipo == 'tipos' %}selected{% endif %}>
-                            Tipos de Balancín
-                        </option>
-                        <option value="balancines" {% if request.GET.tipo == 'balancines' %}selected{% endif %}>
-                            Balancines Individuales
-                        </option>
-                        <option value="repuestos" {% if request.GET.tipo == 'repuestos' %}selected{% endif %}>
-                            Repuestos para Balancines
-                        </option>
-                        <option value="adicionales" {% if request.GET.tipo == 'adicionales' %}selected{% endif %}>
-                            Repuestos Adicionales
-                        </option>
-                    </select>
+                <div class="card-body">
+                    <form method="get" action="{% url 'buscar_inventario' %}">
+                        <div class="mb-3">
+                            <label class="form-label">Buscar en inventario:</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="q" 
+                                   placeholder="Serial, código, descripción..."
+                                   value="{{ request.GET.q|default:'' }}"
+                                   autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo:</label>
+                            <select class="form-select" name="tipo">
+                                <option value="">Todo el inventario</option>
+                                <option value="tipos" {% if request.GET.tipo == 'tipos' %}selected{% endif %}>
+                                    Tipos de Balancín
+                                </option>
+                                <option value="balancines" {% if request.GET.tipo == 'balancines' %}selected{% endif %}>
+                                    Balancines Individuales
+                                </option>
+                                <option value="repuestos" {% if request.GET.tipo == 'repuestos' %}selected{% endif %}>
+                                    Repuestos para Balancines
+                                </option>
+                                <option value="adicionales" {% if request.GET.tipo == 'adicionales' %}selected{% endif %}>
+                                    Repuestos Adicionales
+                                </option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        {% if request.GET.q %}
+                            <a href="{% url 'inventario_principal' %}" class="btn btn-outline-secondary w-100 mt-2">
+                                <i class="fas fa-times"></i> Limpiar Búsqueda
+                            </a>
+                        {% endif %}
+                    </form>
+                    
+                    <hr class="my-3">
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> Busca por serial, código o descripción
+                        </small>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-purple w-100">
-                    <i class="fas fa-search"></i> Buscar
-                </button>
-                {% if request.GET.q %}
-                    <a href="{% url 'inventario_principal' %}" class="btn btn-outline-secondary w-100 mt-2">
-                        <i class="fas fa-times"></i> Limpiar Búsqueda
-                    </a>
-                {% endif %}
-            </form>
-            
-            <!-- Estadísticas rápidas -->
-            <hr class="my-3">
-            <div class="text-center">
-                <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> Busca por serial, código, descripción o ubicación
-                </small>
             </div>
         </div>
     </div>
-</div>
 
     <!-- Acciones rápidas -->
     <div class="row mt-5">
@@ -181,15 +195,14 @@
                         </div>
                         <div class="col-md-3 mb-3">
                            <a href="{% url 'exportar_inventario_excel' %}" class="btn btn-outline-warning w-100">
-
                                 <i class="fas fa-file-export"></i><br>
                                 Exportar Inventario
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="#" class="btn btn-outline-danger w-100">
-                                <i class="fas fa-exclamation-triangle"></i><br>
-                                Stock Bajo
+                            <a href="{% url 'historial_torre_filtros' %}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-tower"></i><br>
+                                Historial Torres
                             </a>
                         </div>
                     </div>
@@ -207,4 +220,36 @@
         </div>
     </div>
 </div>
+
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+}
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+.bg-gradient-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+.btn-outline-info {
+    color: #00f2fe;
+    border: 2px solid #00f2fe;
+    background: transparent;
+}
+.btn-outline-info:hover {
+    color: #fff;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-color: transparent;
+}
+</style>
 {% endblock %}

@@ -391,261 +391,105 @@
         padding: 8px;
     }
     
-  /* ===== ESTILOS DE IMPRESIÓN MEJORADOS ===== */
-@media print {
-    @page {
-        size: A4 landscape;
-        margin: 0.5cm;
+    /* ===== ESTILOS DE IMPRESIÓN ===== */
+    @media print {
+        body {
+            padding: 0.2cm;
+            background: white;
+            font-size: 9pt;
+        }
+        
+        .excel-container {
+            max-width: 100%;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+        }
+        
+        /* Ocultar botones y elementos no deseados */
+        .no-print {
+            display: none !important;
+        }
+        
+        /* Asegurar que los fondos grises se impriman */
+        .excel-table th,
+        .lube-header-cell,
+        .posicion-label,
+        .firma-table th,
+        .torque-label,
+        .lube-label,
+        .excel-table .header-cell,
+        .grupo-titulo,
+        .excel-subheader {
+            background-color: #bcbcbc !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Hacer que los checkboxes se vean bien impresos */
+        input[type="checkbox"] {
+            border: 1px solid #000;
+            width: 16px;
+            height: 16px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: white;
+        }
+        
+        input[type="checkbox"]:checked::before {
+            content: "✓";
+            display: block;
+            text-align: center;
+            line-height: 16px;
+            font-size: 14px;
+            color: black;
+        }
+        
+        /* Evitar que se corten las tablas */
+        table, tr, td, th, div {
+            page-break-inside: avoid;
+        }
+        
+        /* Asegurar que los bordes se impriman */
+        .excel-table, .firma-table, .posicion-table,
+        .excel-table td, .excel-table th,
+        .firma-table td, .firma-table th,
+        .posicion-table td {
+            border: 1px solid #000 !important;
+        }
+        
+        /* Escalar para que quepa en la página */
+        .excel-container {
+            transform: scale(0.98);
+            transform-origin: top left;
+            width: 100%;
+        }
+        
+        /* Ajustar inputs para impresión */
+        .excel-input, .excel-select {
+            border: none;
+            background: transparent;
+            padding: 2px;
+        }
+        
+        /* Mostrar bordes de celdas grises */
+        [style*="background-color: #e0e0e0"] {
+            background-color: #e0e0e0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Evitar saltos de página dentro de secciones */
+        .torque-section, .lubricacion-section {
+            page-break-inside: avoid;
+        }
+        
+        /* Asegurar que los encabezados se repitan */
+        thead {
+            display: table-header-group;
+        }
     }
-    
-    body {
-        background: white;
-        margin: 0;
-        padding: 0;
-        font-size: 10pt;
-        width: 100%;
-        height: 100%;
-    }
-    
-    .excel-container {
-        max-width: 100%;
-        width: 100%;
-        padding: 0;
-        margin: 0;
-        border: none;
-        box-shadow: none;
-    }
-    
-    /* Ocultar elementos no deseados */
-    .no-print,
-    .btn,
-    .btn-success,
-    .btn-primary,
-    .btn-secondary,
-    button,
-    #buscador-repuestos,
-    #btn-agregar,
-    #buscador-usuarios,
-    #btn-agregar-usuario,
-    .btn-eliminar,
-    .btn-eliminar-realizado,
-    #resultados-busqueda,
-    #resultados-usuarios,
-    #resultados-usuario-2 {
-        display: none !important;
-    }
-    
-    /* Mostrar los valores de los inputs */
-    input, select, textarea {
-        border: none !important;
-        background: transparent !important;
-        font-family: 'Calibri', 'Arial', sans-serif;
-        font-size: 9pt;
-        color: black !important;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        height: auto !important;
-    }
-    
-    /* Para checkboxes y radios */
-    input[type="checkbox"], input[type="radio"] {
-        display: inline-block;
-        width: 12px !important;
-        height: 12px !important;
-        border: 1px solid #000 !important;
-        background-color: white !important;
-        margin: 0 auto !important;
-        padding: 0 !important;
-    }
-    
-    input[type="checkbox"]:checked::before,
-    input[type="radio"]:checked::before {
-        content: "✓";
-        display: block;
-        text-align: center;
-        line-height: 12px;
-        font-size: 10px;
-        color: black;
-    }
-    
-    /* Para selects */
-    select {
-        border: none !important;
-        background: transparent !important;
-        color: black !important;
-    }
-    
-    /* Asegurar que los fondos se impriman */
-    .excel-table th,
-    .excel-subheader,
-    .posicion-label,
-    .firma-table th,
-    [style*="background-color: #bcbcbc"],
-    [style*="background-color: #c0c0c0"],
-    [style*="background:#c0c0c0"] {
-        background-color: #bcbcbc !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        color: black !important;
-    }
-    
-    /* Mantener los fondos grises de celdas inactivas */
-    [style*="background-color: #e0e0e0"],
-    [style*="background:#e0e0e0"] {
-        background-color: #e0e0e0 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-    
-    /* Evitar saltos de página */
-    table, tr, td, th, div {
-        page-break-inside: avoid;
-    }
-    
-    /* Asegurar que los bordes se impriman */
-    .excel-table, .firma-table, .posicion-table,
-    .excel-table td, .excel-table th,
-    .firma-table td, .firma-table th,
-    .posicion-table td,
-    [style*="border: 2px solid #000"],
-    [style*="border: 1px solid #000"] {
-        border: 1px solid #000 !important;
-    }
-    
-    /* Hacer que las tablas ocupen todo el ancho */
-    .excel-table {
-        width: 100% !important;
-        font-size: 9pt;
-        margin-bottom: 5px;
-        table-layout: fixed;
-    }
-    
-    /* Ajustar el encabezado */
-    .excel-header {
-        font-size: 14pt;
-        margin-bottom: 5px;
-        padding-bottom: 3px;
-        width: 100%;
-    }
-    
-    .excel-header div:first-child {
-        font-size: 16pt;
-    }
-    
-    .excel-header div:nth-child(2) {
-        font-size: 14pt;
-    }
-    
-    .excel-header div:nth-child(3) {
-        font-size: 16pt;
-        margin: 3px 0;
-    }
-    
-    /* Reducir padding al mínimo */
-    td, th {
-        padding: 2px !important;
-        vertical-align: middle !important;
-    }
-    
-    /* Ajustar altura de celdas */
-    [style*="height: 50px;"],
-    [style*="height: 45px;"],
-    [style*="height: 30px;"] {
-        height: auto !important;
-        min-height: 18px !important;
-    }
-    
-    /* Ajustar títulos de sección */
-    [style*="background:#c0c0c0; font-weight:bold; font-size:14pt;"] {
-        font-size: 12pt !important;
-        padding: 3px !important;
-        margin: 8px 0 5px 0 !important;
-        width: 100%;
-    }
-    
-    /* Ajustar posición final */
-    .posicion-table {
-        width: 50%;
-        margin-left: auto;
-        margin-top: 5px;
-    }
-    
-    /* Ajustar tablas de firmas */
-    .firma-table {
-        width: 100% !important;
-        margin-top: 5px !important;
-    }
-    
-    #tabla-realizado {
-        width: 100% !important;
-    }
-    
-    /* Ajustar contenedores flex */
-    [style*="display: flex;"] {
-        display: flex !important;
-        flex-wrap: wrap;
-        width: 100%;
-    }
-    
-    /* Ajustar gaps */
-    [style*="gap: 50px;"] {
-        gap: 10px !important;
-    }
-    
-    [style*="gap: 250px;"] {
-        gap: 15px !important;
-    }
-    
-    [style*="gap: 40px;"] {
-        gap: 10px !important;
-    }
-    
-    /* Ajustar anchos fijos */
-    [style*="width: 600px;"],
-    [style*="width: 360px;"],
-    [style*="width: 400px;"],
-    [style*="width: 280px;"],
-    [style*="width: 200px;"],
-    [style*="width: 220px;"] {
-        width: auto !important;
-        flex: 1 1 auto;
-    }
-    
-    /* Ajustar la primera columna fija */
-    [style*="width: 120px;"] {
-        width: 80px !important;
-    }
-    
-    [style*="width: 100px;"] {
-        width: 70px !important;
-    }
-    
-    /* Ajustar celdas de números */
-    [style*="width: 30px;"] {
-        width: 20px !important;
-    }
-    
-    [style*="width: 40px;"] {
-        width: 25px !important;
-    }
-    
-    [style*="width: 50px;"] {
-        width: 30px !important;
-    }
-    
-    [style*="width: 80px;"] {
-        width: 50px !important;
-    }
-    
-    /* Asegurar que todo el contenido ocupe el ancho */
-    .excel-container > * {
-        width: 100%;
-    }
-}
 </style>
 {% endblock %}
 
@@ -723,88 +567,96 @@
                 </td>
             </tr>
         </table>
-        
     <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
-        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
-            RECAMBIO DE PARTES Y PIEZAS
-        </div>
-        
+<div class="excel-subheader" style="font-size: 14pt; text-align: center;">
+    RECAMBIO DE PARTES Y PIEZAS
+</div>
+
+<!-- UNA SOLA TABLA para TODOS los grupos -->
+<table class="excel-table" style="margin-bottom: 25px;">
+    <thead>
+        <tr>
+            <th style="width: 10%;">ID</th>
+            <th style="width: 40%;">DESCRIPCIÓN</th>
+            <th style="width: 7%;">CANT.</th>
+            <th style="width: 8%;">TOTAL</th>
+            <th style="width: 7%;" colspan="2">RECAMBIO</th>
+            <th style="width: 28%;">OBSERVACIONES</th>
+        </tr>
+    </thead>
+    <tbody>
         {% for grupo, items in repuestos_agrupados.items %}
-            <!-- Título del grupo -->
-           
-            <!-- Tabla para cada grupo -->
-            <table class="excel-table" style="margin-bottom: 25px;">
-                <thead>
-                    <tr>
-                        <th style="width: 10%;">ID</th>
-                        <th style="width: 40%;">DESCRIPCIÓN</th>
-                        <th style="width: 15%;" colspan="2">CANTIDAD</th>
-                        <th style="width: 15%;" colspan="2">RECAMBIO</th>
-                        <th style="width: 20%;">OBSERVACIONES</th>
+            <!-- Fila de título del grupo -->
+            <tr style="background-color: #c0c0c0; font-weight: bold;">
+                <td colspan="7" style="padding: 8px; text-align: center; border-top: 2px solid #000;">
+                    {{ grupo }}
+                </td>
+            </tr>
+            
+            <!-- Items del grupo -->
+            {% for item in items %}
+                {% if item.es_conjunto %}
+                    <!-- Es un CONJUNTO - mostrar una fila gris para el conjunto -->
+                    <tr style="background-color: #f0f0f0; font-weight: bold;">
+                        <td><code>{{ item.id_original }}</code></td>
+                        <td colspan="6">{{ item.descripcion }}</td>
                     </tr>
-                    <tr>
-                        {% for item in items %}
-                        {% if item.es_conjunto %}
-                        <th><code>{{ item.id_original }}</code></th>
-                        <th>{{ item.descripcion }}</th>
-                        <th style="width: 7%;">UNIT</th>
-                        <th style="width: 8%;">TOTAL</th>
-                        <th style="width: 7%;">SI</th>
-                        <th style="width: 8%;">NO</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
                     
-                            
-                            <!-- COMPONENTES DEL CONJUNTO -->
-                            {% for comp in item.componentes %}
-                            <tr>
-                                <td><code>{{ comp.id_original }}</code></td>
-                                <td>{{ comp.descripcion }}</td>
-                               <td style="text-align: center;">
-    <input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" readonly>
-</td> 
-                            <td style="text-align: center;">
-    <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" readonly>
-</td>
-                                <td style="text-align: center;">
-                                    <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
-                                </td>
-                                <td style="text-align: center;">
-                                    <input type="radio" name="recambio_{{ comp.id }}" value="NO" class="excel-radio" checked>
-                                </td>
-                                <td>
-                                    <input type="text" name="obs_{{ comp.id }}" class="excel-input" placeholder="">
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        {% else %}  
-                            <!-- ITEMS SUELTOS -->
-                            <tr>
-                                <td><code>{{ item.id_original }}</code></td>
-                                <td>{{ item.descripcion }}</td>
-                                <td style="text-align: center;">
-    <input type="number" name="cantidad_{{ item.id }}" value="{{ item.cantidad }}" min="0" class="excel-input" readonly>
-</td>
-                                <td style="text-align: center;">
-    <input type="number" name="cantidad_total_{{ item.id }}" value="{{ item.cantidad_total }}" min="0" class="excel-input" readonly>
-</td>
-                                <td style="text-align: center;">
-                                    <input type="radio" name="recambio_{{ item.id }}" value="SI" class="excel-radio">
-                                </td>
-                                <td style="text-align: center;">
-                                    <input type="radio" name="recambio_{{ item.id }}" value="NO" class="excel-radio" checked>
-                                </td>
-                                <td>
-                                    <input type="text" name="obs_{{ item.id }}" class="excel-input" placeholder="">
-                                </td>
-                            </tr>
-                        {% endif %}
+                    <!-- COMPONENTES del conjunto -->
+                    {% for comp in item.componentes %}
+                    <tr>
+                        <td><code>{{ comp.id_original }}</code></td>
+                        <td>{{ comp.descripcion }}</td>
+                        <td style="text-align: center;">
+                            <input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" >
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" >
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="radio" name="recambio_{{ comp.id }}" value="NO" class="excel-radio" checked>
+                        </td>
+                        <td>
+                            <input type="text" name="obs_{{ comp.id }}" class="excel-input" placeholder="">
+                        </td>
+                    </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                    
+                {% else %}
+                    <!-- Es un ITEM SUELTO -->
+                    <tr>
+                        <td><code>{{ item.id_original }}</code></td>
+                        <td>{{ item.descripcion }}</td>
+                        <td style="text-align: center;">
+                            <input type="number" name="cantidad_{{ item.id }}" value="{{ item.cantidad }}" min="0" class="excel-input" readonly>
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="number" name="cantidad_total_{{ item.id }}" value="{{ item.cantidad_total }}" min="0" class="excel-input" readonly>
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="radio" name="recambio_{{ item.id }}" value="SI" class="excel-radio">
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="radio" name="recambio_{{ item.id }}" value="NO" class="excel-radio" checked>
+                        </td>
+                        <td>
+                            <input type="text" name="obs_{{ item.id }}" class="excel-input" placeholder="">
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        {% empty %}
+        <tr>
+            <td colspan="7" style="text-align: center; padding: 40px; background-color: #f8f8f8;">
+                <strong>No hay repuestos configurados para este balancín</strong>
+            </td>
+        </tr>
         {% endfor %}
+    </tbody>
+</table>
 
         <!-- ===== OTRAS PIEZAS REEMPLAZADAS CON BUSCADOR ===== -->
         <div style="margin-top: 25px; border: 1px solid #000;">
@@ -852,8 +704,7 @@
             <!-- Input oculto para llevar el conteo de filas -->
             <input type="hidden" id="total-filas" name="total_filas_otros" value="1">
         </div>
-
-        <!-- ===== SECCIÓN TORQUE PARA 4T-501C ===== -->
+  <!-- ===== SECCIÓN TORQUE PARA 4T-501C ===== -->
         <div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
             TORQUE, MARCADO DE PERNOS Y TUERCAS
         </div>
@@ -873,8 +724,8 @@
                     <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Poleas</div>
                     {% for i in "1234567890123456"|make_list %}
                         <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
-                            {% if forloop.counter > 4 %}background-color: #e0e0e0;{% endif %}">
-                            {% if forloop.counter <= 4 %}
+                            {% if forloop.counter > 12 %}background-color: #e0e0e0;{% endif %}">
+                            {% if forloop.counter <= 12 %}
                                 <input type="checkbox" name="polea_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
                             {% endif %}
                         </div>
@@ -895,8 +746,8 @@
                     <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Segmentos 2P</div>
                     {% for i in "12345678"|make_list %}
                         <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
-                            {% if forloop.counter > 2 %}background-color: #e0e0e0;{% endif %}">
-                            {% if forloop.counter <= 2  %}
+                            {% if forloop.counter > 6 %}background-color: #e0e0e0;{% endif %}">
+                            {% if forloop.counter <= 6  %}
                                 <input type="checkbox" name="seg2p_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
                             {% endif %}
                         </div>
@@ -934,8 +785,8 @@
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
                         <input type="checkbox" name="pr1_2" style="width: 22px; height: 22px;">
                     </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
@@ -974,10 +825,10 @@
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
                         <input type="checkbox" name="se2_2" style="width: 22px; height: 22px;">
                     </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                 </div>
             </div>
 
@@ -997,29 +848,33 @@
                 </div>
                 <div style="display: flex;">
                     <div style="width: 200px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Consola de suspencion</div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- ===== SECCIÓN Lubricacion PARA 4T-501C ===== -->
+       <!-- ===== SECCIÓN Lubricacion PARA 4T-501C ===== -->
         <div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
             Puntos de lubricacion (gramos)
         </div>
 
-        <div style="display: flex; gap: 250px; margin-bottom: 40px;">
+        <div style="display: flex; gap: 150px; margin-bottom: 40px;">
             <!-- PL-S2P -->
-            <div style="border: 2px solid #000; width: 280px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+            <div style="border: 2px solid #000; width: 425px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
                 <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S2P</div>
                 <div style="display: flex; border-bottom: 1px solid #000;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">4</div>
+                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">4</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">5</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">6</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">7</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0;">8</div>
                 </div>
                 <div style="display: flex;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 2P</div>
@@ -1029,25 +884,36 @@
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
                         <input type="checkbox" style="width: 22px; height: 22px;">
                     </div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                       <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+                       <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    
                 </div>
             </div>
 
             <!-- PL-S4P -->
-            <div style="border: 2px solid #000; width: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+            <div style="border: 2px solid #000; width: 350px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
                 <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S4P</div>
                 <div style="display: flex; border-bottom: 1px solid #000;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">2</div>
+                     <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+                      <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
+                    <div style="width: 40px; text-align: center; padding: 8px 0;">4</div>
                 </div>
                 <div style="display: flex;">
                     <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
                         <input type="checkbox" style="width: 22px; height: 22px;">
                     </div>
+                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                     <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 60px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    
+                    
                 </div>
             </div>
 
@@ -1060,11 +926,10 @@
                 </div>
                 <div style="display: flex;">
                     <div style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; white-space: nowrap;">Consola de suspensión</div>
-                    <div style="width: 80px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+                    <div style="width: 80px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
                 </div>
             </div>
         </div>
-
         <!-- ===== VERIFICACIONES FINALES ===== -->
         <div style="display: flex; gap: 30px; margin-top: 30px; margin-bottom: 30px; align-items: center;">
             <div style="display: flex; align-items: center; gap: 10px;">

@@ -497,8 +497,7 @@
             </tr>
         </table>
         
-        <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
-        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
+         <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
             RECAMBIO DE PARTES Y PIEZAS
         </div>
         
@@ -535,8 +534,12 @@
                             <tr>
                                 <td><code>{{ comp.id_original }}</code></td>
                                 <td>{{ comp.descripcion }}</td>
-                                <td style="text-align: center;">{{ comp.cantidad }}</td>
-                                <td style="text-align: center;">{{ comp.cantidad_total }}</td>
+                               <td style="text-align: center;">
+    <input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" readonly>
+</td> 
+                            <td style="text-align: center;">
+    <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" readonly>
+</td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
                                 </td>
@@ -553,8 +556,12 @@
                             <tr>
                                 <td><code>{{ item.id_original }}</code></td>
                                 <td>{{ item.descripcion }}</td>
-                                <td style="text-align: center;">{{ item.cantidad }}</td>
-                                <td style="text-align: center;">{{ item.cantidad_total }}</td>
+                                <td style="text-align: center;">
+    <input type="number" name="cantidad_{{ item.id }}" value="{{ item.cantidad }}" min="0" class="excel-input" readonly>
+</td>
+                                <td style="text-align: center;">
+    <input type="number" name="cantidad_total_{{ item.id }}" value="{{ item.cantidad_total }}" min="0" class="excel-input" readonly>
+</td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ item.id }}" value="SI" class="excel-radio">
                                 </td>
@@ -727,30 +734,31 @@
     
     <!-- Fila 1: Encabezados CS-SE1 y CS-SE2 -->
     <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
-        <div style="width: 100px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
+        <div style="width: 140px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
         <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE1</div>
          <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-          <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-           <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-            <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-             <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-              <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-               <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-                <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-         <div style="width: 95px; text-align: center; padding: 8px 0; font-weight: bold;">SE3</div>
+          <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE3</div>
+           <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE4</div>
+            <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">PR3</div>
+             <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE5</div>
+              <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE6</div>
+               <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE7</div>
+                <div style="width: 95px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE8</div>
+         <div style="width: 95px; text-align: center; padding: 8px 0; font-weight: bold;">PR4</div>
     </div>
     
     <!-- Fila 2: Números 1,2,1,2 -->
     <div style="display: flex; border-bottom: 1px solid #000;">
-        <div style="width: 100px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
+        <div style="width: 150px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
         <!-- CS-SE1 -->
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-        <!-- CS-SE2 -->
+     
          <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
          <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
+
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
         <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
@@ -778,22 +786,22 @@
          <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
         <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
  <!--SE4 -->
- <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+ <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
         <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
         <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
         <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
         <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
-        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
+        <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #d0d0d0;"></div>
     </div>
 </div>
 

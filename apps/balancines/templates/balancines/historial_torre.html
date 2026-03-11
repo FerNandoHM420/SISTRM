@@ -4,88 +4,70 @@
 {% block title %}Historial de Torres{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <!-- Título -->
-    <h1 class="mb-4">Historial de Torres</h1>
-    
-    <!-- FORMULARIO DE FILTROS MEJORADO -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Buscar Torre</h4>
+<div class="container-fluid py-4">
+    <!-- HEADER MODERNO -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="display-5 fw-bold text-primary mb-1">
+                <i class="fas fa-history me-2"></i>Historial de Torres
+            </h1>
+            <p class="text-muted">Consulta el historial completo de overhauls por torre</p>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <!-- Columna izquierda: Filtros -->
-                <div class="col-md-5">
-                    <form method="GET" action="{% url 'historial_torre_filtros' %}" class="row g-3">
-                        <!-- Filtro por Línea (siempre visible) -->
-                        <div class="col-12">
-                            <label for="linea" class="form-label fw-bold">1. Seleccione una Línea</label>
-                            <select name="linea" id="linea" class="form-select form-select-lg" required>
-                                <option value="">--- Elija una línea ---</option>
-                                {% for linea in lineas %}
-                                <option value="{{ linea.id }}" {% if filtros.linea == linea.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ linea.nombre }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <!-- Botón para cargar torres -->
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary btn-lg w-100" id="btnCargarTorres">
-                                <i class="fas fa-search"></i> Ver Torres de esta Línea
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Columna derecha: Lista de torres (si hay línea seleccionada) -->
-                <div class="col-md-7">
-                    {% if torres_linea %}
-                    <div class="card">
-                        <div class="card-header bg-info text-white">
-                            <h5 class="mb-0">Torres de la Línea {{ linea_seleccionada.nombre }}</h5>
-                        </div>
-                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                            <div class="list-group">
-                                {% for torre_item in torres_linea %}
-                                <a href="?linea={{ filtros.linea }}&numero_torre={{ torre_item.numero_torre }}&tipo_balancin={{ filtros.tipo_balancin|default:'' }}" 
-                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if torre_item.numero_torre == filtros.numero_torre %}active{% endif %}">
-                                    <div>
-                                        <strong>Torre {{ torre_item.numero_torre }}</strong>
-                                        <small class="d-block text-muted">
-                                            Asc: {{ torre_item.tipo_balancin_ascendente|default:"-" }} | 
-                                            Desc: {{ torre_item.tipo_balancin_descendente|default:"-" }}
-                                        </small>
-                                    </div>
-                                    <span class="badge bg-primary rounded-pill">Ver historial</span>
-                                </a>
-                                {% empty %}
-                                <p class="text-muted text-center my-3">No hay torres en esta línea</p>
-                                {% endfor %}
-                            </div>
-                        </div>
+    </div>
+
+    <!-- SECCIÓN DE BÚSQUEDA MEJORADA -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <!-- Selector de Línea con carga automática -->
+                <div class="col-lg-4">
+                    <label class="form-label fw-semibold text-secondary">
+                        <i class="fas fa-tag me-2 text-primary"></i>Línea de Producción
+                    </label>
+                    <select name="linea" id="linea" class="form-select form-select-lg shadow-sm" required>
+                        <option value="">-- Seleccionar línea --</option>
+                        {% for linea in lineas %}
+                        <option value="{{ linea.id }}" 
+                                {% if filtros.linea == linea.id|stringformat:"s" %}selected{% endif %}>
+                            {{ linea.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text mt-2">
+                        <i class="fas fa-bolt me-1 text-warning"></i> Las torres se cargarán automáticamente
                     </div>
-                    {% elif filtros.linea %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle"></i> Seleccione una línea para ver sus torres
-                    </div>
-                    {% endif %}
                 </div>
-            </div>
-            
-            <!-- Filtros adicionales (solo si hay torre seleccionada) -->
-            {% if torre %}
-            <hr class="my-4">
-            <div class="row">
-                <div class="col-12">
-                    <h5 class="mb-3">Filtros adicionales para la Torre {{ torre.numero_torre }}</h5>
+
+                <!-- Selector de Torre CORREGIDO - con número_sección -->
+                <div class="col-lg-4">
+                    <label class="form-label fw-semibold text-secondary">
+                        <i class="fas fa-building me-2 text-primary"></i>Torre
+                    </label>
+                    <select name="numero_torre" id="numero_torre" class="form-select form-select-lg shadow-sm" 
+                            {% if not torres_linea %}disabled{% endif %}>
+                        <option value="">-- Seleccionar torre --</option>
+                        {% for torre_item in torres_linea %}
+                        {% with torre_item.numero_torre|stringformat:"s" as num_torre %}
+                        {% with torre_item.seccion.id|stringformat:"s" as sec_id %}
+                        <option value="{{ num_torre }}_{{ sec_id }}" 
+                                data-numero="{{ num_torre }}"
+                                data-seccion="{{ sec_id }}"
+                                {% if num_torre == filtros.numero_torre|stringformat:"s" and sec_id == filtros.seccion_id|stringformat:"s" %}selected{% endif %}>
+                            Torre {{ torre_item.numero_torre }} (Sec: {{ torre_item.seccion.nombre }} | Asc: {{ torre_item.tipo_balancin_ascendente|default:"-" }} | Desc: {{ torre_item.tipo_balancin_descendente|default:"-" }})
+                        </option>
+                        {% endwith %}
+                        {% endwith %}
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="col-md-6">
-                    <label for="tipo_balancin" class="form-label">Filtrar por Tipo de Balancín</label>
-                    <select name="tipo_balancin" id="tipo_balancin" class="form-select" onchange="aplicarFiltroTipo()">
-                        <option value="">--- Todos los tipos ---</option>
+
+                <!-- Filtro de Tipo de Balancín (opcional) -->
+                <div class="col-lg-4">
+                    <label class="form-label fw-semibold text-secondary">
+                        <i class="fas fa-cog me-2 text-primary"></i>Tipo de Balancín (opcional)
+                    </label>
+                    <select name="tipo_balancin" id="tipo_balancin" class="form-select form-select-lg shadow-sm">
+                        <option value="">-- Todos los tipos --</option>
                         {% for tipo in tipos_balancin %}
                         <option value="{{ tipo }}" {% if filtros.tipo_balancin == tipo %}selected{% endif %}>
                             {{ tipo }}
@@ -93,141 +75,356 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-6 d-flex align-items-end">
-                    <button type="button" class="btn btn-outline-primary" onclick="limpiarFiltroTipo()">
-                        <i class="fas fa-eraser"></i> Limpiar filtro
-                    </button>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- RESULTADOS (si hay torre seleccionada) -->
-    {% if torre %}
-    <!-- Cabecera de la torre -->
-    <div class="card mb-4">
-        <div class="card-header" style="background-color: #2c3e50; color: white;">
-            <h3>Torre {{ torre.numero_torre }} - Línea {{ torre.linea.nombre }}</h3>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Línea:</strong> {{ torre.linea.nombre }}</p>
-                    <p><strong>Sección:</strong> {{ torre.seccion.nombre }}</p>
-                </div>
-                <div class="col-md-6">
-                    <p><strong>Fecha registro:</strong> {{ torre.fecha_registro|date:"d/m/Y H:i" }}</p>
-                    <p><strong>Observaciones:</strong> {{ torre.observaciones|default:"Sin observaciones" }}</p>
-                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Tarjetas de estadísticas -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Balancines</h5>
-                    <h2 class="card-text">{{ total_balancines }}</h2>
-                </div>
+
+    <!-- MOSTRAR TORRES DUPLICADAS PARA SELECCIONAR -->
+    {% if torres_duplicadas %}
+    <div class="alert alert-warning mb-4">
+        <div class="d-flex align-items-center mb-3">
+            <div class="bg-warning bg-opacity-25 p-3 rounded-3 me-3">
+                <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+            </div>
+            <div>
+                <h4 class="mb-1">Múltiples torres encontradas</h4>
+                <p class="mb-0">Hay {{ torres_duplicadas|length }} torres con el número {{ filtros.numero_torre }} en la línea {{ linea_seleccionada.nombre }}. Selecciona la que deseas ver:</p>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Total Overhauls</h5>
-                    <h2 class="card-text">{{ total_oh_torre }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Último Overhaul</h5>
-                    <h2 class="card-text">
-                        {% if ultimo_oh_torre %}
-                            {{ ultimo_oh_torre.fecha_oh|date:"d/m/Y" }}
-                        {% else %}
-                            -
+        
+        <div class="row g-3">
+            {% for torre_dup in torres_duplicadas %}
+            <div class="col-md-6">
+                <div class="card border-warning h-100">
+                    <div class="card-header bg-warning bg-opacity-10">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tower me-2"></i>Torre {{ torre_dup.numero_torre }}
+                            <span class="badge bg-secondary ms-2">ID: {{ torre_dup.id }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong><i class="fas fa-layer-group me-2"></i>Sección:</strong> 
+                            <span class="badge bg-info">{{ torre_dup.seccion.nombre }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong><i class="fas fa-arrow-up me-2"></i>Ascendente:</strong> 
+                            <span class="badge bg-success">{{ torre_dup.tipo_balancin_ascendente|default:"-" }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong><i class="fas fa-arrow-down me-2"></i>Descendente:</strong> 
+                            <span class="badge bg-info">{{ torre_dup.tipo_balancin_descendente|default:"-" }}</span>
+                        </p>
+                        <p class="mb-2">
+                            <strong><i class="fas fa-calendar me-2"></i>Registro:</strong> 
+                            {{ torre_dup.fecha_registro|date:"d/m/Y" }}
+                        </p>
+                        {% if torre_dup.observaciones %}
+                        <p class="mb-0 text-muted small">
+                            <i class="fas fa-comment me-1"></i>{{ torre_dup.observaciones|truncatechars:50 }}
+                        </p>
                         {% endif %}
-                    </h2>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="?linea={{ filtros.linea }}&numero_torre={{ torre_dup.numero_torre }}&seccion_id={{ torre_dup.seccion.id }}&tipo_balancin={{ filtros.tipo_balancin|default:'' }}" 
+                           class="btn btn-warning w-100">
+                            <i class="fas fa-eye me-2"></i>Ver esta torre
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- VISTA RÁPIDA DE LA TORRE SELECCIONADA -->
+    {% if torre %}
+    <div class="card shadow-sm border-0 mb-4 bg-gradient">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+                            <i class="fas fa-tower text-primary fa-2x"></i>
+                        </div>
+                        <div>
+                            <h2 class="h3 mb-1">Torre {{ torre.numero_torre }}</h2>
+                            <p class="text-muted mb-0">
+                                <span class="badge bg-primary me-2">Línea {{ torre.linea.nombre }}</span>
+                                <span class="badge bg-secondary me-2">Sección {{ torre.seccion.nombre }}</span>
+                                <span class="badge bg-info">Registro {{ torre.fecha_registro|date:"d/m/Y" }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mt-3 mt-lg-0">
+                    <div class="d-flex gap-2 justify-content-lg-end">
+                        <a href="?linea={{ filtros.linea }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-2"></i>Limpiar selección
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Balancines -->
-    <div class="row">
-        {% for balancin in balancines %}
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <!-- Cabecera del balancín -->
-                <div class="card-header {% if balancin.sentido == 'ASCENDENTE' %}bg-success{% else %}bg-info{% endif %} text-white">
-                    <h4 class="mb-0">
-                        Balancín {{ balancin.sentido_display }}
-                        <span class="badge bg-light text-dark float-end">
-                            OH: {{ balancin.total_oh }}
-                        </span>
-                    </h4>
-                    <small>{{ balancin.codigo }}</small>
-                </div>
-                
+
+    <!-- TARJETAS DE ESTADÍSTICAS MEJORADAS -->
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <!-- Fila principal con imagen e información -->
-                    <div class="row">
-                        <!-- COLUMNA DE LA IMAGEN - CON MAPEO DE TIPOS -->
-                        <div class="col-md-5 text-center">
-                            <div class="imagen-container" 
-                                 data-tipo="{{ balancin.tipo_codigo }}"
-                                 data-src="/media/balancines/{{ balancin.tipo_codigo }}.jpg"
-                                 data-mapped="true">
-                                <img src="/media/balancines/{{ balancin.tipo_codigo }}.jpg"
-                                     alt="{{ balancin.tipo_codigo }}"
-                                     class="img-fluid rounded mb-2 imagen-clickeable"
-                                     style="max-height: 180px; max-width: 100%; object-fit: contain; border: 1px solid #ddd; padding: 5px; background-color: #f8f9fa; cursor: pointer;"
-                                     onclick="abrirVisorMejorado(this)"
-                                     onerror="this.onerror=null; this.src=this.src; this.onerror=function(){this.onerror=null; this.src='/static/images/default-balancin.png'}">
-                                
-                                <div class="d-flex justify-content-center gap-2 mt-1">
-                                    <span class="badge bg-dark" style="cursor: pointer;" onclick="abrirVisorMejorado(this)">🔍 Ver grande</span>
-                                    <span class="badge bg-success" style="cursor: pointer;" onclick="descargarImagen(this)">⬇️ Descargar</span>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-tachometer-alt text-primary fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-secondary mb-1">Total Balancines</h6>
+                            <h3 class="mb-0 fw-bold">{{ total_balancines }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-wrench text-success fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-secondary mb-1">Total Overhauls</h6>
+                            <h3 class="mb-0 fw-bold">{{ total_oh_torre }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-clock text-info fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-secondary mb-1">Último Overhaul</h6>
+                            <h3 class="mb-0 fw-bold">{{ ultimo_oh_torre.fecha_oh|date:"d/m/Y"|default:"-" }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-chart-line text-warning fa-2x"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-secondary mb-1">Promedio OH</h6>
+                            <h3 class="mb-0 fw-bold">
+                                {% if total_balancines > 0 %}
+                                    {{ total_oh_torre|divisibleby:total_balancines|floatformat:1 }}
+                                {% else %}0{% endif %}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFICAR SI LOS DOS BALANCINES SON DEL MISMO TIPO -->
+    {% with balancines|first as primer_balancin %}
+    {% with balancines|last as segundo_balancin %}
+    {% if balancines|length == 2 and primer_balancin.tipo_codigo == segundo_balancin.tipo_codigo %}
+        <!-- CASO: MISMO TIPO - UNA SOLA IMAGEN PARA AMBOS -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="mb-3">Balancines de la Torre</h4>
+                        <div class="row">
+                            <!-- Columna de la imagen ÚNICA -->
+                            <div class="col-md-4 text-center">
+                                <div class="imagen-container"
+                                     data-tipo="{{ primer_balancin.tipo_codigo }}"
+                                     data-src="/media/balancines/{{ primer_balancin.tipo_codigo }}.jpg">
+                                    <div class="position-relative d-inline-block">
+                                        <img src="/media/balancines/{{ primer_balancin.tipo_codigo }}.jpg"
+                                             alt="{{ primer_balancin.tipo_codigo }}"
+                                             class="img-fluid rounded-3 shadow-sm imagen-clickeable"
+                                             style="max-height: 250px; cursor: pointer;"
+                                             onclick="abrirVisorMejorado(this)"
+                                             onerror="corregirErrorImagen(this)"
+                                             data-tipo-original="{{ primer_balancin.tipo_codigo }}">
+                                    </div>
+                                    <p class="mt-2">
+                                        <span class="badge bg-secondary tipo-balancin">{{ primer_balancin.tipo_codigo }}</span>
+                                        <span class="badge bg-info">Tipo único para ambos balancines</span>
+                                    </p>
                                 </div>
                             </div>
                             
-                            <p class="mt-2">
-                                <span class="badge bg-secondary" style="font-size: 1rem;">{{ balancin.tipo_codigo }}</span>
-                                <span class="badge bg-primary">soporte</span>
-                            </p>
+                            <!-- Columna con información de AMBOS balancines -->
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <!-- Balancín Ascendente -->
+                                    <div class="col-md-6">
+                                        <div class="bg-light p-3 rounded-3 h-100">
+                                            <h5 class="mb-3">
+                                                <span class="badge bg-success">ASCENDENTE</span>
+                                                <small class="text-muted ms-2">{{ balancines.0.codigo }}</small>
+                                            </h5>
+                                            <div class="mb-2">
+                                                <strong>Horas OH:</strong> {{ balancines.0.rango_horas_cambio_oh }}h
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Observaciones:</strong> {{ balancines.0.observaciones|default:"-" }}
+                                            </div>
+                                            
+                                            <!-- Historial Ascendente -->
+                                            <h6 class="mt-3 mb-2">Historial Overhauls</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Fecha</th>
+                                                            <th>Horas</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for oh in balancines.0.oh_historial|slice:":5" %}
+                                                        <tr>
+                                                            <td>{{ oh.numero_oh }}</td>
+                                                            <td>{{ oh.fecha_oh|date:"d/m/y" }}</td>
+                                                            <td>{{ oh.horas_operacion|default:"-" }}</td>
+                                                        </tr>
+                                                        {% empty %}
+                                                        <tr><td colspan="3" class="text-muted">Sin registros</td></tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Balancín Descendente -->
+                                    <div class="col-md-6">
+                                        <div class="bg-light p-3 rounded-3 h-100">
+                                            <h5 class="mb-3">
+                                                <span class="badge bg-info">DESCENDENTE</span>
+                                                <small class="text-muted ms-2">{{ balancines.1.codigo }}</small>
+                                            </h5>
+                                            <div class="mb-2">
+                                                <strong>Horas OH:</strong> {{ balancines.1.rango_horas_cambio_oh }}h
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Observaciones:</strong> {{ balancines.1.observaciones|default:"-" }}
+                                            </div>
+                                            
+                                            <!-- Historial Descendente -->
+                                            <h6 class="mt-3 mb-2">Historial Overhauls</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Fecha</th>
+                                                            <th>Horas</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for oh in balancines.1.oh_historial|slice:":5" %}
+                                                        <tr>
+                                                            <td>{{ oh.numero_oh }}</td>
+                                                            <td>{{ oh.fecha_oh|date:"d/m/y" }}</td>
+                                                            <td>{{ oh.horas_operacion|default:"-" }}</td>
+                                                        </tr>
+                                                        {% empty %}
+                                                        <tr><td colspan="3" class="text-muted">Sin registros</td></tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <!-- Columna de información -->
-                        <div class="col-md-7">
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Rango horas OH:</th>
-                                    <td>{{ balancin.rango_horas_cambio_oh }} horas</td>
-                                </tr>
-                                <tr>
-                                    <th>Observaciones:</th>
-                                    <td>{{ balancin.observaciones|default:"-" }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Fecha registro:</th>
-                                    <td>{{ balancin.fecha_registro|date:"d/m/Y" }}</td>
-                                </tr>
-                            </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- CASO: TIPOS DIFERENTES - UNA IMAGEN POR BALANCÍN -->
+        <div class="row g-4">
+            {% for balancin in balancines %}
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <span class="badge {% if balancin.sentido == 'ASCENDENTE' %}bg-success{% else %}bg-info{% endif %} me-2">
+                                    {{ balancin.sentido_display }}
+                                </span>
+                                <small class="text-muted">{{ balancin.codigo }}</small>
+                            </h5>
+                            <span class="badge bg-dark rounded-pill px-3 py-2">
+                                <i class="fas fa-tools me-1"></i>{{ balancin.total_oh }} OH
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body px-4">
+                        <div class="row">
+                            <!-- Columna de imagen -->
+                            <div class="col-md-5 mb-3 mb-md-0">
+                                <div class="imagen-container text-center"
+                                     data-tipo="{{ balancin.tipo_codigo }}"
+                                     data-src="/media/balancines/{{ balancin.tipo_codigo }}.jpg">
+                                    <div class="position-relative d-inline-block">
+                                        <img src="/media/balancines/{{ balancin.tipo_codigo }}.jpg"
+                                             alt="{{ balancin.tipo_codigo }}"
+                                             class="img-fluid rounded-3 shadow-sm imagen-clickeable"
+                                             style="max-height: 180px; cursor: pointer;"
+                                             onclick="abrirVisorMejorado(this)"
+                                             onerror="corregirErrorImagen(this)"
+                                             data-tipo-original="{{ balancin.tipo_codigo }}">
+                                    </div>
+                                    <p class="mt-2">
+                                        <span class="badge bg-secondary tipo-balancin">{{ balancin.tipo_codigo }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Columna de información -->
+                            <div class="col-md-7">
+                                <div class="bg-light p-3 rounded-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-secondary">Horas OH:</span>
+                                        <span class="fw-bold">{{ balancin.rango_horas_cambio_oh }}h</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span class="text-secondary">Observaciones:</span>
+                                        <span class="text-muted">{{ balancin.observaciones|truncatechars:20|default:"-" }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Historial de Overhauls -->
-                    <div class="mt-4">
-                        <h5 class="border-bottom pb-2">Historial de Overhauls</h5>
-                        
-                        {% if balancin.oh_historial %}
+                    <div class="card-footer bg-transparent border-0 pb-4 px-4">
+                        <h6 class="text-secondary mb-3">
+                            <i class="fas fa-history me-2"></i>Historial de Overhauls
+                        </h6>
                         <div class="table-responsive">
-                            <table class="table table-sm table-hover">
+                            <table class="table table-sm table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
                                         <th># OH</th>
@@ -248,39 +445,27 @@
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">
-                                            No hay registros
+                                        <td colspan="5" class="text-center text-muted py-3">
+                                            No hay registros de overhaul
                                         </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        {% else %}
-                        <p class="text-muted text-center">Sin historial de overhauls</p>
-                        {% endif %}
                     </div>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="alert alert-warning text-center">
-                <h5>No hay balancines que coincidan con los filtros</h5>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    
-    {% elif filtros.linea and not torre %}
-    <!-- Mensaje para seleccionar una torre -->
-    <div class="alert alert-info text-center">
-        <h5><i class="fas fa-hand-pointer"></i> Seleccione una torre de la lista para ver su historial</h5>
-    </div>
+    {% endif %}
+    {% endwith %}
+    {% endwith %}
+
     {% endif %}
 </div>
 
-<!-- MODAL SIMPLE MEJORADO - CON CLICK Y ARRASTRAR -->
+<!-- MODAL ORIGINAL - CON CLICK Y ARRASTRAR -->
 <div class="modal fade" id="visorMejoradoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
@@ -289,7 +474,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0" style="background-color: #f8f9fa; overflow: hidden; position: relative; height: 70vh;">
-                <!-- Contenedor para la imagen con zoom y arrastre -->
                 <div id="mejoradoContainer" style="width: 100%; height: 100%; overflow: hidden; position: relative; cursor: grab;">
                     <img id="mejoradoImagen" 
                          src="" 
@@ -305,7 +489,6 @@
                 </div>
                 <div>
                     <button type="button" class="btn btn-outline-secondary" id="btnResetMejorado">⟲ Reset</button>
-                    <button type="button" class="btn btn-success" id="btnDescargarMejorado">⬇️ Descargar</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
@@ -313,64 +496,45 @@
     </div>
 </div>
 
-<!-- CSS adicional -->
 <style>
-    .card {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-    .table td, .table th {
-        padding: 0.5rem;
-    }
-    .imagen-clickeable {
-        transition: transform 0.2s, opacity 0.2s;
-        background-color: #f8f9fa;
-    }
-    .imagen-clickeable:hover {
-        transform: scale(1.02);
-        opacity: 0.9;
-    }
-    .badge {
-        font-size: 0.9rem;
-        padding: 5px 10px;
-    }
-    .badge:hover {
-        opacity: 0.8;
-    }
-    /* Estilos para el modal */
-    .modal-xl {
-        max-width: 95%;
-    }
-    /* Estilos para el arrastre */
-    #mejoradoContainer.grabbing {
-        cursor: grabbing !important;
-    }
-    #mejoradoImagen {
-        transition: transform 0.05s ease;
-        pointer-events: none;
-    }
-    /* Estilos para la lista de torres */
-    .list-group-item {
-        transition: all 0.2s;
-    }
-    .list-group-item:hover {
-        transform: translateX(5px);
-    }
-    .list-group-item.active {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-    /* Indicador de carga */
-    #mejoradoContainer.loading {
-        cursor: wait !important;
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="%230d6efd" stroke-width="4" stroke-dasharray="31.4 31.4"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/></circle></svg>');
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 50px;
-    }
+/* Estilos adicionales */
+.bg-gradient {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+.imagen-clickeable {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.imagen-clickeable:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+.card {
+    transition: all 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-2px);
+}
+.form-select:focus {
+    box-shadow: 0 0 0 3px rgba(13,110,253,0.15) !important;
+}
+#mejoradoContainer.grabbing {
+    cursor: grabbing !important;
+}
+#mejoradoImagen {
+    transition: transform 0.05s ease;
+    pointer-events: none;
+}
+#mejoradoContainer.loading {
+    cursor: wait !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="%230d6efd" stroke-width="4" stroke-dasharray="31.4 31.4"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/></circle></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 50px;
+}
 </style>
 
-<!-- JavaScript para el visor mejorado y filtros -->
+<!-- JavaScript CORREGIDO con función para manejar errores de imagen y selector mejorado -->
 <script>
 // MAPEO DE TIPOS DE BALANCÍN A NOMBRES DE ARCHIVO
 const tipoToImagen = {
@@ -391,6 +555,16 @@ const tipoToImagen = {
 // Función para obtener el nombre correcto de la imagen
 function getImagenPath(tipo) {
     return tipoToImagen[tipo] || tipo + '.jpg';
+}
+
+// Función: Corregir error de imagen
+function corregirErrorImagen(imgElement) {
+    const tipoOriginal = imgElement.getAttribute('data-tipo-original');
+    if (tipoOriginal) {
+        const imagenCorrecta = getImagenPath(tipoOriginal);
+        imgElement.src = `/media/balancines/${imagenCorrecta}`;
+        console.log(`Imagen corregida: ${tipoOriginal} -> ${imagenCorrecta}`);
+    }
 }
 
 // Variables globales para el visor mejorado
@@ -429,7 +603,7 @@ function actualizarTransformacionMejorado() {
     document.getElementById('zoomLevelMejorado').textContent = `Zoom: ${Math.round(scaleM * 100)}%`;
 }
 
-// Función para abrir el visor mejorado (VERSIÓN CORREGIDA CON SPINNER)
+// Función para abrir el visor mejorado
 function abrirVisorMejorado(elemento) {
     let container = elemento.closest('.imagen-container');
     if (!container) return;
@@ -440,95 +614,126 @@ function abrirVisorMejorado(elemento) {
     const defaultImg = '/static/images/default-balancin.png';
     
     currentTipoM = tipo;
-    document.getElementById('visorMejoradoTitulo').textContent = `Balancín ${tipo}`;
+    document.getElementById('visorMejoradoTitulo').textContent = `Balancín ${tipo.replace(/\//g, '-')}`;
     
-    // Limpiar imagen anterior y mostrar spinner
+    // Limpiar imagen anterior
     mejoradoImagen.src = '';
     mejoradoContainer.classList.add('loading');
     
-    // Cargar imagen con fallback
-    cargarImagenConFallback(src, src, defaultImg, function(imgSrc) {
-        currentImgSrcM = imgSrc;
+    // Resetear transformaciones
+    scaleM = 1;
+    translateXM = 0;
+    translateYM = 0;
+    actualizarTransformacionMejorado();
+    
+    // Crear el modal
+    const modal = new bootstrap.Modal(document.getElementById('visorMejoradoModal'));
+    
+    // Cargar la imagen
+    const img = new Image();
+    img.onload = function() {
+        mejoradoImagen.src = src;
         
-        // Crear una imagen temporal para obtener dimensiones
-        const tempImg = new Image();
-        tempImg.onload = function() {
-            // Configurar la imagen en el visor
-            mejoradoImagen.src = imgSrc;
-            
-            // Resetear transformaciones
-            scaleM = 1;
-            translateXM = 0;
-            translateYM = 0;
-            
-            // Calcular escala inicial para que quepa en el contenedor
+        // Pequeño retraso para asegurar que el DOM se actualizó
+        setTimeout(function() {
             const containerWidth = mejoradoContainer.clientWidth;
             const containerHeight = mejoradoContainer.clientHeight;
             
-            const imgWidth = tempImg.width;
-            const imgHeight = tempImg.height;
+            const imgWidth = img.width;
+            const imgHeight = img.height;
             
             const scaleX = containerWidth / imgWidth;
             const scaleY = containerHeight / imgHeight;
             scaleM = Math.min(scaleX, scaleY, 1);
             
-            // Centrar la imagen
             translateXM = (containerWidth - imgWidth * scaleM) / 2;
             translateYM = (containerHeight - imgHeight * scaleM) / 2;
             
             actualizarTransformacionMejorado();
-            
-            // Quitar spinner
             mejoradoContainer.classList.remove('loading');
-            
-            // Mostrar modal
-            const modal = new bootstrap.Modal(document.getElementById('visorMejoradoModal'));
-            modal.show();
-        };
-        
-        tempImg.onerror = function() {
-            // Si hay error, usar imagen por defecto
-            mejoradoImagen.src = defaultImg;
-            mejoradoContainer.classList.remove('loading');
-            const modal = new bootstrap.Modal(document.getElementById('visorMejoradoModal'));
-            modal.show();
-        };
-        
-        tempImg.src = imgSrc;
+        }, 100);
+    };
+    
+    img.onerror = function() {
+        mejoradoImagen.src = defaultImg;
+        mejoradoContainer.classList.remove('loading');
+    };
+    
+    img.src = src;
+    
+    // Mostrar el modal
+    modal.show();
+}
+
+// Función para formatear tipos (reemplazar / por -)
+function formatearTipos() {
+    document.querySelectorAll('.tipo-balancin').forEach(function(el) {
+        if (el.textContent.includes('/')) {
+            el.textContent = el.textContent.replace(/\//g, '-');
+        }
     });
 }
 
-// Función para descargar imagen
-function descargarImagen(elemento) {
-    const container = elemento.closest('.imagen-container');
-    if (!container) return;
-    
-    const tipo = container.dataset.tipo;
-    const imagenNombre = getImagenPath(tipo);
-    const src = `/media/balancines/${imagenNombre}`;
-    
-    cargarImagenConFallback(src, src, '/static/images/default-balancin.png', function(imgSrc) {
-        const link = document.createElement('a');
-        link.download = `balancin-${tipo.replace(/\//g, '-')}.jpg`;
-        link.href = imgSrc;
-        link.click();
+// Función: Corregir todas las imágenes al cargar la página
+function corregirTodasLasImagenes() {
+    document.querySelectorAll('img[data-tipo-original]').forEach(function(img) {
+        const tipoOriginal = img.getAttribute('data-tipo-original');
+        const imagenCorrecta = getImagenPath(tipoOriginal);
+        img.src = `/media/balancines/${imagenCorrecta}`;
     });
 }
 
-// Función para aplicar filtro por tipo
-function aplicarFiltroTipo() {
-    const tipo = document.getElementById('tipo_balancin').value;
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('tipo_balancin', tipo);
-    window.location.search = urlParams.toString();
-}
-
-// Función para limpiar filtro por tipo
-function limpiarFiltroTipo() {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.delete('tipo_balancin');
-    window.location.search = urlParams.toString();
-}
+// JavaScript mejorado para carga automática y corrección de imágenes
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatear tipos
+    formatearTipos();
+    
+    // Corregir todas las imágenes
+    corregirTodasLasImagenes();
+    
+    const lineaSelect = document.getElementById('linea');
+    const torreSelect = document.getElementById('numero_torre');
+    const tipoSelect = document.getElementById('tipo_balancin');
+    
+    // Carga automática de torres al cambiar línea
+    lineaSelect.addEventListener('change', function() {
+        if (this.value) {
+            window.location.href = `?linea=${this.value}`;
+        }
+    });
+    
+    // Carga automática de historial al cambiar torre (CORREGIDO)
+    torreSelect.addEventListener('change', function() {
+        if (lineaSelect.value && this.value) {
+            const [numeroTorre, seccionId] = this.value.split('_');
+            const url = new URL(window.location.href);
+            url.searchParams.set('linea', lineaSelect.value);
+            url.searchParams.set('numero_torre', numeroTorre);
+            url.searchParams.set('seccion_id', seccionId);
+            if (tipoSelect.value) {
+                url.searchParams.set('tipo_balancin', tipoSelect.value);
+            }
+            window.location.href = url.toString();
+        }
+    });
+    
+    // Carga automática al cambiar tipo (CORREGIDO)
+    tipoSelect.addEventListener('change', function() {
+        if (lineaSelect.value && torreSelect.value) {
+            const [numeroTorre, seccionId] = torreSelect.value.split('_');
+            const url = new URL(window.location.href);
+            url.searchParams.set('linea', lineaSelect.value);
+            url.searchParams.set('numero_torre', numeroTorre);
+            url.searchParams.set('seccion_id', seccionId);
+            if (this.value) {
+                url.searchParams.set('tipo_balancin', this.value);
+            } else {
+                url.searchParams.delete('tipo_balancin');
+            }
+            window.location.href = url.toString();
+        }
+    });
+});
 
 // Eventos para el arrastre
 mejoradoContainer.addEventListener('mousedown', function(e) {
@@ -551,49 +756,31 @@ window.addEventListener('mouseup', function() {
     isDraggingM = false;
     mejoradoContainer.classList.remove('grabbing');
 });
-// ZOOM CON RUEDA DEL MOUSE - VERSIÓN CORREGIDA (AMBAS DIRECCIONES)
+
+// ZOOM CON RUEDA DEL MOUSE
 mejoradoContainer.addEventListener('wheel', function(e) {
     e.preventDefault();
     
-    // Solo procesar si hay una imagen cargada
     if (!mejoradoImagen.src || mejoradoImagen.src === '') return;
     
-    // Obtener posición del mouse relativa a la imagen
     const rect = mejoradoImagen.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // Determinar dirección del zoom (funciona en todos los navegadores)
-    let delta;
-    if (e.deltaY < 0) {
-        // Rueda hacia ARRIBA - ZOOM IN (acercar)
-        delta = 1.1;
-        console.log('Zoom In +');
-    } else {
-        // Rueda hacia ABAJO - ZOOM OUT (alejar)
-        delta = 0.9;
-        console.log('Zoom Out -');
-    }
-    
+    let delta = e.deltaY < 0 ? 1.1 : 0.9;
     let newScale = scaleM * delta;
     
-    // Limitar zoom (entre 0.5x y 5x)
-    if (newScale < 0.01) newScale = 0.01;
+    if (newScale < 0.05) newScale = 0.05;
     if (newScale > 5) newScale = 5;
     
-    // Si el zoom no cambia, salir
     if (newScale === scaleM) return;
     
-    // Ajustar traslación para que el zoom se centre en el mouse
     const scaleChange = newScale / scaleM;
     translateXM = mouseX - (mouseX - translateXM) * scaleChange;
     translateYM = mouseY - (mouseY - translateYM) * scaleChange;
     
     scaleM = newScale;
     actualizarTransformacionMejorado();
-    
-    // Mostrar feedback del zoom (opcional)
-    document.getElementById('zoomLevelMejorado').textContent = `Zoom: ${Math.round(scaleM * 100)}%`;
 });
 
 // Botón reset
@@ -616,16 +803,6 @@ document.getElementById('btnResetMejorado').addEventListener('click', function()
     actualizarTransformacionMejorado();
 });
 
-// Botón descargar en el modal
-document.getElementById('btnDescargarMejorado').addEventListener('click', function() {
-    if (currentImgSrcM) {
-        const link = document.createElement('a');
-        link.download = `balancin-${currentTipoM.replace(/\//g, '-')}.jpg`;
-        link.href = currentImgSrcM;
-        link.click();
-    }
-});
-
 // Limpiar al cerrar
 document.getElementById('visorMejoradoModal').addEventListener('hidden.bs.modal', function() {
     scaleM = 1;
@@ -637,4 +814,4 @@ document.getElementById('visorMejoradoModal').addEventListener('hidden.bs.modal'
     mejoradoContainer.classList.remove('loading');
 });
 </script>
-{% endblock %}
+{% endblock %} 

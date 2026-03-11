@@ -497,8 +497,7 @@
             </tr>
         </table>
         
-      <!-- ===== RECAMBIO DE PARTES Y PIEZAS ===== -->
-        <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
+       <div class="excel-subheader" style="font-size: 14pt; text-align: center;">
             RECAMBIO DE PARTES Y PIEZAS
         </div>
         
@@ -535,8 +534,12 @@
                             <tr>
                                 <td><code>{{ comp.id_original }}</code></td>
                                 <td>{{ comp.descripcion }}</td>
-                                <td style="text-align: center;">{{ comp.cantidad }}</td>
-                                <td style="text-align: center;">{{ comp.cantidad_total }}</td>
+                               <td style="text-align: center;">
+    <input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" readonly>
+</td> 
+                            <td style="text-align: center;">
+    <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" readonly>
+</td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
                                 </td>
@@ -553,8 +556,12 @@
                             <tr>
                                 <td><code>{{ item.id_original }}</code></td>
                                 <td>{{ item.descripcion }}</td>
-                                <td style="text-align: center;">{{ item.cantidad }}</td>
-                                <td style="text-align: center;">{{ item.cantidad_total }}</td>
+                                <td style="text-align: center;">
+    <input type="number" name="cantidad_{{ item.id }}" value="{{ item.cantidad }}" min="0" class="excel-input" readonly>
+</td>
+                                <td style="text-align: center;">
+    <input type="number" name="cantidad_total_{{ item.id }}" value="{{ item.cantidad_total }}" min="0" class="excel-input" readonly>
+</td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ item.id }}" value="SI" class="excel-radio">
                                 </td>
