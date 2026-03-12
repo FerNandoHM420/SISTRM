@@ -1,0 +1,763 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial - {{ balancin.codigo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-gradient {
+        background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    .imagen-clickeable {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .imagen-clickeable:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        border-color: #007bff;
+    }
+    .card {
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    .estado-card {
+        border-left: 5px solid;
+    }
+    .estado-normal {
+        border-left-color: #28a745;
+    }
+    .estado-alerta {
+        border-left-color: #ffc107;
+    }
+    .estado-critico {
+        border-left-color: #dc3545;
+    }
+    
+    /* Estilos para el modal */
+    #mejoradoContainer.grabbing {
+        cursor: grabbing !important;
+    }
+    #mejoradoImagen {
+        transition: transform 0.05s ease;
+        pointer-events: none;
+    }
+    #mejoradoContainer.loading {
+        cursor: wait !important;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20" fill="none" stroke="%230d6efd" stroke-width="4" stroke-dasharray="31.4 31.4"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite"/></circle></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 50px;
+    }
+    
+    /* Estilos para paginación */
+    .pagination {
+        margin-bottom: 0;
+    }
+    .page-link {
+        color: #007bff;
+        border-radius: 5px;
+        margin: 0 2px;
+    }
+    .page-item.active .page-link {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    /* Selector de registros */
+    #paginasPorPagina {
+        border-radius: 5px;
+        border: 1px solid #dee2e6;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- HEADER CON INFORMACIÓN DEL BALANCÍN -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary">
+                <i class="fas fa-history me-2"></i>Historial del Balancín
+            </h1>
+            <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                <span class="badge bg-secondary fs-6">{{ balancin.codigo }}</span>
+                <span class="badge bg-info fs-6">{{ tipo_balancin }}</span>
+                <span class="badge {% if balancin.sentido == 'ASCENDENTE' %}bg-success{% else %}bg-info{% endif %} fs-6">
+                    <i class="fas fa-arrow-{% if balancin.sentido == 'ASCENDENTE' %}up{% else %}down{% endif %} me-1"></i>
+                    {{ balancin.get_sentido_display }}
+                </span>
+                <span class="badge bg-primary fs-6">
+                    <i class="fas fa-map-marker-alt me-1"></i>
+                    {{ balancin.torre.linea.nombre }} - Torre {{ balancin.torre.numero_torre }}
+                </span>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- TARJETA PRINCIPAL CON IMAGEN Y DATOS -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <!-- Contenedor de imagen - CORREGIDO -->
+                    <div class="imagen-container mb-3"
+                         data-tipo="{{ tipo_balancin }}">
+                        <div class="position-relative d-inline-block">
+                            <img src="/media/balancines/{% spaceless %}
+                                {% if tipo_balancin == '8N/4TR-420C' %}8N-4TR-420C.jpg
+                                {% elif tipo_balancin == '10N/4TR-420C' %}10N-4TR-420C.jpg
+                                {% elif tipo_balancin == '12N/4TR-420C' %}12N-4TR-420C.jpg
+                                {% elif tipo_balancin == '14N/4TR-420C' %}14N-4TR-420C.jpg
+                                {% elif tipo_balancin == '16N/4TR-420C' %}16N-4TR-420C.jpg
+                                {% elif tipo_balancin == '4T/4N-420C' %}4T_4N_420C.jpg
+                                {% elif tipo_balancin == '4T-501C' %}4T-501C.jpg
+                                {% elif tipo_balancin == '6T-501C' %}6T-501C.jpg
+                                {% elif tipo_balancin == '8T-501C' %}8T-501C.jpg
+                                {% elif tipo_balancin == '10T-501C' %}10T-501C.jpg
+                                {% elif tipo_balancin == '12T-501C' %}12T-501C.jpg
+                                {% elif tipo_balancin == '8T-8N-420C' %}8T-8N-420C.jpg
+                                {% else %}{{ tipo_balancin|cut:'/' }}-{{ tipo_balancin|cut:'/' }}.jpg
+                                {% endif %}
+                            {% endspaceless %}"
+                                 alt="{{ tipo_balancin }}"
+                                 class="img-fluid rounded-3 shadow-sm imagen-clickeable"
+                                 style="max-height: 250px; cursor: pointer;"
+                                 onclick="abrirVisorMejorado(this)"
+                                 onerror="corregirErrorImagen(this)"
+                                 data-tipo-original="{{ tipo_balancin }}">
+                        </div>
+                        <p class="mt-3">
+                            <span class="badge bg-secondary tipo-balancin fs-6">{{ tipo_balancin }}</span>
+                        </p>
+                    </div>
+                    
+                    <!-- Información rápida debajo de la imagen -->
+                    <div class="text-start mt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Cambio de OH de balancines  en horas:</span>
+                            <span class="fw-bold">{{ balancin.rango_horas_cambio_oh }}h</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Total Overhauls:</span>
+                            <span class="fw-bold">{{ total_oh }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Último OH:</span>
+                            <span class="fw-bold">{{ ultimo_oh.fecha_oh|date:"d/m/Y"|default:"-" }}</span>
+                        </div>
+                        {% if balancin.observaciones %}
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <small class="text-secondary">Observaciones:</small>
+                            <p class="mb-0">{{ balancin.observaciones }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ESTADÍSTICAS Y GRÁFICO -->
+        <div class="col-md-8">
+            <div class="row g-3">
+                <div class="col-sm-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                                    <i class="fas fa-clock text-primary fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-secondary mb-1">Cambio de OH de balancines  en horas:</h6>
+                                    <h3 class="mb-0 fw-bold">{{ balancin.rango_horas_cambio_oh }}h</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                                    <i class="fas fa-chart-line text-success fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-secondary mb-1">Total OH</h6>
+                                    <h3 class="mb-0 fw-bold">{{ total_oh }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-10 p-3 rounded-3 me-3">
+                                    <i class="fas fa-calendar text-info fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-secondary mb-1">Último OH</h6>
+                                    <h3 class="mb-0 fw-bold">{{ ultimo_oh.fecha_oh|date:"d/m/y"|default:"-" }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                                    <i class="fas fa-tachometer-alt text-warning fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="text-secondary mb-1">Último Backlog</h6>
+                                    <h3 class="mb-0 fw-bold">{{ ultimo_oh.backlog|default:"-" }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICO DE BACKLOG - Solo si hay datos -->
+            {% if historial %}
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-primary"></i>Evolución de Backlog (últimos 10)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="backlogChart" style="height: 150px;"></canvas>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TABLA DE HISTORIAL CON PAGINACIÓN -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2 text-primary"></i>
+                Registro Completo de Overhauls
+                <span class="badge bg-secondary ms-2">{{ total_oh }} registros</span>
+            </h5>
+            {% if total_oh > 10 %}
+            <div class="d-flex align-items-center mt-2 mt-sm-0">
+                <label class="me-2 small text-secondary">Mostrar:</label>
+                <select class="form-select form-select-sm" style="width: auto;" id="paginasPorPagina">
+                    <option value="10" {% if request.GET.per_page == '10' or not request.GET.per_page %}selected{% endif %}>10</option>
+                    <option value="25" {% if request.GET.per_page == '25' %}selected{% endif %}>25</option>
+                    <option value="50" {% if request.GET.per_page == '50' %}selected{% endif %}>50</option>
+                    <option value="100" {% if request.GET.per_page == '100' %}selected{% endif %}>100</option>
+                </select>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            <th># OH</th>
+                            <th>Fecha</th>
+                            <th>Horas Operación</th>
+                            <th>Backlog</th>
+                            <th>Estado</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for oh in page_obj %}
+                        <tr class="estado-card 
+                            {% if oh.backlog < 0 %}estado-critico
+                            {% elif oh.backlog < 5000 %}estado-alerta
+                            {% else %}estado-normal{% endif %}">
+                            <td><span class="badge bg-dark">{{ oh.numero_oh }}</span></td>
+                            <td>{{ oh.fecha_oh|date:"d/m/Y" }}</td>
+                            <td>{{ oh.horas_operacion|default:"-" }}</td>
+                            <td>
+                                {% if oh.backlog < 0 %}
+                                    <span class="badge bg-danger">{{ oh.backlog }}</span>
+                                {% elif oh.backlog < 5000 %}
+                                    <span class="badge bg-warning">{{ oh.backlog }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ oh.backlog }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if oh.backlog < 0 %}
+                                    <span class="badge bg-danger">CRÍTICO</span>
+                                {% elif oh.backlog < 5000 %}
+                                    <span class="badge bg-warning">ALERTA</span>
+                                {% else %}
+                                    <span class="badge bg-success">NORMAL</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ oh.observaciones|default:"-"|truncatechars:50 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No hay registros de overhaul para este balancín</h5>
+                                <a href="{% url 'registrar_oh_balancin' balancin.codigo %}" class="btn btn-primary mt-3">
+                                    <i class="fas fa-plus-circle me-2"></i>Registrar primer OH
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- PAGINACIÓN -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center flex-wrap">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">{{ num }}</a></li>
+                        {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <!-- Información de registros -->
+            <div class="text-center text-muted small mt-2">
+                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ total_oh }} registros
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DEL VISOR -->
+<div class="modal fade" id="visorMejoradoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="visorMejoradoTitulo">Balancín</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" style="background-color: #f8f9fa; overflow: hidden; position: relative; height: 70vh;">
+                <div id="mejoradoContainer" style="width: 100%; height: 100%; overflow: hidden; position: relative; cursor: grab;">
+                    <img id="mejoradoImagen" 
+                         src="" 
+                         style="position: absolute; top: 0; left: 0; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; display: none;"
+                         draggable="false">
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <span id="zoomLevelMejorado">Zoom: 100%</span> | 
+                    <span>🖱️ Click y arrastra para mover</span> | 
+                    <span>🔍 Usa la rueda del mouse para zoom</span>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" id="btnResetMejorado">⟲ Reset</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+// ===== VISOR DE IMÁGENES OPTIMIZADO =====
+(function() {
+    'use strict';
+    
+    // MAPEO DE TIPOS DE BALANCÍN A NOMBRES DE ARCHIVO
+    const tipoToImagen = {
+        '8N/4TR-420C': '8N-4TR-420C.jpg',
+        '10N/4TR-420C': '10N-4TR-420C.jpg',
+        '12N/4TR-420C': '12N-4TR-420C.jpg',
+        '14N/4TR-420C': '14N-4TR-420C.jpg',
+        '16N/4TR-420C': '16N-4TR-420C.jpg',
+        '4T/4N-420C': '4T_4N_420C.jpg',
+        '4T-501C': '4T-501C.jpg',
+        '6T-501C': '6T-501C.jpg',
+        '8T-501C': '8T-501C.jpg',
+        '10T-501C': '10T-501C.jpg',
+        '12T-501C': '12T-501C.jpg',
+        '8T-8N-420C': '8T-8N-420C.jpg',
+    };
+
+    // Elementos del DOM (caché)
+    const modalElement = document.getElementById('visorMejoradoModal');
+    const mejoradoImagen = document.getElementById('mejoradoImagen');
+    const mejoradoContainer = document.getElementById('mejoradoContainer');
+    const zoomLevelSpan = document.getElementById('zoomLevelMejorado');
+    
+    // Estado del visor
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let startX, startY;
+    let imageWidth = 0, imageHeight = 0;
+    let containerWidth = 0, containerHeight = 0;
+    let rafId = null;
+    
+    // Actualizar transformación con requestAnimationFrame (optimizado)
+    function actualizarTransformacion() {
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+        }
+        
+        rafId = requestAnimationFrame(() => {
+            mejoradoImagen.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+            if (zoomLevelSpan) {
+                zoomLevelSpan.textContent = `Zoom: ${Math.round(scale * 100)}%`;
+            }
+            rafId = null;
+        });
+    }
+    
+    // Calcular y centrar imagen
+    function centrarImagen() {
+        if (!imageWidth || !imageHeight || !containerWidth || !containerHeight) return;
+        
+        // Calcular escala para que quepa en el contenedor
+        const scaleX = containerWidth / imageWidth;
+        const scaleY = containerHeight / imageHeight;
+        scale = Math.min(scaleX, scaleY, 0.95);
+        
+        // Centrar
+        translateX = (containerWidth - imageWidth * scale) / 2;
+        translateY = (containerHeight - imageHeight * scale) / 2;
+        
+        actualizarTransformacion();
+    }
+    
+    // Actualizar dimensiones del contenedor
+    function actualizarDimensiones() {
+        if (mejoradoContainer) {
+            containerWidth = mejoradoContainer.clientWidth;
+            containerHeight = mejoradoContainer.clientHeight;
+        }
+    }
+    
+    // Función para obtener el nombre correcto de la imagen
+    function getImagenPath(tipo) {
+        return tipoToImagen[tipo] || tipo.replace(/\//g, '-') + '.jpg';
+    }
+    
+    // Función para corregir error de imagen
+    window.corregirErrorImagen = function(imgElement) {
+        const tipoOriginal = imgElement.getAttribute('data-tipo-original');
+        if (tipoOriginal) {
+            const imagenCorrecta = getImagenPath(tipoOriginal);
+            imgElement.src = `/media/balancines/${imagenCorrecta}`;
+        }
+    };
+    
+    // Función para abrir el visor (optimizada)
+    window.abrirVisorMejorado = function(elemento) {
+        const container = elemento.closest('.imagen-container');
+        if (!container) return;
+        
+        const tipo = container.dataset.tipo;
+        const imagenNombre = getImagenPath(tipo);
+        const src = `/media/balancines/${imagenNombre}`;
+        const defaultImg = '/static/images/default-balancin.png';
+        
+        // Actualizar título
+        const titulo = document.getElementById('visorMejoradoTitulo');
+        if (titulo) {
+            titulo.textContent = `Balancín ${tipo.replace(/\//g, '-')}`;
+        }
+        
+        // Resetear estado
+        mejoradoImagen.src = '';
+        mejoradoImagen.style.display = 'none';
+        mejoradoContainer.classList.add('loading');
+        
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        actualizarTransformacion();
+        
+        // Cargar imagen
+        const img = new Image();
+        
+        img.onload = function() {
+            imageWidth = img.width;
+            imageHeight = img.height;
+            
+            mejoradoImagen.src = src;
+            mejoradoImagen.style.display = 'block';
+            
+            // Actualizar dimensiones del contenedor
+            actualizarDimensiones();
+            
+            // Centrar imagen
+            centrarImagen();
+            
+            mejoradoContainer.classList.remove('loading');
+        };
+        
+        img.onerror = function() {
+            // Fallback a imagen por defecto
+            const defaultImgObj = new Image();
+            defaultImgObj.onload = function() {
+                imageWidth = defaultImgObj.width;
+                imageHeight = defaultImgObj.height;
+                
+                mejoradoImagen.src = defaultImg;
+                mejoradoImagen.style.display = 'block';
+                
+                actualizarDimensiones();
+                centrarImagen();
+                
+                mejoradoContainer.classList.remove('loading');
+            };
+            defaultImgObj.src = defaultImg;
+        };
+        
+        img.src = src;
+        
+        // Mostrar modal
+        const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        modal.show();
+    };
+    
+    // Event listeners optimizados con throttle
+    let wheelTimeout = null;
+    
+    mejoradoContainer.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        
+        if (!mejoradoImagen.src || mejoradoImagen.style.display === 'none') return;
+        
+        if (wheelTimeout) return;
+        
+        wheelTimeout = setTimeout(() => {
+            const rect = mejoradoImagen.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const delta = e.deltaY < 0 ? 1.1 : 0.9;
+            let newScale = scale * delta;
+            
+            newScale = Math.max(0.1, Math.min(5, newScale));
+            
+            if (newScale === scale) {
+                wheelTimeout = null;
+                return;
+            }
+            
+            const scaleChange = newScale / scale;
+            translateX = mouseX - (mouseX - translateX) * scaleChange;
+            translateY = mouseY - (mouseY - translateY) * scaleChange;
+            
+            scale = newScale;
+            actualizarTransformacion();
+            
+            wheelTimeout = null;
+        }, 16); // ~60fps
+    }, { passive: false });
+    
+    // Arrastre optimizado
+    mejoradoContainer.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        this.classList.add('grabbing');
+    });
+    
+    window.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        actualizarTransformacion();
+    });
+    
+    window.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            mejoradoContainer.classList.remove('grabbing');
+        }
+    });
+    
+    // Botón reset
+    document.getElementById('btnResetMejorado')?.addEventListener('click', function() {
+        if (!mejoradoImagen.src || mejoradoImagen.style.display === 'none') return;
+        
+        actualizarDimensiones();
+        centrarImagen();
+    });
+    
+    // Limpiar al cerrar modal
+    modalElement?.addEventListener('hidden.bs.modal', function() {
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+        mejoradoImagen.src = '';
+        mejoradoImagen.style.display = 'none';
+        mejoradoContainer.classList.remove('loading');
+        
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+    });
+    
+    // Actualizar dimensiones al redimensionar ventana
+    window.addEventListener('resize', function() {
+        if (mejoradoImagen.style.display === 'block') {
+            actualizarDimensiones();
+            centrarImagen();
+        }
+    });
+    
+    // También actualizar cuando el modal se muestra
+    modalElement?.addEventListener('shown.bs.modal', function() {
+        actualizarDimensiones();
+        if (mejoradoImagen.style.display === 'block') {
+            centrarImagen();
+        }
+    });
+    
+})();
+
+// Función para formatear tipos (separada)
+function formatearTipos() {
+    document.querySelectorAll('.tipo-balancin').forEach(function(el) {
+        if (el.textContent.includes('/')) {
+            el.textContent = el.textContent.replace(/\//g, '-');
+        }
+    });
+}
+
+// Script para cambiar registros por página
+document.getElementById('paginasPorPagina')?.addEventListener('change', function() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('per_page', this.value);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+});
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    formatearTipos();
+    
+    // Gráfico de backlog
+    const ctx = document.getElementById('backlogChart');
+    if (ctx) {
+        try {
+            const fechas = {{ fechas|safe }};
+            const backlogs = {{ backlogs|safe }};
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: fechas,
+                    datasets: [{
+                        label: 'Backlog (horas)',
+                        data: backlogs,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0,123,255,0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: function(context) {
+                            const value = context.raw;
+                            if (value < 0) return '#dc3545';
+                            if (value < 5000) return '#ffc107';
+                            return '#28a745';
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    let value = context.raw;
+                                    let estado = '';
+                                    
+                                    if (value < 0) {
+                                        estado = 'CRÍTICO';
+                                    } else if (value < 5000) {
+                                        estado = 'ALERTA';
+                                    } else {
+                                        estado = 'NORMAL';
+                                    }
+                                    
+                                    return `${label}: ${value} (${estado})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Horas'
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Error al crear el gráfico:', e);
+        }
+    }
+});
+</script>
+{% endblock %}

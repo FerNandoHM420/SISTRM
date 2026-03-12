@@ -87,4 +87,7 @@ path('api/buscar-jefes/', views.buscar_jefes_api, name='buscar_jefes_api'),
 
 path('historial-torre/', views.historial_torre_con_filtros, name='historial_torre_filtros'),
 
+# === PARA HISTORIAL DE BALANCÍN ESPECÍFICO === 
+path('historial-balancin/<path:codigo>/', views.historial_balancin, name='historial_balancin'),
+
 ]

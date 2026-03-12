@@ -577,6 +577,9 @@
                 </tbody>
             </table>
         {% endfor %}
+
+
+        
         <!-- ===== OTRAS PIEZAS REEMPLAZADAS CON BUSCADOR ===== -->
         <div style="margin-top: 25px; border: 1px solid #000;">
             <div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
@@ -648,7 +651,6 @@
                 <div style="width: 49px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
                     {% if forloop.counter > 10 %}background-color: #e0e0e0;{% endif %}">
                     {% if forloop.counter <= 10 %}
-                        <input type="checkbox" name="polea_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
                     {% endif %}
                 </div>
             {% endfor %}
@@ -680,13 +682,11 @@
         <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Segmentos 2P</div>
         {% for i in "12345"|make_list %}
             <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                <input type="checkbox" name="seg2p_1_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
             </div>
         {% endfor %}
  <div></div>
         {% for i in "123456"|make_list %}
             <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                <input type="checkbox" name="seg2p_2_{{ forloop.counter }}" style="width: 24px; height: 24px; cursor: pointer;">
             </div>
         {% endfor %}
     </div>
@@ -861,15 +861,15 @@
     </div>
 </div>
 </div>
-        <!-- ===== SECCIÓN Lubricacion PARA 4T-501C ===== -->
+        <!-- ===== SECCIÓN Lubricacion PARA 12T-501C ===== -->
 <div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
     Puntos de lubricacion (gramos)
 </div>
 
-<div style="display: flex; gap: 250px; margin-bottom: 40px;">
+<div style="display: flex; gap: 80px; margin-bottom: 40px;">
 
     <!-- PL-S2P -->
-    <div style="border: 2px solid #000; width: 280px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+    <div style="border: 2px solid #000; width: 350px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
         <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S2P</div>
         <!-- Fila de números -->
         <div style="display: flex; border-bottom: 1px solid #000;">
@@ -877,25 +877,26 @@
             <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
             <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
             <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
-            <div style="width: 40px; text-align: center; padding: 8px 0;">4</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">4</div>
+            <div style="width: 68px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">5</div>
         </div>
         <!-- Fila de checkboxes -->
         <div style="display: flex;">
             <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 2P</div>
             <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                <input type="checkbox" style="width: 22px; height: 22px;">
             </div>
             <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                <input type="checkbox" style="width: 22px; height: 22px;">
             </div>
-              <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-        <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+              <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+        <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
+         
+         
  <!--SE4 -->
         </div>
     </div>
 
     <!-- PL-S4P -->
-    <div style="border: 2px solid #000; width: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+    <div style="border: 2px solid #000; width: 240px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
         <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S4P</div>
         <!-- Fila de números -->
         <div style="display: flex; border-bottom: 1px solid #000;">
@@ -907,9 +908,25 @@
         <div style="display: flex;">
             <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</div>
             <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                <input type="checkbox" style="width: 22px; height: 22px;">
             </div>
-              <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+        
+        </div>
+    </div>
+
+    <!-- bastidor -->
+    <div style="border: 2px solid #000; width: 150px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
+        <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S4P</div>
+        <!-- Fila de números -->
+        <div style="display: flex; border-bottom: 1px solid #000;">
+            <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
+            <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
+        </div>
+        <!-- Fila de checkboxes -->
+        <div style="display: flex;">
+            <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Bastidor 6P</div>
+            <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
+            </div>
+        
         </div>
     </div>
 
@@ -917,17 +934,18 @@
     <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-CS</div>
     <!-- Fila de números -->
     <div style="display: flex; border-bottom: 1px solid #000;">
-        <div style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
+        <div style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #ffffff;">&nbsp;</div>
         <div style="width: 40px; text-align: center; padding: 8px 0;">1</div>
     </div>
     <!-- Fila de checkboxes -->
     <div style="display: flex;">
         <div style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; white-space: nowrap;">Consola de suspensión</div>
-        <div style="width: 80px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
+        <div style="width: 80px; height: 45px; border-right: 1px solid #000; background-color: #ffffff;"></div>
     </div>
 </div>
 
 </div>
+
 <!-- ===== VERIFICACIONES FINALES ===== -->
 <div style="display: flex; gap: 30px; margin-top: 30px; margin-bottom: 30px; align-items: center;">
     

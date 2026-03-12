@@ -520,9 +520,11 @@
 <a href="/crear-formulario/{{ item.balancin_codigo }}/" class="btn btn-sm btn-success">
   Formulario
 </a>
- <a href="{% url 'lista_formularios' %}" class="btn btn-info">
-        </i> Ver Formularios
-    </a>
+ <a href="{% url 'historial_balancin' item.balancin_codigo %}" 
+   class="btn btn-info btn-sm" 
+   title="Ver historial completo">
+    <i class="fas fa-history me-1"></i> Historial
+</a>
                             </div>
                         </div>
                     </div>

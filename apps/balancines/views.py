@@ -2278,3 +2278,75 @@ def historial_torre_con_filtros(request):
     }
     
     return render(request, 'balancines/historial_torre.html', context)
+
+from django.core.paginator import Paginator
+@login_required
+def historial_balancin(request, codigo):
+    """
+    Muestra el historial completo de un balancín específico - VERSIÓN OPTIMIZADA
+    """
+    from django.core.paginator import Paginator
+    from django.db import models
+    
+    # Obtener el balancín con TODOS los datos relacionados en UNA SOLA CONSULTA
+    balancin = get_object_or_404(
+        BalancinIndividual.objects.select_related(
+            'torre__linea',  # Torre y su línea en una sola consulta
+            'torre__seccion'
+        ),
+        codigo=codigo
+    )
+    
+    # Obtener tipo de balancín directamente desde el balancín (es propiedad)
+    tipo_balancin_codigo = balancin.tipo_balancin_codigo
+    
+    # Obtener historial de OH con consulta optimizada
+    historial_oh = HistorialOH.objects.filter(
+        balancin=balancin
+    ).only(  # Solo cargar los campos que necesitamos
+        'numero_oh', 
+        'fecha_oh', 
+        'horas_operacion', 
+        'backlog', 
+        'observaciones'
+    ).order_by('-fecha_oh', '-numero_oh')
+    
+    # Contar rápido sin cargar todos los objetos
+    total_oh = historial_oh.count()
+    
+    # Obtener último OH de manera eficiente
+    ultimo_oh = historial_oh.first()
+    
+    # Paginación
+    per_page = request.GET.get('per_page', 10)
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+    
+    paginator = Paginator(historial_oh, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Datos para gráficos (solo si hay datos)
+    fechas = []
+    backlogs = []
+    if total_oh > 0:
+        # Obtener solo los últimos 10 para el gráfico
+        ultimos_10 = historial_oh[:10]
+        fechas = [h.fecha_oh.strftime('%d/%m/%Y') for h in ultimos_10]
+        backlogs = [h.backlog or 0 for h in ultimos_10]
+    
+    context = {
+        'balancin': balancin,
+        'page_obj': page_obj,
+        'total_oh': total_oh,
+        'ultimo_oh': ultimo_oh,
+        'fechas': fechas,
+        'backlogs': backlogs,
+        'tipo_balancin': tipo_balancin_codigo,
+        # Indicador para el template de si hay datos o no
+        'hay_datos': total_oh > 0,
+    }
+    
+    return render(request, 'balancines/historial_balancin.html', context)
