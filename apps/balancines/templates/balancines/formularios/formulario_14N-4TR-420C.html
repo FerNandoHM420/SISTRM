@@ -533,7 +533,9 @@
                 <td style="text-align:center;width:;">FCRB-{{ tipo_balancin }}-</td>
             </tr>
         </table>
-
+<input type="hidden" name="linea_inicial" value="{{ linea_actual }}">
+<input type="hidden" name="torre_inicial" value="{{ torre_actual }}">
+<input type="hidden" name="sentido_final" id="sentido_final" value="">
         <!-- ===== ANÁLISIS PREDICTIVO ===== -->
         <table class="excel-table">
             <tr>
@@ -658,52 +660,42 @@
     </tbody>
 </table>
 
-        <!-- ===== OTRAS PIEZAS REEMPLAZADAS CON BUSCADOR ===== -->
-        <div style="margin-top: 25px; border: 1px solid #000;">
-            <div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
-                OTRAS PIEZAS REEMPLAZADAS
-            </div>
-            
-            <!-- Buscador -->
-            <div style="display: flex; padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #000;">
-                <input type="text" id="buscador-repuestos" placeholder="Buscar por ID o descripción (mínimo 2 caracteres)..." 
-                       style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
-                <button type="button" id="btn-agregar" class="btn btn-primary" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" disabled>Agregar</button>
-            </div>
-            
-            <!-- Resultados de búsqueda -->
-            <div id="resultados-busqueda" style="display: none; max-height: 200px; overflow-y: auto; border-bottom: 1px solid #000; background-color: white;"></div>
-            
-            <!-- Tabla de repuestos agregados -->
-            <table id="tabla-otros" class="excel-table" style="margin-top:0; width: 100%;">
-                <thead>
-                    <tr style="background:#c0c0c0; text-align:center; font-weight:bold;">
-                        <th style="width:8%;">ID</th>
-                        <th style="width:37%;">Descripción</th>
-                        <th style="width:8%;">Cant.</th>
-                        <th style="width:8%;">Cant. Total</th>
-                        <th style="width:24%;">OBSERVACIONES</th>
-                        <th style="width:5%;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-otros">
-                    <!-- Fila inicial (vacía) -->
-                    <tr class="fila-repuesto">
-                        <td><input type="text" name="otro_id_0" class="excel-input" value=""></td>
-                        <td><input type="text" name="otro_desc_0" class="excel-input" value=""></td>
-                        <td><input type="number" name="otro_cant_0" class="excel-input" min="0" value="1"></td>
-                        <td><input type="number" name="otro_total_0" class="excel-input" min="0" value="4"></td>
-                        <td><input type="text" name="otro_obs_0" class="excel-input" placeholder="Observaciones"></td>
-                        <td style="text-align: center;">
-                            <button type="button" class="btn-eliminar" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer;">X</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <!-- Input oculto para llevar el conteo de filas -->
-            <input type="hidden" id="total-filas" name="total_filas_otros" value="1">
-        </div>
+      <!-- ===== OTRAS PIEZAS REEMPLAZADAS CON BUSCADOR ===== -->
+<div style="margin-top: 25px; border: 1px solid #000;" id="otras-piezas-container">
+    <div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
+        OTRAS PIEZAS REEMPLAZADAS
+    </div>
+    
+    <!-- Buscador -->
+    <div style="display: flex; padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #000;">
+        <input type="text" id="buscador-repuestos" placeholder="Buscar por ID o descripción..." 
+               style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
+        <button type="button" id="btn-agregar" class="btn btn-primary" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" disabled>Agregar</button>
+    </div>
+    
+    <!-- Resultados de búsqueda -->
+    <div id="resultados-busqueda" style="display: none; max-height: 200px; overflow-y: auto; border-bottom: 1px solid #000; background-color: white;"></div>
+    
+    <!-- Tabla de repuestos agregados -->
+    <table id="tabla-otros" class="excel-table" style="margin-top:0; width: 100%;">
+        <thead>
+            <tr style="background:#c0c0c0; text-align:center; font-weight:bold;">
+                <th style="width:8%;">ID</th>
+                <th style="width:37%;">Descripción</th>
+                <th style="width:8%;">Cant.</th>
+                <th style="width:8%;">Cant. Total</th>
+                <th style="width:24%;">OBSERVACIONES</th>
+                <th style="width:5%;">Acción</th>
+            </tr>
+        </thead>
+        <tbody id="tbody-otros">
+            <!-- SIN FILA INICIAL - se agregarán dinámicamente -->
+        </tbody>
+    </table>
+    
+    <!-- Input oculto para llevar el conteo de filas - CORREGIDO -->
+    <input type="hidden" id="total-filas" name="total_filas_otros" value="0">
+</div>
   <!-- ===== SECCIÓN TORQUE PARA 4T-501C ===== -->
         <div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
             TORQUE, MARCADO DE PERNOS Y TUERCAS
@@ -952,70 +944,63 @@
             </div>
         </div>
 
-        <!-- ===== POSICIÓN FINAL ===== -->
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <table class="posicion-table" style="width: auto;">
-                <tr>
-                    <td style="width:30%;" class="posicion-label">Posición Final</td>
-                    <td style="width:20%;" class="posicion-label">Línea</td>
-                    <td style="width:50%;">
-                        <select name="linea_final" id="linea_final" class="excel-select">
-                            <option value="">Seleccione línea</option>
-                            {% for linea in lineas %}
-                                <option value="{{ linea.nombre }}">{{ linea.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td class="posicion-label">Posición</td>
-                    <td>
-                        <input type="text" name="posicion_final" id="posicion_final" class="excel-input" 
-                               placeholder="Ej: LRO/TOR-01/DESC">
-                    </td>
-                </tr>
-            </table>
-        </div>
+          <!-- ===== POSICIÓN FINAL - CORREGIDA CON FILTRO DE LÍNEAS ===== -->
+<div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+    <table class="posicion-table" style="width: auto;">
+        <tr>
+            <td style="width:30%;" class="posicion-label">Posición Final</td>
+            <td style="width:20%;" class="posicion-label">Línea</td>
+            <td style="width:50%;">
+                <select name="linea_final" id="linea_final" class="excel-select" required>
+                    <option value="">Seleccione línea</option>
+                    {% for linea in lineas_disponibles %}
+                        <option value="{{ linea.nombre }}">{{ linea.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td class="posicion-label">Torre</td>
+            <td>
+                <select name="torre_final" id="torre_final" class="excel-select" required disabled>
+                    <option value="">Primero seleccione una línea</option>
+                </select>
+            </td>
+        </tr>
+    </table>
+</div>
 
-        <!-- ===== TABLA REALIZADO CON BUSCADOR DE USUARIOS ===== -->
-        <div style="margin-top: 25px; border: 1px solid #000;">
-            <div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
-                REALIZADO
-            </div>
-            
-            <div style="display: flex; padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #000;">
-                <input type="text" id="buscador-usuarios" placeholder="Buscar por nombre o email (mínimo 2 caracteres)..." 
-                       style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
-                <button type="button" id="btn-agregar-usuario" class="btn btn-primary" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" disabled>Agregar</button>
-            </div>
-            
-            <div id="resultados-usuarios" style="display: none; max-height: 200px; overflow-y: auto; border-bottom: 1px solid #000; background-color: white;"></div>
-            
-            <table id="tabla-realizado" class="excel-table" style="margin-top:0; width: 100%;">
-                <thead>
-                    <tr style="background:#c0c0c0; text-align:center; font-weight:bold;">
-                        <th style="width:30%;">Firma</th>
-                        <th style="width:30%;">Nombre</th>
-                        <th style="width:30%;">Cargo</th>
-                        <th style="width:10%;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-realizado">
-                    <tr class="fila-realizado">
-                        <td><input type="text" name="firma_realizado_0" class="excel-input" placeholder="Firma"></td>
-                        <td><input type="text" name="nombre_realizado_0" class="excel-input" value="" readonly style="background-color: #f0f0f0;"></td>
-                        <td><input type="text" name="cargo_realizado_0" class="excel-input" value="" readonly style="background-color: #f0f0f0;"></td>
-                        <td style="text-align: center;">
-                            <input type="hidden" name="usuario_realizado_0" class="usuario-id" value="">
-                            <button type="button" class="btn-eliminar-realizado" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer;">X</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <input type="hidden" id="total-filas-realizado" name="total_filas_realizado" value="1">
-        </div>
+<!-- ===== TABLA REALIZADO CON BUSCADOR DE USUARIOS (MEJORADA) ===== -->
+<div style="margin-top: 25px; border: 1px solid #000;">
+    <div style="background:#c0c0c0; font-weight:bold; font-size:12pt; text-align:center; padding: 8px;">
+        REALIZADO (Técnicos que realizaron el trabajo)
+    </div>
+    
+    <div style="display: flex; padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #000;">
+        <input type="text" id="buscador-usuarios" placeholder="Buscar técnico por nombre..." 
+               style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
+        <button type="button" id="btn-agregar-usuario" class="btn btn-primary" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" disabled>Agregar Técnico</button>
+    </div>
+    
+    <div id="resultados-usuarios" style="display: none; max-height: 200px; overflow-y: auto; border-bottom: 1px solid #000; background-color: white;"></div>
+    
+    <table id="tabla-realizado" class="excel-table" style="margin-top:0; width: 100%;">
+        <thead>
+            <tr style="background:#c0c0c0; text-align:center; font-weight:bold;">
+                <th style="width:30%;">Firma</th>
+                <th style="width:30%;">Nombre</th>
+                <th style="width:30%;">Cargo</th>
+                <th style="width:10%;">Acción</th>
+            </tr>
+        </thead>
+        <tbody id="tbody-realizado">
+            <!-- Sin filas iniciales - se agregarán dinámicamente -->
+        </tbody>
+    </table>
+    
+    <input type="hidden" id="total-filas-realizado" name="total_filas_realizado" value="0">
+</div>
 
         <!-- Tabla APROBADO -->
         <table class="firma-table" style="width: 50%; margin-top: 25px;">
@@ -1064,11 +1049,14 @@
 </div>
 {% endblock %}
 
+
+
 {% block extra_js %}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // ===== VARIABLES GLOBALES =====
-    let contadorFilas = 1;
+    let contadorFilas = 0;
     let repuestoSeleccionado = null;
     
     // Elementos del DOM
@@ -1078,19 +1066,60 @@ document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.getElementById('tbody-otros');
     const totalFilasInput = document.getElementById('total-filas');
     
-    // ===== LÓGICA PARA POSICIÓN FINAL =====
-    const lineaSelect = document.getElementById('linea_final');
-    const posicionInput = document.getElementById('posicion_final');
-    
-    if (lineaSelect) {
-        lineaSelect.addEventListener('change', function() {
-            console.log('Línea seleccionada:', this.value);
+    // ===== CARGA AUTOMÁTICA DE TORRES CON SENTIDO =====
+    const lineaFinal = document.getElementById('linea_final');
+    const torreFinal = document.getElementById('torre_final');
+    const sentidoFinal = document.getElementById('sentido_final');
+    const tipoBalancin = '{{ tipo_balancin }}';
+
+    if (lineaFinal && torreFinal) {
+        lineaFinal.addEventListener('change', function() {
+            const linea = this.value;
+            
+            if (linea) {
+                torreFinal.disabled = true;
+                torreFinal.innerHTML = '<option value="">Cargando torres...</option>';
+                
+                fetch(`/crear-formulario/{{ balancin.codigo }}/?linea=${encodeURIComponent(linea)}&tipo=${encodeURIComponent(tipoBalancin)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    torreFinal.innerHTML = '<option value="">Seleccione torre</option>';
+                    
+                    if (data.torres && data.torres.length > 0) {
+                        data.torres.forEach(torre => {
+                            const option = document.createElement('option');
+                            option.value = torre.numero;
+                            option.setAttribute('data-sentido', torre.sentido);
+                            option.textContent = torre.texto;
+                            torreFinal.appendChild(option);
+                        });
+                        torreFinal.disabled = false;
+                    } else {
+                        torreFinal.innerHTML = '<option value="">No hay torres disponibles</option>';
+                        torreFinal.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    torreFinal.innerHTML = '<option value="">Error al cargar</option>';
+                });
+            } else {
+                torreFinal.disabled = true;
+                torreFinal.innerHTML = '<option value="">Primero seleccione una línea</option>';
+            }
         });
-    }
-    
-    if (posicionInput) {
-        posicionInput.addEventListener('input', function() {
-            console.log('Posición:', this.value);
+        
+        // Cuando se selecciona una torre, guardar el sentido
+        torreFinal.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.dataset.sentido) {
+                sentidoFinal.value = selectedOption.dataset.sentido;
+                console.log('Sentido final:', sentidoFinal.value);
+            } else {
+                sentidoFinal.value = '';
+            }
         });
     }
     
@@ -1109,33 +1138,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== BUSCADOR DE REPUESTOS =====
     let timeoutId = null;
     
-    buscador.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-        }
-        
-        if (query.length < 2) {
-            resultadosDiv.style.display = 'none';
-            btnAgregar.disabled = true;
-            repuestoSeleccionado = null;
-            return;
-        }
-        
-        timeoutId = setTimeout(() => {
-            fetch(`/api/buscar-repuestos/?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    mostrarResultados(data.results);
-                })
-                .catch(error => {
-                    console.error('Error en la búsqueda:', error);
-                    resultadosDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #dc3545;">Error al buscar</div>';
-                    resultadosDiv.style.display = 'block';
-                });
-        }, 300);
-    });
+    if (buscador) {
+        buscador.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            if (query.length < 2) {
+                resultadosDiv.style.display = 'none';
+                btnAgregar.disabled = true;
+                repuestoSeleccionado = null;
+                return;
+            }
+            
+            timeoutId = setTimeout(() => {
+                fetch(`/api/buscar-repuestos/?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        mostrarResultados(data.results);
+                    })
+                    .catch(error => {
+                        console.error('Error en la búsqueda:', error);
+                        resultadosDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #dc3545;">Error al buscar</div>';
+                        resultadosDiv.style.display = 'block';
+                    });
+            }, 300);
+        });
+    }
     
     function mostrarResultados(resultados) {
         resultadosDiv.innerHTML = '';
@@ -1166,6 +1195,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resultadosDiv.style.display = 'block';
     }
     
+    // ===== FUNCIÓN MODIFICADA: GUARDA EL ORIGEN =====
     function seleccionarRepuesto(repuesto) {
         if (repuestoYaAgregado(repuesto.item)) {
             alert('Este repuesto ya está agregado a la lista.');
@@ -1180,54 +1210,56 @@ document.addEventListener('DOMContentLoaded', function() {
         buscador.value = `${repuesto.item} - ${repuesto.descripcion}`;
         resultadosDiv.style.display = 'none';
         btnAgregar.disabled = false;
+        
+        // 🔥 GUARDAR EL ORIGEN EN EL BOTÓN
+        btnAgregar.setAttribute('data-origen', repuesto.origen);
     }
     
-    // ===== AGREGAR NUEVA FILA DE REPUESTO =====
-    btnAgregar.addEventListener('click', function() {
-        if (!repuestoSeleccionado) return;
-        
-        const nuevaFila = document.createElement('tr');
-        nuevaFila.className = 'fila-repuesto';
-        nuevaFila.innerHTML = `
-            <td><input type="text" name="otro_id_${contadorFilas}" class="excel-input" value="${repuestoSeleccionado.item}" readonly style="background-color: #f0f0f0;"></td>
-            <td><input type="text" name="otro_desc_${contadorFilas}" class="excel-input" value="${repuestoSeleccionado.descripcion}" readonly style="background-color: #f0f0f0;"></td>
-            <td><input type="number" name="otro_cant_${contadorFilas}" class="excel-input" min="0" value="1"></td>
-            <td><input type="number" name="otro_total_${contadorFilas}" class="excel-input" min="0" value="4"></td>
-            <td><input type="text" name="otro_obs_${contadorFilas}" class="excel-input" placeholder="Observaciones"></td>
-            <td style="text-align: center;">
-                <button type="button" class="btn-eliminar" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer;">X</button>
-            </td>
-        `;
-        
-        tbody.appendChild(nuevaFila);
-        contadorFilas++;
-        totalFilasInput.value = contadorFilas;
-        
-        buscador.value = '';
-        btnAgregar.disabled = true;
-        repuestoSeleccionado = null;
-        
-        nuevaFila.querySelector('.btn-eliminar').addEventListener('click', function() {
-            eliminarFila(this);
+    // ===== FUNCIÓN MODIFICADA: USA EL ORIGEN =====
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', function() {
+            if (!repuestoSeleccionado) return;
+            
+            // 🔥 OBTENER EL ORIGEN DEL BOTÓN
+            const origen = this.getAttribute('data-origen') || 'balancin';
+            
+            const nuevaFila = document.createElement('tr');
+            nuevaFila.className = 'fila-repuesto';
+            nuevaFila.innerHTML = `
+                <td><input type="text" name="otro_id_${contadorFilas}" class="excel-input" value="${repuestoSeleccionado.item}" readonly style="background-color: #f0f0f0;"></td>
+                <td><input type="text" name="otro_desc_${contadorFilas}" class="excel-input" value="${repuestoSeleccionado.descripcion}" readonly style="background-color: #f0f0f0;"></td>
+                <td><input type="number" name="otro_cant_${contadorFilas}" class="excel-input" min="0" value="1"></td>
+                <td><input type="number" name="otro_total_${contadorFilas}" class="excel-input" min="0" value="4"></td>
+                <td><input type="text" name="otro_obs_${contadorFilas}" class="excel-input" placeholder="Observaciones"></td>
+                <td style="text-align: center;">
+                    <!-- 🔥 CAMPO OCULTO CON EL ORIGEN -->
+                    <input type="hidden" name="otro_origen_${contadorFilas}" value="${origen}">
+                    <button type="button" class="btn-eliminar" style="background-color: #dc3545; color: white; border: none; border-radius: 3px; padding: 3px 8px; cursor: pointer;">X</button>
+                </td>
+            `;
+            
+            tbody.appendChild(nuevaFila);
+            contadorFilas++;
+            totalFilasInput.value = contadorFilas;
+            
+            buscador.value = '';
+            btnAgregar.disabled = true;
+            // 🔥 LIMPIAR EL ORIGEN DEL BOTÓN
+            btnAgregar.removeAttribute('data-origen');
+            repuestoSeleccionado = null;
+            
+            nuevaFila.querySelector('.btn-eliminar').addEventListener('click', function() {
+                eliminarFila(this);
+            });
         });
-    });
+    }
     
     // ===== ELIMINAR FILA DE REPUESTO =====
     function eliminarFila(boton) {
         const fila = boton.closest('tr');
-        const filas = document.querySelectorAll('.fila-repuesto');
-        
-        if (filas.length <= 1) {
-            const inputs = fila.querySelectorAll('input');
-            inputs[0].value = '';
-            inputs[1].value = '';
-            inputs[2].value = '1';
-            inputs[3].value = '4';
-            inputs[4].value = '';
-            return;
-        }
-        
         fila.remove();
+        contadorFilas--;
+        totalFilasInput.value = contadorFilas;
     }
     
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
@@ -1237,13 +1269,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.addEventListener('click', function(event) {
-        if (!buscador.contains(event.target) && !resultadosDiv.contains(event.target)) {
+        if (buscador && !buscador.contains(event.target) && resultadosDiv && !resultadosDiv.contains(event.target)) {
             resultadosDiv.style.display = 'none';
         }
     });
 
     // ===== BUSCADOR DE USUARIOS PARA REALIZADO =====
-    let contadorFilasRealizado = 1;
+    let contadorFilasRealizado = 0;
     let usuarioSeleccionado = null;
     
     const buscadorUsuarios = document.getElementById('buscador-usuarios');
@@ -1251,6 +1283,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultadosUsuarios = document.getElementById('resultados-usuarios');
     const tbodyRealizado = document.getElementById('tbody-realizado');
     const totalFilasRealizado = document.getElementById('total-filas-realizado');
+    
+    if (tbodyRealizado) {
+        tbodyRealizado.innerHTML = '';
+    }
     
     function usuarioYaAgregado(usuarioId) {
         const filas = document.querySelectorAll('.fila-realizado');
@@ -1267,19 +1303,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (buscadorUsuarios) {
         buscadorUsuarios.addEventListener('input', function() {
-            const query = this.value.trim();
-            
-            if (timeoutIdUsuarios) {
-                clearTimeout(timeoutIdUsuarios);
-            }
-            
+            const query = this.value.trim(); 
+            if (timeoutIdUsuarios) clearTimeout(timeoutIdUsuarios);
             if (query.length < 2) {
                 resultadosUsuarios.style.display = 'none';
                 btnAgregarUsuario.disabled = true;
                 usuarioSeleccionado = null;
                 return;
             }
-            
             timeoutIdUsuarios = setTimeout(() => {
                 fetch(`/api/buscar-usuarios/?q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
@@ -1335,7 +1366,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         usuarioSeleccionado = usuario;
-        buscadorUsuarios.value = `${usuario.nombre} - ${usuario.email}`;
+        buscadorUsuarios.value = usuario.nombre;
         resultadosUsuarios.style.display = 'none';
         btnAgregarUsuario.disabled = false;
     }
@@ -1365,25 +1396,18 @@ document.addEventListener('DOMContentLoaded', function() {
             usuarioSeleccionado = null;
             
             nuevaFila.querySelector('.btn-eliminar-realizado').addEventListener('click', function() {
-                eliminarFilaRealizado(this);
+                fila.remove();
+                contadorFilasRealizado--;
+                totalFilasRealizado.value = contadorFilasRealizado;
             });
         });
     }
     
     function eliminarFilaRealizado(boton) {
         const fila = boton.closest('tr');
-        const filas = document.querySelectorAll('.fila-realizado');
-        
-        if (filas.length <= 1) {
-            const inputs = fila.querySelectorAll('input');
-            inputs[0].value = '';
-            inputs[1].value = '';
-            inputs[2].value = '';
-            fila.querySelector('.usuario-id').value = '';
-            return;
-        }
-        
         fila.remove();
+        contadorFilasRealizado--;
+        totalFilasRealizado.value = contadorFilasRealizado;
     }
     
     document.querySelectorAll('.btn-eliminar-realizado').forEach(btn => {
@@ -1399,4 +1423,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+
 {% endblock %}

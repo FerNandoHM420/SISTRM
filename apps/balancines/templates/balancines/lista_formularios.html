@@ -62,18 +62,31 @@
                                 <small class="text-muted">{{ f.balancin.torre }}</small>
                             </td>
                             <td>{{ f.tipo }}</td>
-                            <td>
-                                <i class="fas fa-arrow-right text-success"></i>
-                                {{ f.linea_inicial }} T{{ f.torre_inicial }}
-                                → 
-                                {{ f.linea_final }} T{{ f.torre_final }}
-                            </td>
-                            <td>
-                                {% if f.realizado_por_recambio %}
-                                    {{ f.realizado_por_recambio.nombre }}<br>
-                                    <small class="text-muted">{{ f.realizado_por_recambio.rol }}</small>
-                                {% endif %}
-                            </td>
+                           <td>
+    <i class="fas fa-arrow-right text-success"></i>
+    {{ f.linea_inicial }} T{{ f.torre_inicial }}/{% if f.balancin.sentido == 'ASCENDENTE' %}ASC{% else %}DESC{% endif %}
+    → 
+    {{ f.linea_final }} T{{ f.torre_final }}/{% if f.sentido_final == 'ASCENDENTE' %}ASC{% else %}DESC{% endif %}
+</td>
+                           <td>
+    {% if f.realizado_por_recambio %}
+        <div class="mb-1">
+          {{ f.realizado_por_recambio.nombre }}
+           
+        </div>
+        
+        {% if f.tecnicos.all %}
+          
+                    {% for t in f.tecnicos.all %}
+                        {% if t.usuario.id != f.realizado_por_recambio.id %}
+                            <span >{{ t.usuario.nombre }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</td>
                             <td>
                                 {% if f.aprobado_por %}
                                     {{ f.aprobado_por.nombre }}<br>

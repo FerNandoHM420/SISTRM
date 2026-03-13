@@ -697,6 +697,14 @@ class FormularioReacondicionamiento(models.Model):
     torre_inicial = models.CharField('Torre inicial', max_length=50, blank=True)
     linea_final = models.CharField('Línea final', max_length=50, blank=True)
     torre_final = models.CharField('Torre final', max_length=50, blank=True)
+    sentido_final = models.CharField(
+    'Sentido final',
+    max_length=20,
+    choices=BalancinIndividual.SentidoBalancin.choices,
+    null=True,
+    blank=True,
+    help_text='ASCENDENTE o DESCENDENTE según la torre de destino'
+)
     
     # Análisis predictivo
     control_particulas = models.BooleanField('Control de partículas magnéticas', default=False)
@@ -795,3 +803,31 @@ class ItemFormularioReacondicionamiento(models.Model):
     
     
     
+    
+    
+# Al final, agrega el nuevo modelo:
+class TecnicoFormulario(models.Model):
+    """
+    Técnicos que participaron en el reacondicionamiento
+    """
+    formulario = models.ForeignKey(
+        'FormularioReacondicionamiento',
+        on_delete=models.CASCADE,
+        related_name='tecnicos'
+    )
+    usuario = models.ForeignKey(
+        'Usuario',
+        on_delete=models.PROTECT,
+        verbose_name='Técnico'
+    )
+    firma = models.CharField('Firma', max_length=100, blank=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'app_tecnico_formulario'
+        verbose_name = 'Técnico por Formulario'
+        verbose_name_plural = 'Técnicos por Formulario'
+        ordering = ['fecha_registro']
+    
+    def __str__(self):
+        return f"{self.formulario.codigo_formulario} - {self.usuario.nombre}"

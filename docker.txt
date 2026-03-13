@@ -68,5 +68,5 @@ docker exec -it proyectonuevo-db-1 psql -U proyecto_user -l
 #GitHub actualizar 
 git status
 git add .
-git commit -m "Actualización módulo balancines, formularios OH y nuevas migraciones"
+git commit -m "Ultima Acrualizacion del sistema"
 git push origin main

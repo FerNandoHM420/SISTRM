@@ -1,0 +1,689 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle del Formulario - {{ formulario.codigo_formulario }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #4361ee;
+        --success: #06d6a0;
+        --warning: #ffb703;
+        --danger: #ef476f;
+        --info: #4cc9f0;
+        --dark: #2b2d42;
+        --light: #f8f9fa;
+    }
+    
+    body {
+        background-color: #f4f7fc;
+    }
+    
+    /* ===== TARJETAS ===== */
+    .detail-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+        height: 100%;
+        margin-bottom: 1.5rem;
+    }
+    .detail-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .detail-card .card-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #6c5ce7 100%);
+        color: white;
+        border-bottom: none;
+        padding: 1.25rem 1.5rem;
+    }
+    .detail-card .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    .detail-card .card-header i {
+        margin-right: 0.5rem;
+    }
+    .detail-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* ===== BADGES ===== */
+    .badge-custom {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .badge-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #6c5ce7 100%);
+        color: white;
+    }
+    .badge-success {
+        background: linear-gradient(135deg, var(--success) 0%, #05b588 100%);
+        color: white;
+    }
+    .badge-warning {
+        background: linear-gradient(135deg, var(--warning) 0%, #fb8b24 100%);
+        color: white;
+    }
+    .badge-danger {
+        background: linear-gradient(135deg, var(--danger) 0%, #d62828 100%);
+        color: white;
+    }
+    .badge-info {
+        background: linear-gradient(135deg, var(--info) 0%, #3a86ff 100%);
+        color: white;
+    }
+    
+    /* ===== TABLAS ===== */
+    .table-custom {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+    .table-custom th {
+        background-color: #f8fafc;
+        color: var(--dark);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 16px;
+        border: none;
+    }
+    .table-custom td {
+        background-color: white;
+        padding: 12px 16px;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .table-custom tr:hover td {
+        background-color: #f8fafc;
+    }
+    
+    /* ===== INFO GRID ===== */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    .info-item {
+        background-color: #f8fafc;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+    .info-item .label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    .info-item .value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+    
+    /* ===== TIMELINE ===== */
+    .timeline-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        margin-bottom: 0.5rem;
+        border-left: 4px solid transparent;
+    }
+    .timeline-item.entrada {
+        border-left-color: var(--success);
+    }
+    .timeline-item.salida {
+        border-left-color: var(--danger);
+    }
+    .timeline-item .icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .timeline-item.entrada .icon {
+        background-color: rgba(6, 214, 160, 0.1);
+        color: var(--success);
+    }
+    .timeline-item.salida .icon {
+        background-color: rgba(239, 71, 111, 0.1);
+        color: var(--danger);
+    }
+    
+    /* ===== BOTONES ===== */
+    .btn-custom {
+        padding: 0.6rem 1.2rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--primary) 0%, #6c5ce7 100%);
+        color: white;
+    }
+    .btn-success-custom {
+        background: linear-gradient(135deg, var(--success) 0%, #05b588 100%);
+        color: white;
+    }
+    .btn-danger-custom {
+        background: linear-gradient(135deg, var(--danger) 0%, #d62828 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    
+    <!-- ===== HEADER ===== -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold" style="color: var(--dark);">
+                <i class="fas fa-clipboard-list me-2" style="color: var(--primary);"></i>
+                Detalle del Formulario
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-1 text-primary"></i>
+                {{ formulario.codigo_formulario }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'lista_formularios' %}" class="btn btn-light border">
+                <i class="fas fa-arrow-left me-1"></i> Volver a la lista
+            </a>
+            <button class="btn btn-primary-custom btn-custom" onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Imprimir
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== TARJETA PRINCIPAL ===== -->
+    <div class="row">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-info-circle"></i>
+                        Información General
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="label">Código</div>
+                            <div class="value">
+                                <code style="font-size: 1rem;">{{ formulario.codigo_formulario }}</code>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Tipo</div>
+                            <div class="value">
+                                <span class="badge badge-info badge-custom">{{ formulario.tipo }}</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Fecha</div>
+                            <div class="value">{{ formulario.fecha|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Horas de funcionamiento</div>
+                            <div class="value">{{ formulario.horas_funcionamiento }} h</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BALANCÍN Y POSICIONES ===== -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-balance-scale"></i>
+                        Balancín
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="label">Código</div>
+                        <div class="value">
+                            <a href="{% url 'detalle_balancin' formulario.balancin.codigo %}" class="text-decoration-none">
+                                <code>{{ formulario.balancin.codigo }}</code>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="label">Tipo</div>
+                        <div class="value">
+                            <span class="badge badge-info badge-custom">{{ formulario.balancin.tipo_balancin_codigo }}</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="label">Sentido</div>
+                        <div class="value">
+                            {% if formulario.balancin.sentido == 'ASCENDENTE' %}
+                                <span class="badge badge-success badge-custom">
+                                    <i class="fas fa-arrow-up me-1"></i> ASCENDENTE
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning badge-custom">
+                                    <i class="fas fa-arrow-down me-1"></i> DESCENDENTE
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="label">Rango OH</div>
+                        <div class="value">{{ formulario.balancin.rango_horas_cambio_oh }} h</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Posiciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <h6 class="fw-bold mb-3">Posición Inicial</h6>
+                            <div class="mb-3">
+                                <div class="label">Línea</div>
+                                <div class="value">{{ formulario.linea_inicial|default:"-" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="label">Torre</div>
+                                <div class="value">{{ formulario.torre_inicial|default:"-" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="label">Ubicación completa</div>
+                                <div class="value">
+                                    LINEA {{ formulario.linea_inicial }}/TORRE-{{ formulario.torre_inicial }}/{{ formulario.balancin.sentido }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="fw-bold mb-3">Posición Final</h6>
+                            <div class="mb-3">
+                                <div class="label">Línea</div>
+                                <div class="value">{{ formulario.linea_final|default:"-" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="label">Torre</div>
+                                <div class="value">{{ formulario.torre_final|default:"-" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="label">Sentido final</div>
+                                <div class="value">
+                                    {% if formulario.sentido_final == 'ASCENDENTE' %}
+                                        <span class="badge badge-success badge-custom">ASCENDENTE</span>
+                                    {% elif formulario.sentido_final == 'DESCENDENTE' %}
+                                        <span class="badge badge-warning badge-custom">DESCENDENTE</span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ANÁLISIS PREDICTIVO ===== -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-flask"></i>
+                        Análisis Predictivo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="label">Control de partículas magnéticas</div>
+                                <div class="value">
+                                    {% if formulario.control_particulas %}
+                                        <span class="badge badge-success badge-custom">
+                                            <i class="fas fa-check-circle me-1"></i> Realizado
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-danger badge-custom">
+                                            <i class="fas fa-times-circle me-1"></i> No realizado
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="label">Código de informe</div>
+                                <div class="value">{{ formulario.codigo_informe|default:"-" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== VERIFICACIONES ===== -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-clipboard-check"></i>
+                        Verificaciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="label">Torque verificado</div>
+                                <div class="value">
+                                    {% if formulario.torque_verificado %}
+                                        <span class="badge badge-success badge-custom">✓ Verificado</span>
+                                    {% else %}
+                                        <span class="badge badge-danger badge-custom">✗ Pendiente</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="label">Limpieza de uniones</div>
+                                <div class="value">
+                                    {% if formulario.limpieza_verificada %}
+                                        <span class="badge badge-success badge-custom">✓ Verificada</span>
+                                    {% else %}
+                                        <span class="badge badge-danger badge-custom">✗ Pendiente</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="label">Continuidad verificada</div>
+                                <div class="value">
+                                    {% if formulario.continuidad_verificada %}
+                                        <span class="badge badge-success badge-custom">✓ Verificada</span>
+                                    {% else %}
+                                        <span class="badge badge-danger badge-custom">✗ Pendiente</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RESPONSABLES ===== -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-users"></i>
+                        Realizado por
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <!-- Técnico principal -->
+                        {% if formulario.realizado_por_recambio %}
+                        <div class="timeline-item entrada">
+                            <div class="icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ formulario.realizado_por_recambio.nombre }}</strong>
+                                    <small class="badge badge-primary badge-custom">Principal</small>
+                                </div>
+                                <small class="text-muted">{{ formulario.realizado_por_recambio.rol }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Otros técnicos -->
+                        {% for tecnico in formulario.tecnicos.all %}
+                            {% if tecnico.usuario.id != formulario.realizado_por_recambio.id %}
+                            <div class="timeline-item entrada">
+                                <div class="icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div>
+                                        <strong>{{ tecnico.usuario.nombre }}</strong>
+                                    </div>
+                                    <small class="text-muted">{{ tecnico.usuario.rol }}</small>
+                                    {% if tecnico.firma %}
+                                    <br><small class="text-muted"><i class="fas fa-signature me-1"></i>{{ tecnico.firma }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% empty %}
+                            {% if not formulario.realizado_por_recambio %}
+                            <p class="text-muted text-center py-3">No hay técnicos registrados</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-check-double"></i>
+                        Aprobado por
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if formulario.aprobado_por %}
+                    <div class="timeline-item entrada">
+                        <div class="icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <strong>{{ formulario.aprobado_por.nombre }}</strong>
+                            <br><small class="text-muted">{{ formulario.aprobado_por.rol }}</small>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="label">Fecha de aprobación</div>
+                        <div class="value">{{ formulario.fecha_actualizacion|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Pendiente de aprobación</p>
+                        <span class="badge badge-warning badge-custom">
+                            <i class="fas fa-hourglass-half me-1"></i> En espera
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== REPUESTOS UTILIZADOS ===== -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-tools"></i>
+                        Repuestos Utilizados
+                        <span class="badge bg-white text-primary ms-2">{{ items_usados.count }} items</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if items_usados %}
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Descripción</th>
+                                    <th>Cantidad</th>
+                                    <th>Stock antes</th>
+                                    <th>Stock después</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items_usados %}
+                                <tr>
+                                    <td><code>{{ item.id_original }}</code></td>
+                                    <td>{{ item.descripcion }}</td>
+                                    <td>
+                                        <span class="badge badge-danger badge-custom">
+                                            {{ item.cantidad_usada }} uds
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary text-white">
+                                            {{ item.stock_antes }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success text-white">
+                                            {{ item.stock_despues }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.observaciones|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No se utilizaron repuestos en este formulario</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== METADATOS ===== -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="detail-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-history"></i>
+                        Metadatos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="label">Creado por</div>
+                            <div class="value">{{ formulario.usuario_creacion.nombre|default:"Sistema" }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="label">Fecha de creación</div>
+                            <div class="value">{{ formulario.fecha_creacion|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="label">Última actualización</div>
+                            <div class="value">{{ formulario.fecha_actualizacion|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTONES DE ACCIÓN ===== -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex gap-2 justify-content-end">
+                {% if not formulario.aprobado_por and user.es_jefe %}
+                <button class="btn btn-success-custom btn-custom" data-bs-toggle="modal" data-bs-target="#aprobarModal">
+                    <i class="fas fa-check-circle me-1"></i> Aprobar Formulario
+                </button>
+                {% endif %}
+                <a href="{% url 'lista_formularios' %}" class="btn btn-light border btn-custom">
+                    <i class="fas fa-arrow-left me-1"></i> Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para aprobar formulario (opcional) -->
+{% if not formulario.aprobado_por and user.es_jefe %}
+<div class="modal fade" id="aprobarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Aprobar Formulario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'aprobar_formulario' formulario.codigo_formulario %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>¿Estás seguro de aprobar el formulario <strong>{{ formulario.codigo_formulario }}</strong>?</p>
+                    <p class="text-muted small">Esta acción confirmará que el trabajo ha sido revisado y aprobado.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check-circle me-1"></i> Confirmar Aprobación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

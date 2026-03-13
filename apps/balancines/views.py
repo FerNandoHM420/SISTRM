@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
+from django.template.loader import render_to_string  # ← ESTO FALTA
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Sum, Count, Avg
@@ -19,7 +20,7 @@ from .forms import (
 )
 from .models import (
     TipoBalancin, BalancinIndividual, HistorialBalancin, BalancinOH,
-    RepuestoBalancin, RepuestoAdicional, HistorialRepuesto, HistorialAdicional,
+    RepuestoBalancin, RepuestoAdicional, HistorialRepuesto,   TecnicoFormulario, HistorialAdicional,
     Usuario, Torre, Linea, Seccion, HistorialOH, ActivityLog
 )
 
@@ -1638,21 +1639,68 @@ def obtener_config_torque(tipo):
     }
     return configs.get(tipo, configs['4T-501C'])
 
+
 @login_required
 def crear_formulario_control(request, codigo):
     """
     Vista para crear formulario de control de reacondicionamiento
     """
+    import sys
+    from django.db import transaction, models
+    from collections import OrderedDict, defaultdict
+    from django.utils import timezone
+    
     # Obtener el balancín
     balancin = get_object_or_404(BalancinIndividual, codigo=codigo)
     
     # Obtener el último OH
     ultimo_oh = HistorialOH.objects.filter(balancin=balancin).order_by('-numero_oh').first()
     
+    # Obtener el tipo de balancín
+    tipo_codigo = balancin.tipo_balancin_codigo
+    
+    # ===== API PARA CARGAR TORRES CON AMBOS SENTIDOS =====
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.GET.get('linea'):
+        from django.http import JsonResponse
+        linea_nombre = request.GET.get('linea')
+        tipo_balancin = request.GET.get('tipo')
+        
+        try:
+            linea = Linea.objects.get(nombre=linea_nombre)
+            # Buscar torres que tengan este tipo de balancín
+            torres = Torre.objects.filter(
+                linea=linea
+            ).filter(
+                models.Q(tipo_balancin_ascendente=tipo_balancin) |
+                models.Q(tipo_balancin_descendente=tipo_balancin)
+            ).select_related('seccion').order_by('numero_torre')
+            
+            torres_data = []
+            for t in torres:
+                # Verificar sentido ascendente
+                if t.tipo_balancin_ascendente == tipo_balancin:
+                    torres_data.append({
+                        'id': f"{t.id}_ASC",
+                        'numero': t.numero_torre,
+                        'sentido': 'ASCENDENTE',
+                        'texto': f"Torre {t.numero_torre} / ASC"
+                    })
+                
+                # Verificar sentido descendente
+                if t.tipo_balancin_descendente == tipo_balancin:
+                    torres_data.append({
+                        'id': f"{t.id}_DESC",
+                        'numero': t.numero_torre,
+                        'sentido': 'DESCENDENTE',
+                        'texto': f"Torre {t.numero_torre} / DESC"
+                    })
+            
+            return JsonResponse({'torres': torres_data})
+        except Linea.DoesNotExist:
+            return JsonResponse({'torres': []})
+    
     # ===== PROCESAR POST (GUARDAR) =====
     if request.method == 'POST':
-        # 🔴 DEBUG: Ver todos los datos que llegan
-        import sys
         print("=" * 50)
         print("DATOS RECIBIDOS DEL FORMULARIO:")
         for key, value in request.POST.items():
@@ -1661,132 +1709,220 @@ def crear_formulario_control(request, codigo):
         sys.stdout.flush()
         
         # Generar código de formulario
-        tipo_codigo = balancin.tipo_balancin_codigo
         codigo_formulario = generar_codigo_formulario(tipo_codigo)
         
-        # Crear el formulario
-        formulario = FormularioReacondicionamiento.objects.create(
-            codigo_formulario=codigo_formulario,
-            tipo=tipo_codigo,
-            balancin=balancin,
-            historial_oh=ultimo_oh,
-            fecha=request.POST.get('fecha', timezone.now().date()),
-            horas_funcionamiento=request.POST.get('horas_funcionamiento', 0),
-            linea_inicial=request.POST.get('linea_inicial', ''),
-            torre_inicial=request.POST.get('torre_inicial', ''),
-            linea_final=request.POST.get('linea_final', ''),
-            torre_final=request.POST.get('torre_final', ''),
-            control_particulas=request.POST.get('control_particulas') == 'on',
-            codigo_informe=request.POST.get('codigo_informe', ''),
-            torque_verificado=request.POST.get('torque_verificado') == 'on',
-            limpieza_verificada=request.POST.get('limpieza_verificada') == 'on',
-            continuidad_verificada=request.POST.get('continuidad_verificada') == 'on',
-            realizado_por_analisis_id=request.POST.get('realizado_analisis'),
-            realizado_por_recambio_id=request.POST.get('realizado_recambio'),
-            aprobado_por_id=request.POST.get('aprobado'),
-            usuario_creacion=request.user if request.user.is_authenticated else None
-        )
-        
-        # ===== PROCESAR REPUESTOS (CORREGIDO) =====
-        items_procesados = 0
-        for key, value in request.POST.items():
-            # Buscar campos que empiecen con 'recambio_'
-            if key.startswith('recambio_'):
-                item_id = key.replace('recambio_', '')
-                print(f"🔍 Encontrado recambio para item_id: {item_id}, valor: {value}")
-                sys.stdout.flush()
-                
-                reemplazado = value == 'SI'
-                
-                if reemplazado:
-                    print(f"  ✅ Repuesto {item_id} será reemplazado")
-                    sys.stdout.flush()
+        # Usar transacción para asegurar integridad
+        with transaction.atomic():
+            # Crear el formulario
+            formulario = FormularioReacondicionamiento.objects.create(
+                codigo_formulario=codigo_formulario,
+                tipo=tipo_codigo,
+                balancin=balancin,
+                historial_oh=ultimo_oh,
+                fecha=request.POST.get('fecha', timezone.now().date()),
+                horas_funcionamiento=request.POST.get('horas_funcionamiento', 0),
+                linea_inicial=request.POST.get('linea_inicial', ''),
+                torre_inicial=request.POST.get('torre_inicial', ''),
+                linea_final=request.POST.get('linea_final', ''),
+                torre_final=request.POST.get('torre_final', ''),
+                sentido_final=request.POST.get('sentido_final', ''),
+                control_particulas=request.POST.get('control_particulas') == 'on',
+                codigo_informe=request.POST.get('codigo_informe', ''),
+                torque_verificado=request.POST.get('torque_verificado') == 'on',
+                limpieza_verificada=request.POST.get('limpieza_verificada') == 'on',
+                continuidad_verificada=request.POST.get('continuidad_verificada') == 'on',
+                realizado_por_analisis_id=request.POST.get('realizado_analisis'),
+                aprobado_por_id=request.POST.get('jefe_id'),
+                usuario_creacion=request.user if request.user.is_authenticated else None
+            )
+            
+            # ===== PROCESAR TÉCNICOS DE LA TABLA REALIZADO =====
+            tecnicos_procesados = 0
+            total_filas = int(request.POST.get('total_filas_realizado', 0))
+            
+            for i in range(total_filas):
+                usuario_id = request.POST.get(f'usuario_realizado_{i}')
+                if usuario_id and usuario_id.strip():
+                    firma = request.POST.get(f'firma_realizado_{i}', '')
                     
-                    # Buscar la cantidad
-                    cantidad_key = f'cantidad_{item_id}'
-                    cantidad = int(request.POST.get(cantidad_key, 0))
-                    print(f"  📦 Cantidad: {cantidad}")
-                    sys.stdout.flush()
+                    # Guardar en la tabla TecnicoFormulario
+                    TecnicoFormulario.objects.create(
+                        formulario=formulario,
+                        usuario_id=usuario_id,
+                        firma=firma
+                    )
                     
-                    if cantidad > 0:
-                        try:
-                            # 🔴 FORZAR la carga del repuesto con select_related
-                            config = ConfiguracionRepuestosPorTipo.objects.select_related('repuesto').get(id=item_id)
-                            
-                            # Verificar que el repuesto existe
-                            if not config.repuesto:
-                                print(f"  ❌ ERROR: La configuración {item_id} no tiene repuesto asociado")
-                                sys.stdout.flush()
-                                continue
-                            
-                            repuesto = config.repuesto
-                            
-                            print(f"  🔧 Config encontrada: {config.id_original} - {config.descripcion[:30]}")
-                            print(f"  📊 Stock antes: {repuesto.cantidad}")
-                            sys.stdout.flush()
-                            
-                            # Guardar stock antes
-                            stock_antes = repuesto.cantidad
-                            
-                            # Descontar stock
-                            repuesto.cantidad -= cantidad
-                            repuesto.fecha_ultimo_movimiento = timezone.now()
-                            repuesto.fecha_ultima_salida = timezone.now()
-                            repuesto.save()
-                            
-                            print(f"  📊 Stock después: {repuesto.cantidad}")
-                            sys.stdout.flush()
-                            
-                            # Registrar en historial
-                            HistorialRepuesto.objects.create(
-                                repuesto=repuesto,
-                                tipo_movimiento='salida',
-                                cantidad=cantidad,
-                                stock_restante=repuesto.cantidad,
-                                observaciones=f"Salida por formulario {codigo_formulario}"
-                            )
-                            
-                            # Crear el item del formulario
-                            ItemFormularioReacondicionamiento.objects.create(
-                                formulario=formulario,
-                                configuracion=config,
-                                repuesto=repuesto,
-                                id_original=config.id_original,
-                                descripcion=config.descripcion,
-                                cantidad_requerida=config.cantidad_por_balancin,
-                                cantidad_usada=cantidad,
-                                fue_reemplazado=True,
-                                stock_antes=stock_antes,
-                                stock_despues=repuesto.cantidad
-                            )
-                            items_procesados += 1
-                            print(f"  ✅ Item creado, total procesados: {items_procesados}")
-                            sys.stdout.flush()
-                            
-                        except ConfiguracionRepuestosPorTipo.DoesNotExist:
-                            print(f"  ❌ ERROR: No existe configuración con id {item_id}")
-                            sys.stdout.flush()
-                        except Exception as e:
-                            print(f"  ❌ ERROR: {str(e)}")
-                            sys.stdout.flush()
-                    else:
-                        print(f"  ⚠️ Cantidad es 0, no se procesa")
-                        sys.stdout.flush()
+                    # Guardar el primer técnico como realizado_por_recambio
+                    if tecnicos_procesados == 0:
+                        formulario.realizado_por_recambio_id = usuario_id
+                        formulario.save()
+                        print(f"  👤 Técnico principal: ID {usuario_id}")
+                    
+                    tecnicos_procesados += 1
+                    print(f"  👤 Técnico {tecnicos_procesados}: ID {usuario_id}, Firma: {firma}")
+            
+            # ===== PROCESAR REPUESTOS CONFIGURADOS (con radios SI/NO) =====
+            items_procesados = 0
+            for key, value in request.POST.items():
+                if key.startswith('recambio_'):
+                    item_id = key.replace('recambio_', '')
+                    print(f"🔍 Encontrado recambio para item_id: {item_id}, valor: {value}")
+                    
+                    reemplazado = value == 'SI'
+                    
+                    if reemplazado:
+                        cantidad_key = f'cantidad_{item_id}'
+                        cantidad = int(request.POST.get(cantidad_key, 0))
+                        
+                        if cantidad > 0:
+                            try:
+                                config = ConfiguracionRepuestosPorTipo.objects.select_related('repuesto').get(id=item_id)
+                                
+                                if not config.repuesto:
+                                    print(f"  ❌ ERROR: La configuración {item_id} no tiene repuesto asociado")
+                                    continue
+                                
+                                repuesto = config.repuesto
+                                stock_antes = repuesto.cantidad
+                                
+                                # Verificar stock suficiente
+                                if repuesto.cantidad < cantidad:
+                                    print(f"  ❌ Stock insuficiente: disponible {repuesto.cantidad}, requerido {cantidad}")
+                                    messages.warning(request, f'Stock insuficiente para {config.id_original}')
+                                    continue
+                                
+                                # Descontar stock
+                                repuesto.cantidad -= cantidad
+                                repuesto.fecha_ultimo_movimiento = timezone.now()
+                                repuesto.fecha_ultima_salida = timezone.now()
+                                repuesto.save()
+                                
+                                # Registrar en historial
+                                HistorialRepuesto.objects.create(
+                                    repuesto=repuesto,
+                                    tipo_movimiento='salida',
+                                    cantidad=cantidad,
+                                    stock_restante=repuesto.cantidad,
+                                    observaciones=f"Salida por formulario {codigo_formulario}"
+                                )
+                                
+                                # Crear el item del formulario
+                                ItemFormularioReacondicionamiento.objects.create(
+                                    formulario=formulario,
+                                    configuracion=config,
+                                    repuesto=repuesto,
+                                    id_original=config.id_original,
+                                    descripcion=config.descripcion,
+                                    cantidad_requerida=config.cantidad_por_balancin,
+                                    cantidad_usada=cantidad,
+                                    fue_reemplazado=True,
+                                    stock_antes=stock_antes,
+                                    stock_despues=repuesto.cantidad
+                                )
+                                items_procesados += 1
+                                print(f"  ✅ Item creado: {config.id_original}")
+                                
+                            except Exception as e:
+                                print(f"  ❌ ERROR: {str(e)}")
+            
+            # ===== PROCESAR REPUESTOS DE "OTRAS PIEZAS REEMPLAZADAS" (CORREGIDO) =====
+            items_procesados_otros = 0
+            total_filas_otros = int(request.POST.get('total_filas_otros', 0))
+            print(f"🔍 Procesando {total_filas_otros} filas de otras piezas")
+            
+            for i in range(total_filas_otros):
+                item_id = request.POST.get(f'otro_id_{i}', '')
+                if not item_id or item_id.strip() == '':
+                    continue
+                
+                descripcion = request.POST.get(f'otro_desc_{i}', '')
+                cantidad = int(request.POST.get(f'otro_cant_{i}', 0))
+                cantidad_total = int(request.POST.get(f'otro_total_{i}', 0))
+                observaciones = request.POST.get(f'otro_obs_{i}', '')
+                origen = request.POST.get(f'otro_origen_{i}', 'balancin')  # 🔥 LEER EL ORIGEN
+                
+                print(f"  📦 Procesando otro repuesto: {item_id} - {descripcion} - Origen: {origen} - Cantidad: {cantidad}")
+                
+                if cantidad <= 0:
+                    print(f"  ⚠️ Cantidad inválida: {cantidad}, se omite")
+                    continue
+                
+                # 🔥 BUSCAR SOLO EN LA TABLA CORRESPONDIENTE SEGÚN EL ORIGEN
+                repuesto_encontrado = None
+                
+                if origen == 'balancin':
+                    try:
+                        repuesto_encontrado = RepuestoBalancin.objects.get(item=item_id)
+                        print(f"  ✅ Repuesto encontrado en balancines: {repuesto_encontrado.item}")
+                    except RepuestoBalancin.DoesNotExist:
+                        print(f"  ❌ Repuesto de balancín no encontrado: {item_id}")
+                        messages.warning(request, f'Repuesto de balancín no encontrado: {item_id} - {descripcion}')
+                        continue
+                
+                elif origen == 'adicional':
+                    try:
+                        repuesto_encontrado = RepuestoAdicional.objects.get(item=item_id)
+                        print(f"  ✅ Repuesto encontrado en adicionales: {repuesto_encontrado.item}")
+                    except RepuestoAdicional.DoesNotExist:
+                        print(f"  ❌ Repuesto adicional no encontrado: {item_id}")
+                        messages.warning(request, f'Repuesto adicional no encontrado: {item_id} - {descripcion}')
+                        continue
+                
                 else:
-                    print(f"  ❌ Repuesto {item_id} NO será reemplazado (valor: {value})")
-                    sys.stdout.flush()
+                    print(f"  ❌ Origen desconocido: {origen}")
+                    continue
+                
+                # Verificar stock suficiente
+                if repuesto_encontrado.cantidad < cantidad:
+                    print(f"  ❌ Stock insuficiente: disponible {repuesto_encontrado.cantidad}, requerido {cantidad}")
+                    messages.warning(request, f'Stock insuficiente para {item_id} - {descripcion}')
+                    continue
+                
+                # Guardar stock antes
+                stock_antes = repuesto_encontrado.cantidad
+                
+                # Descontar stock
+                repuesto_encontrado.cantidad -= cantidad
+                repuesto_encontrado.fecha_ultimo_movimiento = timezone.now()
+                repuesto_encontrado.fecha_ultima_salida = timezone.now()
+                repuesto_encontrado.save()
+                
+                # Registrar en historial según el origen
+                if origen == 'balancin':
+                    HistorialRepuesto.objects.create(
+                        repuesto=repuesto_encontrado,
+                        tipo_movimiento='salida',
+                        cantidad=cantidad,
+                        stock_restante=repuesto_encontrado.cantidad,
+                        observaciones=f"Salida por formulario {codigo_formulario} (otras piezas: {descripcion})"
+                    )
+                else:  # origen == 'adicional'
+                    HistorialAdicional.objects.create(
+                        repuesto=repuesto_encontrado,
+                        tipo_movimiento='salida',
+                        cantidad=cantidad,
+                        stock_restante=repuesto_encontrado.cantidad,
+                        observaciones=f"Salida por formulario {codigo_formulario} (otras piezas: {descripcion})",
+                        usuario=request.user if request.user.is_authenticated else None
+                    )
+                
+                items_procesados += 1
+                items_procesados_otros += 1
+                print(f"  ✅ Otro repuesto procesado: {item_id} - Stock: {stock_antes} → {repuesto_encontrado.cantidad}")
         
-        print(f"🎯 TOTAL PROCESADOS: {items_procesados}")
-        sys.stdout.flush()
+        print(f"🎯 TOTAL: {items_procesados} repuestos, {tecnicos_procesados} técnicos")
         messages.success(request, f'✅ Formulario {codigo_formulario} guardado correctamente. {items_procesados} repuestos procesados.')
         return redirect('dashboard_oh_nuevo')
     
     # ===== CÓDIGO PARA GET (mostrar formulario) =====
-    lineas = Linea.objects.all().order_by('nombre')
-    usuarios_tecnicos = Usuario.objects.filter(rol__in=['tecnico', 'supervisor'])
-    usuarios_supervisores = Usuario.objects.filter(rol__in=['supervisor', 'jefe'])
     
-    # Obtener solo usuarios con rol de jefe
+    # Filtrar líneas que tienen torres con este tipo de balancín
+    lineas_disponibles = Linea.objects.filter(
+        models.Q(torres__tipo_balancin_ascendente=tipo_codigo) |
+        models.Q(torres__tipo_balancin_descendente=tipo_codigo)
+    ).distinct().order_by('nombre')
+    
+    usuarios_tecnicos = Usuario.objects.filter(rol__in=['tecnico', 'supervisor']).order_by('nombre')
     jefes = Usuario.objects.filter(rol='jefe').order_by('nombre')
     
     # Datos del balancín
@@ -1796,9 +1932,6 @@ def crear_formulario_control(request, codigo):
     horas_actuales = ultimo_oh.horas_operacion if ultimo_oh else 0
     
     # ===== OBTENER REPUESTOS CONFIGURADOS =====
-    from collections import OrderedDict, defaultdict
-    
-    tipo_codigo = balancin.tipo_balancin_codigo
     config_repuestos = ConfiguracionRepuestosPorTipo.objects.filter(
         tipo_balancin__codigo=tipo_codigo
     ).select_related('repuesto').order_by('grupo', 'orden')
@@ -1831,7 +1964,7 @@ def crear_formulario_control(request, codigo):
         
         # Crear diccionario con un grupo vacío
         repuestos_agrupados = OrderedDict()
-        repuestos_agrupados[''] = items_sueltos  # Grupo sin nombre para que no muestre título
+        repuestos_agrupados[''] = items_sueltos  # Grupo sin nombre
         
     else:
         # ===== LÓGICA NORMAL PARA OTROS TIPOS (con grupos y conjuntos) =====
@@ -1940,9 +2073,8 @@ def crear_formulario_control(request, codigo):
         'sentido': balancin.sentido,
         'horas_actuales': horas_actuales,
         'ultimo_oh': ultimo_oh,
-        'lineas': lineas,
+        'lineas_disponibles': lineas_disponibles,
         'usuarios_tecnicos': usuarios_tecnicos,
-        'usuarios_supervisores': usuarios_supervisores,
         'jefes': jefes,
         'repuestos_agrupados': repuestos_agrupados,
         'total_repuestos': config_repuestos.count(),
@@ -1953,10 +2085,41 @@ def crear_formulario_control(request, codigo):
     template_name = f'balancines/formularios/formulario_{tipo_codigo.replace("/", "-")}.html'
     return render(request, template_name, context)
 
+
+@login_required
+def torres_por_linea_api(request):
+    """API para obtener torres de una línea que tienen un tipo específico de balancín"""
+    from django.http import JsonResponse
+    
+    linea_nombre = request.GET.get('linea')
+    tipo_balancin = request.GET.get('tipo')
+    
+    if not linea_nombre or not tipo_balancin:
+        return JsonResponse({'torres': []})
+    
+    try:
+        linea = Linea.objects.get(nombre=linea_nombre)
+        torres = Torre.objects.filter(
+            linea=linea
+        ).filter(
+            models.Q(tipo_balancin_ascendente=tipo_balancin) |
+            models.Q(tipo_balancin_descendente=tipo_balancin)
+        ).select_related('seccion').order_by('numero_torre')
+        
+        torres_data = [{
+            'id': t.id,
+            'numero': t.numero_torre,
+            'texto': f"Torre {t.numero_torre} ({t.seccion.nombre})"
+        } for t in torres]
+        
+        return JsonResponse({'torres': torres_data})
+    except Linea.DoesNotExist:
+        return JsonResponse({'torres': []})
+
 def generar_codigo_formulario(tipo):
     """
     Genera un código de formulario automático
-    Ej: TRM-FCRB-16N/4TR-420C-001
+    Ej: TRM-FCRB-4T-501C-001
     """
     from django.db.models import Max
     
@@ -1985,10 +2148,15 @@ def lista_formularios(request):
     Lista todos los formularios de reacondicionamiento guardados
     """
     formularios = FormularioReacondicionamiento.objects.all().select_related(
-        'balancin', 'historial_oh', 'realizado_por_analisis', 'realizado_por_recambio', 'aprobado_por'
+        'balancin', 'balancin__torre__linea', 'balancin__torre__seccion',
+        'historial_oh', 'realizado_por_analisis', 'realizado_por_recambio', 
+        'aprobado_por'
+    ).prefetch_related(
+        'tecnicos',  # Para cargar todos los técnicos
+        'tecnicos__usuario'
     ).order_by('-fecha_creacion')
     
-    # Estadísticas - CORREGIDO: usar Sum directamente
+    # Estadísticas
     total_formularios = formularios.count()
     total_repuestos_usados = ItemFormularioReacondicionamiento.objects.filter(
         fue_reemplazado=True
@@ -2280,6 +2448,9 @@ def historial_torre_con_filtros(request):
     return render(request, 'balancines/historial_torre.html', context)
 
 from django.core.paginator import Paginator
+
+
+
 @login_required
 def historial_balancin(request, codigo):
     """
@@ -2349,4 +2520,369 @@ def historial_balancin(request, codigo):
         'hay_datos': total_oh > 0,
     }
     
-    return render(request, 'balancines/historial_balancin.html', context)
+    return render(request, 'balancines/historial_balancin.html', context)   
+
+
+from django.utils.dateparse import parse_date
+from django.db.models import Count, Sum, Q
+from datetime import timedelta
+import calendar
+@login_required
+def api_historial_repuestos_balancin_filtros(request):
+    """
+    API que devuelve el HTML del historial de repuestos de balancines con filtros
+    """
+    # Obtener filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    tipo = request.GET.get('tipo')
+    busqueda = request.GET.get('busqueda')
+    
+    # Query base
+    historial = HistorialRepuesto.objects.all().select_related('repuesto')
+    
+    # Aplicar filtros
+    if fecha_desde:
+        fecha_desde = parse_date(fecha_desde)
+        if fecha_desde:
+            historial = historial.filter(fecha_movimiento__date__gte=fecha_desde)
+    
+    if fecha_hasta:
+        fecha_hasta = parse_date(fecha_hasta)
+        if fecha_hasta:
+            historial = historial.filter(fecha_movimiento__date__lte=fecha_hasta)
+    
+    if tipo:
+        historial = historial.filter(tipo_movimiento=tipo)
+    
+    if busqueda:
+        historial = historial.filter(
+            Q(repuesto__item__icontains=busqueda) |
+            Q(repuesto__descripcion__icontains=busqueda) |
+            Q(observaciones__icontains=busqueda)
+        )
+    
+    # Ordenar y limitar
+    historial = historial.order_by('-fecha_movimiento')[:100]
+    
+    # Preparar datos
+    actividades = []
+    for h in historial:
+        actividades.append({
+            'tipo': h.tipo_movimiento,
+            'repuesto': h.repuesto.item,
+            'descripcion': h.repuesto.descripcion,
+            'cantidad': h.cantidad,
+            'stock_restante': h.stock_restante,
+            'observaciones': h.observaciones,
+            'fecha': h.fecha_movimiento,
+            'origen': 'Balancín'
+        })
+    
+    html = render_to_string('balancines/historial_items.html', {  # ← CORREGIDO
+        'actividades': actividades
+    })
+    return HttpResponse(html)
+
+@login_required
+def api_historial_repuestos_adicionales_filtros(request):
+    """
+    API que devuelve el HTML del historial de repuestos adicionales con filtros
+    """
+    # Obtener filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    tipo = request.GET.get('tipo')
+    busqueda = request.GET.get('busqueda')
+    
+    # Query base
+    historial = HistorialAdicional.objects.all().select_related('repuesto', 'usuario')
+    
+    # Aplicar filtros
+    if fecha_desde:
+        fecha_desde = parse_date(fecha_desde)
+        if fecha_desde:
+            historial = historial.filter(fecha_movimiento__date__gte=fecha_desde)
+    
+    if fecha_hasta:
+        fecha_hasta = parse_date(fecha_hasta)
+        if fecha_hasta:
+            historial = historial.filter(fecha_movimiento__date__lte=fecha_hasta)
+    
+    if tipo:
+        historial = historial.filter(tipo_movimiento=tipo)
+    
+    if busqueda:
+        historial = historial.filter(
+            Q(repuesto__item__icontains=busqueda) |
+            Q(repuesto__descripcion__icontains=busqueda) |
+            Q(observaciones__icontains=busqueda)
+        )
+    
+    # Ordenar y limitar
+    historial = historial.order_by('-fecha_movimiento')[:100]
+    
+    # Preparar datos
+    actividades = []
+    for h in historial:
+        actividades.append({
+            'tipo': h.tipo_movimiento,
+            'repuesto': h.repuesto.item,
+            'descripcion': h.repuesto.descripcion,
+            'cantidad': h.cantidad,
+            'stock_restante': h.stock_restante,
+            'observaciones': h.observaciones,
+            'fecha': h.fecha_movimiento,
+            'origen': 'Adicional',
+            'usuario': h.usuario.nombre if h.usuario else 'Sistema'
+        })
+    
+    html = render_to_string('balancines/historial_items.html', {  # ← CORREGIDO
+        'actividades': actividades
+    })
+    return HttpResponse(html)
+
+@login_required
+def api_historial_completo_filtros(request):
+    """
+    API que devuelve el HTML del historial combinado con filtros
+    """
+    # Obtener filtros
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    tipo = request.GET.get('tipo')
+    busqueda = request.GET.get('busqueda')
+    
+    # Función para aplicar filtros
+    def aplicar_filtros(queryset):
+        if fecha_desde:
+            fd = parse_date(fecha_desde)
+            if fd:
+                queryset = queryset.filter(fecha_movimiento__date__gte=fd)
+        if fecha_hasta:
+            fh = parse_date(fecha_hasta)
+            if fh:
+                queryset = queryset.filter(fecha_movimiento__date__lte=fh)
+        if tipo:
+            queryset = queryset.filter(tipo_movimiento=tipo)
+        return queryset
+    
+    # Obtener historiales con filtros
+    historial_balancin = aplicar_filtros(
+        HistorialRepuesto.objects.all().select_related('repuesto')
+    )
+    
+    historial_adicional = aplicar_filtros(
+        HistorialAdicional.objects.all().select_related('repuesto', 'usuario')
+    )
+    
+    # Aplicar búsqueda si existe
+    if busqueda:
+        historial_balancin = historial_balancin.filter(
+            Q(repuesto__item__icontains=busqueda) |
+            Q(repuesto__descripcion__icontains=busqueda) |
+            Q(observaciones__icontains=busqueda)
+        )
+        historial_adicional = historial_adicional.filter(
+            Q(repuesto__item__icontains=busqueda) |
+            Q(repuesto__descripcion__icontains=busqueda) |
+            Q(observaciones__icontains=busqueda)
+        )
+    
+    # Combinar
+    actividades_combinadas = []
+    
+    for h in historial_balancin[:50]:
+        actividades_combinadas.append({
+            'tipo': h.tipo_movimiento,
+            'repuesto': h.repuesto.item,
+            'descripcion': h.repuesto.descripcion,
+            'cantidad': h.cantidad,
+            'stock_restante': h.stock_restante,
+            'observaciones': h.observaciones,
+            'fecha': h.fecha_movimiento,
+            'origen': 'Balancín'
+        })
+    
+    for h in historial_adicional[:50]:
+        actividades_combinadas.append({
+            'tipo': h.tipo_movimiento,
+            'repuesto': h.repuesto.item,
+            'descripcion': h.repuesto.descripcion,
+            'cantidad': h.cantidad,
+            'stock_restante': h.stock_restante,
+            'observaciones': h.observaciones,
+            'fecha': h.fecha_movimiento,
+            'origen': 'Adicional',
+            'usuario': h.usuario.nombre if h.usuario else 'Sistema'
+        })
+    
+    # Ordenar por fecha
+    actividades_combinadas.sort(key=lambda x: x['fecha'], reverse=True)
+    
+    html = render_to_string('balancines/historial_items.html', {  # ← CORREGIDO
+        'actividades': actividades_combinadas[:100]
+    })
+    return HttpResponse(html)
+@login_required
+def api_dashboard_inventario(request):
+    """
+    API que devuelve datos JSON para el dashboard de inventario
+    """
+    periodo = int(request.GET.get('periodo', 30))
+    tipo = request.GET.get('tipo', 'todos')
+    
+    fecha_limite = timezone.now() - timedelta(days=periodo)
+    
+    # Inicializar datos
+    data = {
+        'total_entradas': 0,
+        'total_salidas': 0,
+        'total_movimientos': 0,
+        'stock_total': 0,
+        'movimientos_dia': {
+            'fechas': [],
+            'entradas': [],
+            'salidas': []
+        },
+        'distribucion': {
+            'entradas': 0,
+            'salidas': 0,
+            'creaciones': 0,
+            'actualizaciones': 0
+        },
+        'top_repuestos': []
+    }
+    
+    # Calcular stock total
+    stock_balancines = RepuestoBalancin.objects.aggregate(total=Sum('cantidad'))['total'] or 0
+    stock_adicionales = RepuestoAdicional.objects.aggregate(total=Sum('cantidad'))['total'] or 0
+    data['stock_total'] = stock_balancines + stock_adicionales
+    
+    # Obtener datos según tipo
+    if tipo in ['todos', 'balancines']:
+        historial_balancin = HistorialRepuesto.objects.filter(
+            fecha_movimiento__gte=fecha_limite
+        )
+        
+        data['total_entradas'] += historial_balancin.filter(tipo_movimiento='entrada').count()
+        data['total_salidas'] += historial_balancin.filter(tipo_movimiento='salida').count()
+        data['total_movimientos'] += historial_balancin.count()
+        
+        data['distribucion']['entradas'] += historial_balancin.filter(tipo_movimiento='entrada').count()
+        data['distribucion']['salidas'] += historial_balancin.filter(tipo_movimiento='salida').count()
+        data['distribucion']['creaciones'] += historial_balancin.filter(tipo_movimiento='creacion').count()
+        data['distribucion']['actualizaciones'] += historial_balancin.filter(tipo_movimiento='actualizacion').count()
+    
+    if tipo in ['todos', 'adicionales']:
+        historial_adicional = HistorialAdicional.objects.filter(
+            fecha_movimiento__gte=fecha_limite
+        )
+        
+        data['total_entradas'] += historial_adicional.filter(tipo_movimiento='entrada').count()
+        data['total_salidas'] += historial_adicional.filter(tipo_movimiento='salida').count()
+        data['total_movimientos'] += historial_adicional.count()
+        
+        data['distribucion']['entradas'] += historial_adicional.filter(tipo_movimiento='entrada').count()
+        data['distribucion']['salidas'] += historial_adicional.filter(tipo_movimiento='salida').count()
+        data['distribucion']['creaciones'] += historial_adicional.filter(tipo_movimiento='creacion').count()
+        data['distribucion']['actualizaciones'] += historial_adicional.filter(tipo_movimiento='actualizacion').count()
+    
+    # Calcular movimientos por día (últimos 7 días)
+    for i in range(6, -1, -1):
+        dia = timezone.now().date() - timedelta(days=i)
+        data['movimientos_dia']['fechas'].append(dia.strftime('%d/%m'))
+        
+        entradas_dia = 0
+        salidas_dia = 0
+        
+        if tipo in ['todos', 'balancines']:
+            entradas_dia += HistorialRepuesto.objects.filter(
+                fecha_movimiento__date=dia,
+                tipo_movimiento='entrada'
+            ).count()
+            salidas_dia += HistorialRepuesto.objects.filter(
+                fecha_movimiento__date=dia,
+                tipo_movimiento='salida'
+            ).count()
+        
+        if tipo in ['todos', 'adicionales']:
+            entradas_dia += HistorialAdicional.objects.filter(
+                fecha_movimiento__date=dia,
+                tipo_movimiento='entrada'
+            ).count()
+            salidas_dia += HistorialAdicional.objects.filter(
+                fecha_movimiento__date=dia,
+                tipo_movimiento='salida'
+            ).count()
+        
+        data['movimientos_dia']['entradas'].append(entradas_dia)
+        data['movimientos_dia']['salidas'].append(salidas_dia)
+    
+    # Top 10 repuestos más movidos - CORREGIDO
+    from collections import defaultdict
+    
+    # Inicializar con valores por defecto
+    movimientos_repuesto = defaultdict(lambda: {
+        'codigo': '', 
+        'descripcion': '', 
+        'tipo': '', 
+        'entradas': 0, 
+        'salidas': 0, 
+        'total': 0
+    })
+    
+    if tipo in ['todos', 'balancines']:
+        for h in HistorialRepuesto.objects.filter(
+            fecha_movimiento__gte=fecha_limite
+        ).select_related('repuesto')[:100]:
+            codigo = h.repuesto.item
+            # Inicializar si no existe
+            if codigo not in movimientos_repuesto:
+                movimientos_repuesto[codigo] = {
+                    'codigo': codigo,
+                    'descripcion': h.repuesto.descripcion,
+                    'tipo': 'balancin',
+                    'entradas': 0,
+                    'salidas': 0,
+                    'total': 0
+                }
+            
+            if h.tipo_movimiento == 'entrada':
+                movimientos_repuesto[codigo]['entradas'] += h.cantidad
+                movimientos_repuesto[codigo]['total'] += h.cantidad
+            elif h.tipo_movimiento == 'salida':
+                movimientos_repuesto[codigo]['salidas'] += h.cantidad
+                movimientos_repuesto[codigo]['total'] += h.cantidad
+    
+    if tipo in ['todos', 'adicionales']:
+        for h in HistorialAdicional.objects.filter(
+            fecha_movimiento__gte=fecha_limite
+        ).select_related('repuesto')[:100]:
+            codigo = h.repuesto.item
+            # Inicializar si no existe
+            if codigo not in movimientos_repuesto:
+                movimientos_repuesto[codigo] = {
+                    'codigo': codigo,
+                    'descripcion': h.repuesto.descripcion,
+                    'tipo': 'adicional',
+                    'entradas': 0,
+                    'salidas': 0,
+                    'total': 0
+                }
+            
+            if h.tipo_movimiento == 'entrada':
+                movimientos_repuesto[codigo]['entradas'] += h.cantidad
+                movimientos_repuesto[codigo]['total'] += h.cantidad
+            elif h.tipo_movimiento == 'salida':
+                movimientos_repuesto[codigo]['salidas'] += h.cantidad
+                movimientos_repuesto[codigo]['total'] += h.cantidad
+    
+    # Ordenar y tomar top 10
+    data['top_repuestos'] = sorted(
+        [v for v in movimientos_repuesto.values() if v['total'] > 0],
+        key=lambda x: x['total'],
+        reverse=True
+    )[:10]
+    
+    return JsonResponse(data)

@@ -1,4 +1,3 @@
-<!-- templates/app/inventario/inventario_principal.html -->
 {% extends 'base.html' %}
 
 {% block title %}Balancines - Sistema TRM{% endblock %}
@@ -8,10 +7,10 @@
     <!-- Header -->
     <div class="text-center mb-5">
         <h1 class="display-4 fw-bold text-primary">
-            <i class="fas fa-warehouse"></i> Gestion de Balancines
+            <i class="fas fa-warehouse"></i> Gestión de Balancines
         </h1>
         <p class="lead text-muted">
-            Gestión centralizada de todos los recursos del los Balancines
+            Gestión centralizada de todos los recursos de los Balancines
         </p>
     </div>
 
@@ -37,57 +36,57 @@
             </div>
         </div>
 
-        <!-- NUEVA TARJETA: Historial de Torres (estilo similar) -->
-        <div class="col-xl-4 col-lg-6">
-            <div class="card h-100 shadow-lg border-0 hover-card">
-                <div class="card-header bg-gradient-info text-white py-4">
-                    <h4 class="mb-0"><i class="fas fa-tower"></i> Formularios De Control</h4>
-                </div>
-                <div class="card-body">
-                    <div class="mt-3">
-                        <a href="{% url 'lista_formularios' %}" class="btn btn-outline-info">
-                            <i class="fas fa-search"></i> Ver Historial
-                        </a>
-                    </div>
-                </div>
+  <!-- Formularios De Control -->
+<div class="col-xl-4 col-lg-6">
+    <div class="card h-100 shadow-lg border-0 hover-card">
+        <div class="card-header py-4" style="background: linear-gradient(135deg, #001aff 0%, #7acaff 100%); color: white;">
+            <h4 class="mb-0"><i class="fas fa-tower"></i> Formularios De Control</h4>
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+                Historial de formularios de reacondicionamiento y control de mantenimiento.
+            </p>
+            <div class="mt-3">
+                <a href="{% url 'lista_formularios' %}" class="btn" style="border: 2px solid #9b5de5; color: #9b5de5; background: transparent;">
+                    <i class="fas fa-search me-2"></i> Ver Historial
+                </a>
             </div>
         </div>
-
-        <!-- Repuestos para Balancines -->
+    </div>
+</div>
+        <!-- TARJETA: INVENTARIO DE REPUESTOS -->
         <div class="col-xl-4 col-lg-6">
             <div class="card h-100 shadow-lg border-0 hover-card">
-                <div class="card-header bg-gradient-warning text-white py-4">
-                    <h4 class="mb-0"><i class="fas fa-cogs"></i> Repuestos para Balancines</h4>
+                <div class="card-header bg-gradient-success text-white py-4">
+                    <h4 class="mb-0"><i class="fas fa-boxes"></i> Inventario de Repuestos</h4>
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        Inventario de repuestos específicos para balancines.
-                        Control de stock y ubicaciones.
+                        Gestión completa de repuestos para balancines y materiales adicionales.
                     </p>
-                    <div class="mt-3">
-                        <a href="{% url 'lista_repuestos_balancin' %}" class="btn btn-outline-warning">
-                            <i class="fas fa-eye"></i> Ver Lista
+                    
+                    <!-- Sub-opciones de inventario -->
+                    <div class="list-group mt-3">
+                        <a href="{% url 'lista_repuestos_balancin' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-cogs text-warning me-2"></i>
+                            Repuestos para Balancines
+                        </a>
+                        <a href="{% url 'lista_repuestos_adicionales' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tools text-info me-2"></i>
+                            Repuestos Adicionales
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Repuestos Adicionales -->
-        <div class="col-xl-4 col-lg-6">
-            <div class="card h-100 shadow-lg border-0 hover-card">
-                <div class="card-header bg-gradient-info text-white py-4">
-                    <h4 class="mb-0"><i class="fas fa-tools"></i> Repuestos Adicionales</h4>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">
-                        Inventario de repuestos generales y herramientas.
-                        Consumibles y materiales diversos.
-                    </p>
-                    <div class="mt-3">
-                        <a href="{% url 'lista_repuestos_adicionales' %}" class="btn btn-outline-info">
-                            <i class="fas fa-eye"></i> Ver Lista
-                        </a>
+                    
+                    <!-- Botones de acciones -->
+                    <div class="mt-3 d-grid gap-2">
+                        <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#movimientosModal">
+                            <i class="fas fa-history me-2"></i>
+                            Ver Movimientos de Repuestos
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dashboardModal">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Dashboard de Inventario
+                        </button>
                     </div>
                 </div>
             </div>
@@ -97,16 +96,16 @@
         <div class="col-xl-4 col-lg-6">
             <div class="card h-100 shadow-lg border-0 hover-card">
                 <div class="card-header bg-gradient-secondary text-white py-4">
-                    <h4 class="mb-0"><i class="fas fa-chart-line"></i> Dashboard</h4>
+                    <h4 class="mb-0"><i class="fas fa-chart-line"></i> Dashboard OH</h4>
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        Estadísticas y reportes del inventario.
-                        Gráficos y análisis de stock.
+                        Estadísticas y reportes de Overhaul.
+                        Gráficos y análisis de mantenimiento.
                     </p>
                     <div class="mt-3">
-                        <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-outline-secondary btn-lg">
-                            <i class="fas fa-chart-bar"></i> Ver Dashboard
+                        <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-chart-bar"></i> Ver Dashboard OH
                         </a>
                     </div>
                 </div>
@@ -157,19 +156,291 @@
                             </a>
                         {% endif %}
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PARA MOVIMIENTOS DE REPUESTOS CON FILTROS -->
+<div class="modal fade" id="movimientosModal" tabindex="-1" aria-labelledby="movimientosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white py-3">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <h5 class="modal-title" id="movimientosModalLabel">
+                            <i class="fas fa-history me-2"></i>
+                            Historial de Movimientos de Repuestos
+                        </h5>
+                        <small class="opacity-75">Filtra y busca movimientos en el inventario</small>
+                    </div>
+                    <span class="badge bg-white text-success">
+                        <i class="fas fa-clock me-1"></i>
+                        {% now "H:i" %}
+                    </span>
+                </div>
+                <button type="button" class="btn-close btn-close-white position-absolute top-50 end-0 translate-middle-y me-3" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-0">
+                <!-- FILTROS DE FECHA Y BÚSQUEDA -->
+                <div class="bg-light p-3 border-bottom">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Fecha desde:</label>
+                            <input type="date" class="form-control form-control-sm" id="fecha_desde">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Fecha hasta:</label>
+                            <input type="date" class="form-control form-control-sm" id="fecha_hasta">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Tipo movimiento:</label>
+                            <select class="form-select form-select-sm" id="filtro_tipo">
+                                <option value="">Todos</option>
+                                <option value="entrada">Entradas</option>
+                                <option value="salida">Salidas</option>
+                                <option value="creacion">Creaciones</option>
+                                <option value="actualizacion">Actualizaciones</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Buscar (código/desc):</label>
+                            <input type="text" class="form-control form-control-sm" id="filtro_busqueda" placeholder="Ej: 10000082">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-success flex-grow-1" id="btnFiltrar">
+                                    <i class="fas fa-filter me-1"></i> Filtrar
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" id="btnLimpiarFiltros" title="Limpiar filtros">
+                                    <i class="fas fa-eraser"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col">
+                            <small class="text-muted" id="filtros-activos"></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pestañas para filtrar por tipo de repuesto -->
+                <div class="bg-light px-3 py-2 border-bottom">
+                    <ul class="nav nav-pills" id="movimientosTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="todos-tab" data-bs-toggle="tab" data-bs-target="#todos" type="button" role="tab">
+                                <i class="fas fa-layer-group me-2"></i>Todos
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="balancines-tab" data-bs-toggle="tab" data-bs-target="#balancines" type="button" role="tab">
+                                <i class="fas fa-cogs me-2"></i>Balancines
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="adicionales-tab" data-bs-toggle="tab" data-bs-target="#adicionales" type="button" role="tab">
+                                <i class="fas fa-tools me-2"></i>Adicionales
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Contenido de las pestañas -->
+                <div class="tab-content" id="movimientosTabsContent">
+                    <!-- Pestaña: Todos los movimientos -->
+                    <div class="tab-pane fade show active" id="todos" role="tabpanel">
+                        <div id="historial-todos" class="activity-timeline">
+                            <div class="text-center py-5">
+                                <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                                <p class="text-muted">Cargando historial...</p>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <hr class="my-3">
-                    <div class="text-center">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle"></i> Busca por serial, código o descripción
+                    <!-- Pestaña: Repuestos Balancines -->
+                    <div class="tab-pane fade" id="balancines" role="tabpanel">
+                        <div id="historial-balancines" class="activity-timeline">
+                            <div class="text-center py-5">
+                                <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                                <p class="text-muted">Cargando historial...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pestaña: Repuestos Adicionales -->
+                    <div class="tab-pane fade" id="adicionales" role="tabpanel">
+                        <div id="historial-adicionales" class="activity-timeline">
+                            <div class="text-center py-5">
+                                <i class="fas fa-spinner fa-spin fa-3x text-success mb-3"></i>
+                                <p class="text-muted">Cargando historial...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-light py-2">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <small class="text-muted" id="total-movimientos">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Cargando actividades...
                         </small>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-success" id="refreshMovimientos">
+                                <i class="fas fa-sync-alt me-1"></i> Actualizar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i> Cerrar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
+<!-- MODAL DASHBOARD DE INVENTARIO -->
+<div class="modal fade" id="dashboardModal" tabindex="-1" aria-labelledby="dashboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="dashboardModalLabel">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Dashboard de Inventario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Selector de período -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Período:</label>
+                        <select class="form-select" id="periodoDashboard">
+                            <option value="7">Últimos 7 días</option>
+                            <option value="30" selected>Últimos 30 días</option>
+                            <option value="90">Últimos 90 días</option>
+                            <option value="365">Último año</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tipo de repuesto:</label>
+                        <select class="form-select" id="tipoDashboard">
+                            <option value="todos">Todos</option>
+                            <option value="balancines">Balancines</option>
+                            <option value="adicionales">Adicionales</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" id="btnActualizarDashboard">
+                            <i class="fas fa-sync-alt me-2"></i>Actualizar Dashboard
+                        </button>
+                    </div>
+                </div>
 
+                <!-- Tarjetas de resumen -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h6 class="text-white-50">Total Entradas</h6>
+                                <h3 class="mb-0" id="total-entradas">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h6 class="text-white-50">Total Salidas</h6>
+                                <h3 class="mb-0" id="total-salidas">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h6 class="text-white-50">Movimientos</h6>
+                                <h3 class="mb-0" id="total-movimientos-dash">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h6 class="text-white-50">Stock Total</h6>
+                                <h3 class="mb-0" id="stock-total">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Movimientos por día</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="movimientosChart" style="height: 250px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Distribución por tipo</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="tipoChart" style="height: 250px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 10 repuestos más movidos -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Top 10 repuestos más movidos</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Descripción</th>
+                                        <th>Tipo</th>
+                                        <th>Entradas</th>
+                                        <th>Salidas</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="top-repuestos">
+                                    <tr><td colspan="6" class="text-center">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="exportarDashboard">
+                    <i class="fas fa-download me-2"></i>Exportar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos -->
 <style>
 .hover-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -181,24 +452,359 @@
 .bg-gradient-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
-.bg-gradient-warning {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
 .bg-gradient-info {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+.bg-gradient-success {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 .bg-gradient-secondary {
     background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
 }
-.btn-outline-info {
-    color: #00f2fe;
-    border: 2px solid #00f2fe;
+.list-group-item {
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px !important;
+    margin-bottom: 5px;
+    transition: all 0.3s ease;
+}
+.list-group-item:hover {
+    background-color: rgba(0,0,0,0.02);
+    transform: translateX(5px);
+}
+.btn-outline-light {
+    color: #333;
+    border: 2px solid #43e97b;
     background: transparent;
 }
-.btn-outline-info:hover {
+.btn-outline-light:hover {
     color: #fff;
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
     border-color: transparent;
 }
+
+/* Estilos para el timeline */
+.activity-timeline {
+    position: relative;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.activity-item {
+    transition: all 0.3s ease;
+    cursor: default;
+    border-bottom: 1px solid #dee2e6;
+}
+.activity-item:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: translateX(5px);
+}
+.activity-icon .badge {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.activity-item:hover .activity-icon .badge {
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+.activity-timeline::-webkit-scrollbar {
+    width: 6px;
+}
+.activity-timeline::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.activity-timeline::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
 </style>
+
+<!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ===== VARIABLES GLOBALES =====
+    let movimientosChart = null;
+    let tipoChart = null;
+    let filtrosActuales = {
+        fecha_desde: '',
+        fecha_hasta: '',
+        tipo: '',
+        busqueda: ''
+    };
+    
+    // ===== CONFIGURAR EVENTOS =====
+    configurarFiltros();
+    configurarDashboard();
+    
+    // ===== FUNCIÓN PARA CONFIGURAR FILTROS =====
+    function configurarFiltros() {
+        const movimientosModal = document.getElementById('movimientosModal');
+        
+        if (movimientosModal) {
+            movimientosModal.addEventListener('show.bs.modal', function() {
+                // Limpiar filtros al abrir
+                document.getElementById('fecha_desde').value = '';
+                document.getElementById('fecha_hasta').value = '';
+                document.getElementById('filtro_tipo').value = '';
+                document.getElementById('filtro_busqueda').value = '';
+                filtrosActuales = { fecha_desde: '', fecha_hasta: '', tipo: '', busqueda: '' };
+                actualizarTextoFiltros();
+                cargarHistorialConFiltros();
+            });
+        }
+        
+        document.getElementById('btnFiltrar')?.addEventListener('click', function() {
+            filtrosActuales = {
+                fecha_desde: document.getElementById('fecha_desde').value,
+                fecha_hasta: document.getElementById('fecha_hasta').value,
+                tipo: document.getElementById('filtro_tipo').value,
+                busqueda: document.getElementById('filtro_busqueda').value
+            };
+            actualizarTextoFiltros();
+            cargarHistorialConFiltros();
+        });
+        
+        document.getElementById('btnLimpiarFiltros')?.addEventListener('click', function() {
+            document.getElementById('fecha_desde').value = '';
+            document.getElementById('fecha_hasta').value = '';
+            document.getElementById('filtro_tipo').value = '';
+            document.getElementById('filtro_busqueda').value = '';
+            filtrosActuales = { fecha_desde: '', fecha_hasta: '', tipo: '', busqueda: '' };
+            actualizarTextoFiltros();
+            cargarHistorialConFiltros();
+        });
+        
+        document.getElementById('refreshMovimientos')?.addEventListener('click', function() {
+            cargarHistorialConFiltros(true);
+        });
+    }
+    
+    // ===== FUNCIÓN PARA ACTUALIZAR TEXTO DE FILTROS =====
+    function actualizarTextoFiltros() {
+        const texto = [];
+        if (filtrosActuales.fecha_desde) texto.push(`Desde: ${filtrosActuales.fecha_desde}`);
+        if (filtrosActuales.fecha_hasta) texto.push(`Hasta: ${filtrosActuales.fecha_hasta}`);
+        if (filtrosActuales.tipo) texto.push(`Tipo: ${filtrosActuales.tipo}`);
+        if (filtrosActuales.busqueda) texto.push(`Búsqueda: ${filtrosActuales.busqueda}`);
+        
+        const span = document.getElementById('filtros-activos');
+        if (span) {
+            span.innerHTML = texto.length > 0 
+                ? `<i class="fas fa-filter me-1"></i>Filtros: ${texto.join(' • ')}`
+                : '';
+        }
+    }
+    
+    // ===== FUNCIÓN PARA CARGAR HISTORIAL CON FILTROS =====
+    function cargarHistorialConFiltros(showRefresh = false) {
+        let totalCargados = 0;
+        const totalEsperado = 3;
+        
+        function verificarCarga() {
+            totalCargados++;
+            if (totalCargados === totalEsperado) {
+                document.getElementById('total-movimientos').innerHTML = 
+                    '<i class="fas fa-check-circle text-success me-1"></i> Mostrando actividades filtradas';
+            }
+        }
+        
+        // Construir URL con filtros
+        const params = new URLSearchParams(filtrosActuales).toString();
+        
+        // Cargar historial de repuestos balancines
+        fetch(`/api/historial-repuestos-balancin-filtros/?${params}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('historial-balancines').innerHTML = html;
+                verificarCarga();
+            })
+            .catch(error => {
+                document.getElementById('historial-balancines').innerHTML = 
+                    '<div class="alert alert-danger m-3">Error al cargar historial</div>';
+                verificarCarga();
+            });
+        
+        // Cargar historial de repuestos adicionales
+        fetch(`/api/historial-repuestos-adicionales-filtros/?${params}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('historial-adicionales').innerHTML = html;
+                verificarCarga();
+            })
+            .catch(error => {
+                document.getElementById('historial-adicionales').innerHTML = 
+                    '<div class="alert alert-danger m-3">Error al cargar historial</div>';
+                verificarCarga();
+            });
+        
+        // Cargar historial combinado
+        fetch(`/api/historial-completo-filtros/?${params}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('historial-todos').innerHTML = html;
+                verificarCarga();
+            })
+            .catch(error => {
+                document.getElementById('historial-todos').innerHTML = 
+                    '<div class="alert alert-danger m-3">Error al cargar historial</div>';
+                verificarCarga();
+            });
+    }
+    
+    // ===== FUNCIÓN PARA CONFIGURAR DASHBOARD =====
+    function configurarDashboard() {
+        const dashboardModal = document.getElementById('dashboardModal');
+        
+        if (dashboardModal) {
+            dashboardModal.addEventListener('show.bs.modal', function() {
+                cargarDashboard();
+            });
+        }
+        
+        document.getElementById('btnActualizarDashboard')?.addEventListener('click', function() {
+            cargarDashboard();
+        });
+        
+        document.getElementById('exportarDashboard')?.addEventListener('click', function() {
+            exportarDashboard();
+        });
+    }
+    
+    // ===== FUNCIÓN PARA CARGAR DASHBOARD =====
+    function cargarDashboard() {
+        const periodo = document.getElementById('periodoDashboard').value;
+        const tipo = document.getElementById('tipoDashboard').value;
+        
+        fetch(`/api/dashboard-inventario/?periodo=${periodo}&tipo=${tipo}`)
+            .then(response => response.json())
+            .then(data => {
+                // Actualizar tarjetas
+                document.getElementById('total-entradas').textContent = data.total_entradas || 0;
+                document.getElementById('total-salidas').textContent = data.total_salidas || 0;
+                document.getElementById('total-movimientos-dash').textContent = data.total_movimientos || 0;
+                document.getElementById('stock-total').textContent = data.stock_total || 0;
+                
+                // Actualizar top repuestos
+                actualizarTopRepuestos(data.top_repuestos);
+                
+                // Actualizar gráficos
+                actualizarGraficos(data);
+            })
+            .catch(error => {
+                console.error('Error cargando dashboard:', error);
+            });
+    }
+    
+    // ===== FUNCIÓN PARA ACTUALIZAR TOP REPUESTOS =====
+    function actualizarTopRepuestos(repuestos) {
+        const tbody = document.getElementById('top-repuestos');
+        
+        if (!repuestos || repuestos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay datos</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        repuestos.forEach(r => {
+            html += `
+                <tr>
+                    <td><code>${r.codigo}</code></td>
+                    <td>${r.descripcion}</td>
+                    <td><span class="badge bg-${r.tipo === 'balancin' ? 'warning' : 'info'}">${r.tipo}</span></td>
+                    <td class="text-success">${r.entradas}</td>
+                    <td class="text-danger">${r.salidas}</td>
+                    <td><strong>${r.total}</strong></td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+    
+    // ===== FUNCIÓN PARA ACTUALIZAR GRÁFICOS =====
+    function actualizarGraficos(data) {
+        // Gráfico de movimientos por día
+        if (movimientosChart) movimientosChart.destroy();
+        
+        const ctx1 = document.getElementById('movimientosChart')?.getContext('2d');
+        if (ctx1 && data.movimientos_dia) {
+            movimientosChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: data.movimientos_dia.fechas,
+                    datasets: [
+                        {
+                            label: 'Entradas',
+                            data: data.movimientos_dia.entradas,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Salidas',
+                            data: data.movimientos_dia.salidas,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Gráfico de distribución por tipo
+        if (tipoChart) tipoChart.destroy();
+        
+        const ctx2 = document.getElementById('tipoChart')?.getContext('2d');
+        if (ctx2 && data.distribucion) {
+            tipoChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Entradas', 'Salidas', 'Creaciones', 'Actualizaciones'],
+                    datasets: [{
+                        data: [
+                            data.distribucion.entradas || 0,
+                            data.distribucion.salidas || 0,
+                            data.distribucion.creaciones || 0,
+                            data.distribucion.actualizaciones || 0
+                        ],
+                        backgroundColor: ['#28a745', '#dc3545', '#007bff', '#ffc107'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // ===== FUNCIÓN PARA EXPORTAR DASHBOARD =====
+    function exportarDashboard() {
+        const periodo = document.getElementById('periodoDashboard').value;
+        const tipo = document.getElementById('tipoDashboard').value;
+        
+        window.location.href = `/api/exportar-dashboard/?periodo=${periodo}&tipo=${tipo}`;
+    }
+});
+</script>
 {% endblock %}

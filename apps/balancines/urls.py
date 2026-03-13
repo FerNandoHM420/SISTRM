@@ -90,4 +90,18 @@ path('historial-torre/', views.historial_torre_con_filtros, name='historial_torr
 # === PARA HISTORIAL DE BALANCÍN ESPECÍFICO === 
 path('historial-balancin/<path:codigo>/', views.historial_balancin, name='historial_balancin'),
 
+path('api/torres-por-linea/', views.torres_por_linea_api, name='torres_por_linea_api'),
+
+
+# ========== APIS PARA HISTORIAL DE MOVIMIENTOS ==========
+# ===== APIs CON FILTROS =====
+path('api/historial-repuestos-balancin-filtros/', views.api_historial_repuestos_balancin_filtros, name='api_historial_repuestos_balancin_filtros'),
+path('api/historial-repuestos-adicionales-filtros/', views.api_historial_repuestos_adicionales_filtros, name='api_historial_repuestos_adicionales_filtros'),
+path('api/historial-completo-filtros/', views.api_historial_completo_filtros, name='api_historial_completo_filtros'),
+
+# ===== DASHBOARD =====
+path('api/dashboard-inventario/', views.api_dashboard_inventario, name='api_dashboard_inventario'),
+
+
+
 ]

@@ -7,160 +7,263 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/Chart.min.css">
 <style>
+    /* ===== ESTILOS GENERALES ===== */
+    :root {
+        --primary: #4361ee;
+        --success: #06d6a0;
+        --warning: #ffb703;
+        --danger: #ef476f;
+        --info: #4cc9f0;
+        --dark: #2b2d42;
+        --light: #f8f9fa;
+    }
+    
+    body {
+        background-color: #f4f7fc;
+    }
+    
     /* ===== TARJETAS DE ESTADÍSTICAS ===== */
     .stat-card {
-        transition: all 0.2s;
+        transition: all 0.3s ease;
         border: none;
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-radius: 16px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         border-left: 5px solid;
+        background: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
     }
     .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
     }
     .stat-card .stat-icon {
-        font-size: 2.5rem;
-        opacity: 0.3;
+        font-size: 2.8rem;
+        opacity: 0.2;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
     }
     .stat-card .stat-value {
-        font-size: 2rem;
-        font-weight: bold;
-        line-height: 1;
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 0.2rem;
     }
     .stat-card .stat-label {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         color: #6c757d;
+        font-weight: 500;
     }
     
     /* ===== FILTROS ===== */
     .filter-section {
         background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        border: 1px solid #dee2e6;
-        margin-bottom: 20px;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: none;
+        margin-bottom: 24px;
+    }
+    .filter-section .form-label {
+        font-weight: 600;
+        color: #2b2d42;
+        margin-bottom: 8px;
+    }
+    .filter-section .form-control,
+    .filter-section .form-select {
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        padding: 10px 16px;
+        transition: all 0.3s ease;
+    }
+    .filter-section .form-control:focus,
+    .filter-section .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
     }
     
     /* ===== PESTAÑAS ===== */
     .nav-tabs-custom {
-        border-bottom: 2px solid #dee2e6;
-        margin-bottom: 20px;
+        border-bottom: none;
+        margin-bottom: 24px;
+        gap: 8px;
     }
     .nav-tabs-custom .nav-link {
         border: none;
         color: #6c757d;
         font-weight: 600;
         padding: 12px 24px;
-        margin-right: 10px;
-        border-radius: 8px 8px 0 0;
-        transition: all 0.2s;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
     .nav-tabs-custom .nav-link:hover {
         background-color: #f8f9fa;
-        color: #495057;
+        color: var(--primary);
+        transform: translateY(-2px);
     }
     .nav-tabs-custom .nav-link.active {
-        background-color: #007bff;
+        background: linear-gradient(135deg, var(--primary) 0%, #6c5ce7 100%);
         color: white;
+        box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
     }
     
-    /* ===== GRÁFICOS ===== */
+    /* ===== TARJETAS DE GRÁFICOS ===== */
+    .chart-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+        height: 100%;
+    }
+    .chart-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .chart-card .card-header {
+        background: white;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1.25rem 1.5rem;
+    }
+    .chart-card .card-header h6 {
+        font-weight: 700;
+        color: #2b2d42;
+        margin: 0;
+        font-size: 1rem;
+    }
+    .chart-card .card-body {
+        padding: 1.5rem;
+    }
     .chart-container {
         position: relative;
         height: 300px;
         width: 100%;
-        margin-bottom: 30px;
     }
     
     /* ===== TARJETAS DE BALANCINES ===== */
     .hover-card {
-        transition: all 0.2s;
-        border: 1px solid #dee2e6;
-        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 16px;
         overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
     .hover-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+        border-color: transparent;
+    }
+    .hover-card .card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
     }
     .timeline-oh {
-        background-color: #f8f9fa;
-        padding: 10px;
-        border-radius: 8px;
+        background-color: #f8fafc;
+        padding: 12px;
+        border-radius: 12px;
         overflow-x: auto;
     }
-    .timeline-oh .badge {
-        font-size: 0.7rem;
-    }
-    .card-footer .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.7rem;
-    }
-    
-    /* ===== BADGES ===== */
-    .badge-sentido {
-        padding: 5px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    .badge-asc {
-        background-color: #d1e7dd;
-        color: #0a5e4a;
-    }
-    .badge-desc {
-        background-color: #f8dddd;
-        color: #9a3b3b;
-    }
-    .badge-oh {
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    /* ===== COLORES DE ESTADO ===== */
-    .estado-critico {
-        background-color: rgba(220, 53, 69, 0.1);
-    }
-    .estado-alerta {
-        background-color: rgba(255, 193, 7, 0.1);
-    }
-    .estado-normal {
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-    .estado-sin-oh {
-        background-color: rgba(108, 117, 125, 0.1);
-    }
-
-    /* ===== LÍNEA DE TIEMPO ===== */
-    .timeline-container {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex-wrap: wrap;
-    }
     .timeline-item {
-        flex: 0 0 auto;
-        min-width: 80px;
+        min-width: 90px;
         text-align: center;
-        padding: 5px;
-        border-radius: 6px;
+        padding: 8px;
+        border-radius: 10px;
         background: white;
-        border: 1px solid #dee2e6;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
     }
-    .timeline-item.missing {
-        opacity: 0.5;
-        background: #f8f9fa;
+    .timeline-item:hover {
+        transform: scale(1.02);
+        border-color: var(--primary);
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.1);
     }
-    .timeline-arrow {
-        color: #6c757d;
+    
+    /* ===== BADGES Y ESTADOS ===== */
+    .badge-estado {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .badge-normal {
+        background: linear-gradient(135deg, #06d6a0 0%, #05b588 100%);
+        color: white;
+    }
+    .badge-alerta {
+        background: linear-gradient(135deg, #ffb703 0%, #fb8b24 100%);
+        color: white;
+    }
+    .badge-critico {
+        background: linear-gradient(135deg, #ef476f 0%, #d62828 100%);
+        color: white;
+    }
+    .badge-sin-oh {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    /* ===== PROGRESS BAR ===== */
+    .progress-custom {
+        height: 8px;
+        border-radius: 20px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    .progress-custom .progress-bar {
+        border-radius: 20px;
+        transition: width 0.6s ease;
+    }
+    
+    /* ===== BOTONES DE ACCIÓN ===== */
+    .btn-action {
+        padding: 0.4rem 0.8rem;
+        border-radius: 10px;
         font-size: 0.8rem;
-        margin: 0 2px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* ===== ALERTAS ===== */
+    .alert-custom {
+        border-radius: 12px;
+        border: none;
+        padding: 1rem 1.5rem;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+        }
+        .timeline-item {
+            min-width: 70px;
+        }
     }
 </style>
 {% endblock %}
@@ -168,39 +271,37 @@
 {% block content %}
 <div class="container-fluid px-4 py-4">
     
-    <!-- ===== HEADER ===== -->
+    <!-- ===== HEADER MODERNO ===== -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h2 fw-bold" style="color: #2c3e50;">
-                <i class="fas fa-chart-line me-2" style="color: #3498db;"></i>
-                Control de Overhaul (OH) por Torre
+            <h1 class="h2 fw-bold" style="color: var(--dark);">
+                <i class="fas fa-chart-line me-2" style="color: var(--primary);"></i>
+                Control de Overhaul (OH)
             </h1>
             <p class="text-muted mb-0">
-                <i class="fas fa-info-circle me-1"></i>
+                <i class="fas fa-info-circle me-1 text-primary"></i>
                 Seguimiento completo de órdenes de horas (OH) por torre
             </p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+            <button class="btn btn-light border" onclick="window.location.reload()" title="Actualizar">
                 <i class="fas fa-sync-alt"></i>
             </button>
-            <a href="{% url 'exportar_oh_excel' %}" class="btn btn-success">
+            <a href="{% url 'exportar_oh_excel' %}" class="btn" style="background: linear-gradient(135deg, #06d6a0 0%, #05b588 100%); color: white; border: none;">
                 <i class="fas fa-file-excel me-1"></i> Exportar
             </a>
-        </div>
-        <div>
-            <a href="{% url 'inventario_principal' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver
+            <a href="{% url 'inventario_principal' %}" class="btn btn-light border">
+                <i class="fas fa-arrow-left me-1"></i> Volver
             </a>
         </div>
     </div>
 
-    <!-- ===== FILTROS ===== -->
+    <!-- ===== FILTROS MEJORADOS ===== -->
     <div class="filter-section">
         <form method="get" id="filterForm" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-industry me-1"></i> Línea</label>
-                <select name="linea" class="form-select form-select-sm">
+                <label class="form-label"><i class="fas fa-industry me-2 text-primary"></i>Línea</label>
+                <select name="linea" class="form-select">
                     <option value="">Todas las líneas</option>
                     {% for linea in lineas %}
                     <option value="{{ linea.nombre }}" {% if linea_filtro == linea.nombre %}selected{% endif %}>
@@ -210,13 +311,13 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-flag me-1"></i> Torre</label>
-                <input type="text" name="torre" class="form-control form-control-sm" 
+                <label class="form-label"><i class="fas fa-flag me-2 text-primary"></i>Torre</label>
+                <input type="text" name="torre" class="form-control" 
                        placeholder="N° torre" value="{{ torre_filtro }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label"><i class="fas fa-exclamation-triangle me-1"></i> Estado</label>
-                <select name="estado" class="form-select form-select-sm">
+                <label class="form-label"><i class="fas fa-exclamation-triangle me-2 text-primary"></i>Estado</label>
+                <select name="estado" class="form-select">
                     <option value="">Todos</option>
                     <option value="normal" {% if estado_filtro == 'normal' %}selected{% endif %}>Normal</option>
                     <option value="alerta" {% if estado_filtro == 'alerta' %}selected{% endif %}>Alerta</option>
@@ -226,8 +327,8 @@
             </div>
             <div class="col-md-3">
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-filter me-1"></i> Filtrar
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, var(--primary) 0%, #6c5ce7 100%); color: white; border: none; padding: 10px;">
+                        <i class="fas fa-filter me-2"></i> Aplicar Filtros
                     </button>
                 </div>
             </div>
@@ -236,12 +337,16 @@
 
     <!-- ===== FILTRO ACTIVO (por balancín) ===== -->
     {% if balancin_filtro %}
-    <div class="alert alert-info mb-3">
-        <i class="fas fa-filter me-2"></i>
-        Mostrando solo el balancín <strong>{{ balancin_filtro }}</strong>
-        <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-sm btn-outline-info ms-3">
-            <i class="fas fa-times"></i> Quitar filtro
-        </a>
+    <div class="alert alert-custom alert-info mb-3">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-filter me-3 fs-4 text-primary"></i>
+            <div class="flex-grow-1">
+                Mostrando solo el balancín <strong>{{ balancin_filtro }}</strong>
+            </div>
+            <a href="{% url 'dashboard_oh_nuevo' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-times"></i> Quitar filtro
+            </a>
+        </div>
     </div>
     {% endif %}
 
@@ -249,12 +354,12 @@
     <ul class="nav nav-tabs-custom" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
-                <i class="fas fa-chart-pie"></i> Dashboard de Estado
+                <i class="fas fa-chart-pie me-2"></i> Dashboard de Estado
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado" type="button" role="tab">
-                <i class="fas fa-table"></i> Listado Detallado de OH
+                <i class="fas fa-table me-2"></i> Listado Detallado de OH
             </button>
         </li>
     </ul>
@@ -262,65 +367,57 @@
     <!-- ===== CONTENIDO DE PESTAÑAS ===== -->
     <div class="tab-content" id="myTabContent">
         
-        <!-- ===== PESTAÑA 1: DASHBOARD DE ESTADO ===== -->
+        <!-- ===== PESTAÑA 1: DASHBOARD DE ESTADO (REDISEÑADO) ===== -->
         <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
             
-            <!-- Tarjetas de resumen -->
-            <div class="row g-3 mb-4">
+            <!-- Tarjetas de resumen con nuevo diseño -->
+            <div class="row g-4 mb-4">
                 <div class="col-md-3">
-                    <div class="stat-card h-100 p-3" style="border-left-color: #3498db;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="stat-label">Total Balancines</div>
-                                <div class="stat-value">{{ total_balancines }}</div>
-                            </div>
-                            <i class="fas fa-building stat-icon" style="color: #3498db;"></i>
+                    <div class="stat-card h-100 p-3" style="border-left-color: var(--primary);">
+                        <div class="position-relative">
+                            <div class="stat-value">{{ total_balancines }}</div>
+                            <div class="stat-label">Total Balancines</div>
+                            <i class="fas fa-building stat-icon"></i>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card h-100 p-3" style="border-left-color: #28a745;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="stat-label">Balancines OK</div>
-                                <div class="stat-value">{{ total_normal }}</div>
-                            </div>
-                            <i class="fas fa-check-circle stat-icon" style="color: #28a745;"></i>
+                    <div class="stat-card h-100 p-3" style="border-left-color: var(--success);">
+                        <div class="position-relative">
+                            <div class="stat-value">{{ total_normal }}</div>
+                            <div class="stat-label">Balancines OK</div>
+                            <i class="fas fa-check-circle stat-icon"></i>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card h-100 p-3" style="border-left-color: #ffc107;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="stat-label">En Alerta</div>
-                                <div class="stat-value">{{ total_alerta }}</div>
-                            </div>
-                            <i class="fas fa-exclamation-triangle stat-icon" style="color: #ffc107;"></i>
+                    <div class="stat-card h-100 p-3" style="border-left-color: var(--warning);">
+                        <div class="position-relative">
+                            <div class="stat-value">{{ total_alerta }}</div>
+                            <div class="stat-label">En Alerta</div>
+                            <i class="fas fa-exclamation-triangle stat-icon"></i>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card h-100 p-3" style="border-left-color: #dc3545;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="stat-label">Críticos</div>
-                                <div class="stat-value">{{ total_critico }}</div>
-                            </div>
-                            <i class="fas fa-exclamation-circle stat-icon" style="color: #dc3545;"></i>
+                    <div class="stat-card h-100 p-3" style="border-left-color: var(--danger);">
+                        <div class="position-relative">
+                            <div class="stat-value">{{ total_critico }}</div>
+                            <div class="stat-label">Críticos</div>
+                            <i class="fas fa-exclamation-circle stat-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- GRÁFICOS -->
-            <div class="row">
+            <!-- GRÁFICOS MEJORADOS -->
+            <div class="row g-4">
                 <!-- Gráfico de torta - Estado de Balancines -->
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="fas fa-chart-pie me-2 text-primary"></i>
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h6>
+                                <i class="fas fa-chart-pie me-2" style="color: var(--primary);"></i>
                                 Distribución por Estado
                             </h6>
                         </div>
@@ -333,11 +430,11 @@
                 </div>
 
                 <!-- Gráfico de barras - Estado por Línea -->
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="fas fa-chart-bar me-2 text-primary"></i>
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h6>
+                                <i class="fas fa-chart-bar me-2" style="color: var(--primary);"></i>
                                 Estado por Línea
                             </h6>
                         </div>
@@ -351,12 +448,12 @@
             </div>
 
             <!-- Gráfico de columnas - Backlog por Torre -->
-            <div class="row">
-                <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-white py-3">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="fas fa-chart-bar me-2 text-primary"></i>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h6>
+                                <i class="fas fa-chart-bar me-2" style="color: var(--primary);"></i>
                                 Backlog por Torre (Último OH)
                             </h6>
                         </div>
@@ -368,8 +465,41 @@
                     </div>
                 </div>
             </div>
-        </div>
 
+            <!-- Resumen de estado en badges (opcional) -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h6>
+                                <i class="fas fa-tags me-2" style="color: var(--primary);"></i>
+                                Resumen de Estado
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap gap-3 justify-content-center">
+                                <span class="badge badge-normal badge-estado">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Normal: {{ total_normal }}
+                                </span>
+                                <span class="badge badge-alerta badge-estado">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Alerta: {{ total_alerta }}
+                                </span>
+                                <span class="badge badge-critico badge-estado">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    Crítico: {{ total_critico }}
+                                </span>
+                                <span class="badge badge-sin-oh badge-estado">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Sin OH: {{ total_sin_oh }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- ===== PESTAÑA 2: LISTADO DETALLADO DE OH (VERSIÓN DINÁMICA) ===== -->
         <div class="tab-pane fade" id="listado" role="tabpanel">
             
@@ -425,7 +555,7 @@
                             </span>
                         </div>
 
-                        <div class="card-body">
+                        <div class="card-body"> 
                             <!-- Progreso actual usando el último OH -->
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between small mb-1">
@@ -551,7 +681,7 @@
     // Gráfico de torta - Distribución por Estado
     var ctxPie = document.getElementById('estadoPieChart').getContext('2d');
     new Chart(ctxPie, {
-        type: 'pie',
+        type: 'doughnut',  // Cambiado a doughnut para mejor estilo
         data: {
             labels: ['Normal', 'Alerta', 'Crítico', 'Sin OH'],
             datasets: [{
@@ -561,22 +691,28 @@
                     {{ total_critico }},
                     {{ total_sin_oh }}
                 ],
-                backgroundColor: ['#28a745', '#ffc107', '#dc3545', '#6c757d'],
-                borderWidth: 0
+                backgroundColor: ['#06d6a0', '#ffb703', '#ef476f', '#6c757d'],
+                borderWidth: 0,
+                borderRadius: 10
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '70%',
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
                 }
             }
         }
     });
     
-    // Gráfico de barras - Estado por Línea
+    // Gráfico de barras - Estado por Línea (con colores mejorados)
     var ctxBar = document.getElementById('lineaBarChart').getContext('2d');
     new Chart(ctxBar, {
         type: 'bar',
@@ -586,31 +722,49 @@
                 {
                     label: 'Normal',
                     data: {{ data_normal|safe }},
-                    backgroundColor: '#28a745'
+                    backgroundColor: '#06d6a0',
+                    borderRadius: 6
                 },
                 {
                     label: 'Alerta',
                     data: {{ data_alerta|safe }},
-                    backgroundColor: '#ffc107'
+                    backgroundColor: '#ffb703',
+                    borderRadius: 6
                 },
                 {
                     label: 'Crítico',
                     data: {{ data_critico|safe }},
-                    backgroundColor: '#dc3545'
+                    backgroundColor: '#ef476f',
+                    borderRadius: 6
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true
+                    }
+                }
+            },
             scales: {
-                x: { stacked: true },
-                y: { stacked: true, beginAtZero: true }
+                x: { 
+                    stacked: true,
+                    grid: { display: false }
+                },
+                y: { 
+                    stacked: true, 
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' }
+                }
             }
         }
     });
     
-    // Gráfico de columnas - Backlog por Torre
+    // Gráfico de columnas - Backlog por Torre (mejorado)
     var ctxBacklog = document.getElementById('backlogBarChart').getContext('2d');
     new Chart(ctxBacklog, {
         type: 'bar',
@@ -621,8 +775,8 @@
                     label: 'Backlog (horas)',
                     data: {{ backlog_data|safe }},
                     backgroundColor: {{ backlog_colors|safe }},
-                    borderWidth: 1,
-                    borderRadius: 5
+                    borderWidth: 0,
+                    borderRadius: 8
                 }
             ]
         },
@@ -630,10 +784,11 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
+                    backgroundColor: '#2b2d42',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
                     callbacks: {
                         label: function(context) {
                             let label = context.dataset.label || '';
@@ -658,19 +813,17 @@
                     beginAtZero: false,
                     title: {
                         display: true,
-                        text: 'Horas de backlog'
+                        text: 'Horas de backlog',
+                        color: '#6c757d'
                     },
-                    grid: {
-                        color: 'rgba(0,0,0,0.05)'
-                    }
+                    grid: { color: '#f1f5f9' }
                 },
                 x: {
-                    grid: {
-                        display: false
-                    },
+                    grid: { display: false },
                     ticks: {
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
+                        font: { size: 10 }
                     }
                 }
             }
