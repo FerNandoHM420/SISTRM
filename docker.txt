@@ -62,7 +62,13 @@ docker exec -it proyectonuevo-db-1 psql -U proyecto_user -d proyecto_db
 
 docker exec -it proyectonuevo-db-1 psql -U proyecto_user -l
 
-
+#Dcoker y GitHub 
+git status
+1️⃣ git add .
+2️⃣ git commit -m "cambios"
+3️⃣ git push origin main
+4️⃣ docker build -t miguelfhm/sistrm .
+5️⃣ docker push miguelfhm/sistrm
 
 
 #GitHub actualizar 
@@ -70,3 +76,9 @@ git status
 git add .
 git commit -m "Ultima Acrualizacion del sistema"
 git push origin main
+
+
+#para Docker hub 
+docker build -t miguelfhm/sistrm .
+docker push miguelfhm/sistrm:latest
+

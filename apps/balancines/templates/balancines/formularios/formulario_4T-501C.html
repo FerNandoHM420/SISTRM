@@ -1,10 +1,11 @@
-{% extends 'base.html' %}
+
 {% load static %}
 {% load matriz_filters %}
 
-{% block title %}Formulario de Control - {{ balancin.codigo }}{% endblock %}
 
 {% block extra_css %}
+
+
 <style>
     /* ===== ESTILOS BASE ===== */
     * {
@@ -390,313 +391,105 @@
         text-align: center;
         padding: 8px;
     }
-  /* ===================================================================
-   REEMPLAZA COMPLETAMENTE EL BLOQUE @media print EN TU TEMPLATE
-   =================================================================== */
-
+@page {
+    margin-top: 0.1cm;
+    margin-bottom: 0.1cm;
+    margin-left: 0cm;
+    margin-right: 0cm;
+}
 @media print {
-    /* ── Página A4 horizontal, sin márgenes ── */
-    @page {
-        size: A4 landscape;
-        margin: 0.4cm 0.5cm;
-    }
 
-    /* ── Reset global ── */
-    * {
-        box-sizing: border-box !important;
-    }
-
-    /* ── Ocultar elementos que NO deben imprimirse ── */
-    .no-print,
-    button,
-    .btn,
-    #buscador-repuestos,
-    #btn-agregar,
-    #buscador-usuarios,
-    #btn-agregar-usuario,
-    .btn-eliminar,
-    .btn-eliminar-realizado,
-    #resultados-busqueda,
-    #resultados-usuarios,
-    #resultados-usuario-2,
-    [id^="resultados"] {
-        display: none !important;
-    }
-
-    /* ── Ocultar la FILA COMPLETA del buscador (div con padding y background) ── */
-    div[style*="display: flex"][style*="padding: 10px"][style*="background-color: #f0f0f0"] {
-        display: none !important;
-    }
-
-    /* ── Body y contenedor principal ── */
+    
+    /* ... todo tu código existente ... */
+    
+    /* ===== REDUCIR TAMAÑOS PARA QUE QUEPA EN 2 HOJAS ===== */
+    
+    /* Reducir fuente general */
     body {
-        background: white !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        font-size: 7.5pt !important;
-        font-family: 'Calibri', Arial, sans-serif !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-
-    .excel-container {
-        /* Escala TODO el contenedor para que entre en una hoja */
-        transform: scale(0.72);
-        transform-origin: top left;
-        /* Compensa el espacio que deja el scale */
-        width: calc(100% / 0.72);
-        max-width: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        overflow: visible !important;
-    }
-
-    /* ── Evitar saltos de página ── */
-    table, tr, td, th, div, section {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-
-    /* ── Encabezado ── */
-    .excel-header {
-        margin-bottom: 4px !important;
-        padding-bottom: 4px !important;
-        border-bottom: 1.5px solid #000 !important;
-    }
-
-    .excel-header div:first-child  { font-size: 11pt !important; }
-    .excel-header div:nth-child(2) { font-size: 9pt  !important; }
-    .excel-header div:nth-child(3) { font-size: 12pt !important; margin: 3px 0 !important; }
-
-    /* ── Subtítulos ── */
-    .excel-subheader,
-    div[style*="background:#c0c0c0"][style*="font-weight:bold"],
-    div[style*="background: #c0c0c0"] {
-        padding: 3px 6px !important;
-        margin: 6px 0 4px !important;
         font-size: 9pt !important;
     }
-
-    /* ── Tablas generales ── */
+    
+    /* Encabezado más compacto */
+    .excel-header {
+        margin-bottom: 0.2cm !important;
+        padding-bottom: 0.2cm !important;
+    }
+    
+    .excel-header div:first-child { font-size: 12pt !important; }
+    .excel-header div:nth-child(2) { font-size: 10pt !important; }
+    .excel-header div:nth-child(3) { font-size: 14pt !important; margin: 0.1cm 0 !important; }
+    .excel-header div:last-child { font-size: 9pt !important; margin-top: 0.1cm !important; }
+    
+    /* Tablas más compactas */
     .excel-table {
-        width: 100% !important;
-        font-size: 7.5pt !important;
-        margin-bottom: 4px !important;
-        border: 1px solid #000 !important;
-        border-collapse: collapse !important;
-        table-layout: fixed !important;
-    }
-
-    .excel-table th {
-        font-size: 7.5pt !important;
-        padding: 2px 3px !important;
-        border: 1px solid #000 !important;
-        background-color: #bcbcbc !important;
-    }
-
-    .excel-table td {
-        padding: 2px 3px !important;
-        border: 1px solid #000 !important;
-        vertical-align: middle !important;
-    }
-
-    /* ── Inputs y selects: mostrar su valor limpio ── */
-    input[type="text"],
-    input[type="number"],
-    textarea,
-    select {
-        border: none !important;
-        background: transparent !important;
-        font-size: 7.5pt !important;
-        color: #000 !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        height: auto !important;
-        -webkit-appearance: none !important;
-        appearance: none !important;
-    }
-
-    input[type="radio"],
-    input[type="checkbox"] {
-        width: 12px !important;
-        height: 12px !important;
-        margin: 0 auto !important;
-        display: block !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* ── Sección de TORQUE: contenedores flex con anchos fijos → flexibles ── */
-
-    /* Fila que contiene P + S2P */
-    div[style*="display: flex"][style*="gap: 50px"] {
-        display: flex !important;
-        gap: 8px !important;
-        margin-bottom: 8px !important;
-        width: 100% !important;
-    }
-
-    /* Caja P (600px fijo) */
-    div[style*="width: 600px"] {
-        flex: 2 1 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
-    }
-
-    /* Caja S2P (360px fijo) */
-    div[style*="width: 360px"] {
-        flex: 1 1 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
-    }
-
-    /* Fila que contiene Segmento4P + SE + Consola */
-    div[style*="display: flex"][style*="gap: 40px"] {
-        display: flex !important;
-        gap: 6px !important;
-        margin-top: 6px !important;
-        width: 100% !important;
-    }
-
-    /* Consola (400px fijo) */
-    div[style*="width: 400px"] {
-        flex: 1.5 1 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
-    }
-
-    /* Todas las cajas "width: fit-content" dentro del área torque */
-    div[style*="width: fit-content"] {
-        flex: 1 1 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
-    }
-
-    /* Celdas numéricas de torque (30px, 40px fijos) */
-    div[style*="width: 30px"],
-    div[style*="width: 40px"],
-    div[style*="width: 50px"] {
-        flex: 1 1 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        font-size: 6.5pt !important;
-    }
-
-    /* Etiquetas laterales (120px, 160px, 200px fijos) */
-    div[style*="width: 120px"],
-    div[style*="width: 160px"],
-    div[style*="width: 200px"],
-    div[style*="width: 199px"] {
-        flex: 0 0 80px !important;
-        width: 80px !important;
-        min-width: 60px !important;
-        font-size: 6.5pt !important;
-    }
-
-    /* Altura de celdas de checkbox de torque */
-    div[style*="height: 50px"],
-    div[style*="height: 45px"] {
-        height: 16px !important;
-        min-height: 14px !important;
-    }
-
-    /* Títulos de bloques torque (P, S2P, etc.) */
-    div[style*="font-size: 18px"],
-    div[style*="font-size: 16px"] {
         font-size: 8pt !important;
-        padding: 2px 4px !important;
+        margin-bottom: 0.2cm !important;
     }
-
-    /* ── Sección LUBRICACIÓN ── */
-    div[style*="display: flex"][style*="gap: 250px"] {
-        display: flex !important;
-        gap: 6px !important;
-        margin-bottom: 6px !important;
-        width: 100% !important;
-        flex-wrap: nowrap !important;
+    
+    .excel-table th,
+    .excel-table td {
+        padding: 0.1cm 0.15cm !important;
     }
-
-    div[style*="width: 280px"],
-    div[style*="width: 200px"],
-    div[style*="width: 220px"] {
-        flex: 1 1 0 !important;
-        width: auto !important;
-        min-width: 0 !important;
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
+    
+    /* Reducir altura de filas de torque */
+    table[style*="height: 50px"] td,
+    table[style*="height: 45px"] td,
+    td[style*="height: 50px"],
+    td[style*="height: 45px"] {
+        height: 0.6cm !important;
+        min-height: 0.5cm !important;
+        padding: 0.05cm !important;
     }
-
-    /* ── Verificaciones finales ── */
-    div[style*="display: flex"][style*="gap: 30px"] {
-        display: flex !important;
-        gap: 10px !important;
-        margin: 6px 0 !important;
-        flex-wrap: wrap !important;
-        align-items: center !important;
+    
+    /* Compactar secciones */
+    .excel-subheader {
+        margin: 0.2cm 0 0.1cm 0 !important;
+        padding: 0.15cm !important;
+        font-size: 10pt !important;
     }
-
-    div[style*="border: 1px solid #000"][style*="width: 30px"][style*="height: 30px"] {
-        width: 14px !important;
-        height: 14px !important;
-        min-width: 14px !important;
-        flex-shrink: 0 !important;
+    
+    div[style*="background:#c0c0c0"][style*="font-size:14pt"] {
+        font-size: 11pt !important;
+        padding: 0.2cm !important;
+        margin: 0.3cm 0 0.15cm 0 !important;
     }
-
-    /* ── Posición final ── */
+    
+    /* Reducir gaps entre elementos */
+    div[style*="gap: 50px"] { gap: 0.2cm !important; }
+    div[style*="gap: 40px"] { gap: 0.15cm !important; }
+    div[style*="gap: 250px"] { gap: 0.2cm !important; }
+    div[style*="gap: 30px"] { gap: 0.2cm !important; }
+    
+    /* Posición final más pequeña */
     .posicion-table {
         width: 35% !important;
-        margin-left: auto !important;
-        margin-top: 4px !important;
-        border: 1px solid #000 !important;
+        margin-top: 0.2cm !important;
     }
-
+    
     .posicion-table td {
-        padding: 2px 4px !important;
-        font-size: 7.5pt !important;
+        padding: 0.1cm !important;
     }
-
-    /* ── Tabla REALIZADO ── */
-    #tabla-realizado {
-        width: 100% !important;
+    
+    /* Inputs más pequeños */
+    input, select, textarea {
+        font-size: 8pt !important;
     }
-
-    /* ── Tabla APROBADO ── */
-    .firma-table {
-        width: 45% !important;
-        margin-top: 4px !important;
-        border: 1px solid #000 !important;
+    
+    input[type="checkbox"], input[type="radio"] {
+        width: 10px !important;
+        height: 10px !important;
     }
-
-    .firma-table th,
-    .firma-table td {
-        padding: 2px 4px !important;
-        font-size: 7.5pt !important;
-        border: 1px solid #000 !important;
+    
+    /* Forzar saltos de página donde sea necesario */
+    .excel-subheader:first-of-type {
+        page-break-before: avoid !important;
     }
-
-    /* ── Márgenes extra de secciones ── */
-    .grupo-titulo {
-        padding: 3px 6px !important;
-        margin: 4px 0 2px 0 !important;
-        font-size: 9pt !important;
+    
+    /* Si quieres forzar un salto después de cierta sección, descomenta:
+    div[style*="TORQUE"] {
+        page-break-before: always !important;
     }
-
-    /* ── Sombras: eliminarlas en impresión ── */
-    * {
-        box-shadow: none !important;
-        text-shadow: none !important;
-    }
+    */
 }
 </style>
 {% endblock %}
@@ -901,236 +694,233 @@
 
 
 
-        <!-- ===== SECCIÓN TORQUE PARA 4T-501C ===== -->
-        <div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
-            TORQUE, MARCADO DE PERNOS Y TUERCAS
-        </div>
+      <!-- ===== SECCIÓN TORQUE PARA 4T-501C ===== -->
+<div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
+    TORQUE, MARCADO DE PERNOS Y TUERCAS
+</div>
 
-        <!-- SECCIÓN P Y S2P -->
-        <div style="display: flex; gap: 50px; margin-bottom: 40px;">
-            <!-- P -->
-            <div style="border: 2px solid #000; width: 600px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="background-color: #bcbcbc; padding: 12px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #000;">P</div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 10px; background-color: #f0f0f0; font-weight: bold;">&nbsp;</div>
-                    {% for i in "1234567890123456"|make_list %}
-                        <div style="width: 30px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">{{ forloop.counter }}</div>
-                    {% endfor %}
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Poleas</div>
-                    {% for i in "1234567890123456"|make_list %}
-                        <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
-                            {% if forloop.counter > 4 %}background-color: #e0e0e0;{% endif %}">
-                            {% if forloop.counter <= 4 %}
-                                
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
+<!-- SECCIÓN P Y S2P -->
+<div style="display: flex; gap: 50px; margin-bottom: 40px;">
+    <!-- P (como tabla) -->
+    <table style="border: 2px solid #000; width: 600px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <caption style="background-color: #bcbcbc; padding: 12px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #000; caption-side: top;">P</caption>
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th style="width: 120px; border-right: 1px solid #000; padding: 10px; background-color: #f0f0f0; font-weight: bold;">&nbsp;</th>
+                {% for i in "1234567890123456"|make_list %}
+                    <th style="width: 30px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">{{ forloop.counter }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold;">Poleas</td>
+                {% for i in "1234567890123456"|make_list %}
+                    <td style="width: 30px; height: 50px; border-right: 1px solid #000; text-align: center; vertical-align: middle; {% if forloop.counter > 4 %}background-color: #e0e0e0;{% endif %}">
+                        {% if forloop.counter <= 4 %}
+                            <!-- Aquí puedes poner el checkbox si existe -->
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
 
-            <!-- S2P -->
-            <div style="border: 2px solid #000; width: 360px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="background-color: #bcbcbc; padding: 12px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #000;">S2P</div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 10px; background-color: #f0f0f0; font-weight: bold;">&nbsp;</div>
-                    {% for i in "12345678"|make_list %}
-                        <div style="width: 30px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">{{ forloop.counter }}</div>
-                    {% endfor %}
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold; display: flex; align-items: center;">Segmentos 2P</div>
-                    {% for i in "12345678"|make_list %}
-                        <div style="width: 30px; height: 50px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center; 
-                            {% if forloop.counter > 2 %}background-color: #e0e0e0;{% endif %}">
-                            {% if forloop.counter <= 2  %}
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+    <!-- S2P (como tabla) -->
+    <table style="border: 2px solid #000; width: 360px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <caption style="background-color: #bcbcbc; padding: 12px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px solid #000; caption-side: top;">S2P</caption>
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th style="width: 120px; border-right: 1px solid #000; padding: 10px; background-color: #f0f0f0; font-weight: bold;">&nbsp;</th>
+                {% for i in "12345678"|make_list %}
+                    <th style="width: 30px; text-align: center; padding: 10px 0; border-right: 1px solid #000; font-weight: bold;">{{ forloop.counter }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width: 120px; border-right: 1px solid #000; padding: 12px; background-color: #f0f0f0; font-weight: bold;">Segmentos 2P</td>
+                {% for i in "12345678"|make_list %}
+                    <td style="width: 30px; height: 50px; border-right: 1px solid #000; text-align: center; vertical-align: middle; {% if forloop.counter > 2 %}background-color: #e0e0e0;{% endif %}">
+                        {% if forloop.counter <= 2 %}
+                            <!-- Aquí puedes poner el checkbox si existe -->
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+</div>
+<!-- SEGUNDA FILA: SEGMENTO 4P, SE, CONSOLA -->
+<div style="display: flex; gap: 40px; margin-top: 30px;">
+    
+    <!-- SEGMENTO 4P como tabla -->
+    <table style="border: 2px solid #000; width: fit-content; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <!-- Fila 1: Encabezados PR1-PR4 -->
+        <tr style="background-color: #bcbcbc;">
+            <td style="width: 120px; border: 1px solid #000; padding: 8px;">&nbsp;</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">PR1</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">PR2</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">PR3</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">PR4</td>
+        </tr>
+        
+        <!-- Fila 2: Números -->
+        <tr>
+            <td style="width: 120px; border: 1px solid #000; padding: 8px;">&nbsp;</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">3</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">4</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">5</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">6</td>
+        </tr>
+        
+        <!-- Fila 3: Segmentos 4P -->
+        <tr>
+            <td style="width: 120px; border: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+        </tr>
+    </table>
 
-        <div style="display: flex; gap: 40px; margin-top: 30px;">
-            <!-- SEGMENTO 4P -->
-            <div style="border: 2px solid #000; width: fit-content; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">PR1</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">PR2</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">PR3</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; font-weight: bold;">PR4</div>
-                </div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">4</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">5</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">6</div>
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
+    <!-- SE como tabla -->
+    <table style="border: 2px solid #000; width: fit-content; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <!-- Fila 1: Encabezados SE1-SE4 -->
+        <tr style="background-color: #e8e8e8;">
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">SE1</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">SE2</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">SE3</td>
+            <td style="width: 80px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">SE4</td>
+        </tr>
+        
+        <!-- Fila 2: Números -->
+        <tr>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 40px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+        </tr>
+        
+        <!-- Fila 3: Espacios/Checkboxes -->
+        <tr>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 40px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+        </tr>
+    </table>
 
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; display: flex; align-items: center; justify-content: center; background-color: #e0e0e0;"></div>
-                </div>
-            </div>
+    <!-- CONSOLA como tabla -->
+    <table style="border: 2px solid #000; width: 400px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <!-- Fila 1: Encabezados -->
+        <tr style="background-color: #bcbcbc;">
+            <td style="width: 199px; border: 1px solid #000; padding: 8px;">&nbsp;</td>
+            <td style="width: 99px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;" colspan="2">CS-SE1</td>
+            <td style="width: 90px; text-align: center; border: 1px solid #000; padding: 8px; font-weight: bold;"colspan="2">CS-SE2</td>
+        </tr>
+        
+        <!-- Fila 2: Números -->
+        <tr>
+            <td style="width: 200px; border: 1px solid #000; padding: 8px;">&nbsp;</td>
+            <td style="width: 50px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 50px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+            <td style="width: 50px; text-align: center; border: 1px solid #000; padding: 8px;">1</td>
+            <td style="width: 50px; text-align: center; border: 1px solid #000; padding: 8px;">2</td>
+        </tr>
+        
+        <!-- Fila 3: Consola -->
+        <tr>
+            <td style="width: 200px; border: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Consola de suspencion</td>
+            <td style="width: 50px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 50px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 50px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+            <td style="width: 50px; height: 45px; border: 1px solid #000; background-color: #e0e0e0;"></td>
+        </tr>
+    </table>
+</div>
+<!-- ===== SECCIÓN Lubricacion PARA 4T-501C ===== -->
+<div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
+    Puntos de lubricacion (gramos)
+</div>
 
-            <!-- SE -->
-            <div style="border: 2px solid #000; width: fit-content; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="display: flex; border-bottom: 1px solid #000; background-color: #e8e8e8;">
-                    <div style="width: 80px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE1</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE2</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">SE3</div>
-                    <div style="width: 80px; text-align: center; padding: 8px 0; font-weight: bold;">SE4</div>
-                </div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">2</div>
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                        
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                        
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                        
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                        
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                </div>
-            </div>
+<!-- LUBRICACIÓN -->
+<div style="display: flex; gap: 250px; margin-bottom: 40px;">
+    <!-- PL-S2P (como tabla) -->
+    <table style="border: 2px solid #000; width: 280px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <caption style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000; caption-side: top;">PL-S2P</caption>
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0;">4</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 2P</td>
+                <td style="width: 40px; height: 45px; border-right: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+                <td style="width: 40px; height: 45px; border-right: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+                <td style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></td>
+                <td style="width: 40px; height: 45px; background-color: #e0e0e0;"></td>
+            </tr>
+        </tbody>
+    </table>
 
-            <!-- CONSOLA -->
-            <div style="border: 2px solid #000; width: 400px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="display: flex; border-bottom: 1px solid #000; background-color: #bcbcbc;">
-                    <div style="width: 199px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
-                    <div style="width: 99px; text-align: center; padding: 8px 0; border-right: 1px solid #000; font-weight: bold;">CS-SE1</div>
-                    <div style="width: 90px; text-align: center; padding: 8px 0; font-weight: bold;">CS-SE2</div>
-                </div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 200px; border-right: 1px solid #000; padding: 8px;">&nbsp;</div>
-                    <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 50px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 50px; text-align: center; padding: 8px 0;">2</div>
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 200px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Consola de suspencion</div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 50px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                </div>
-            </div>
-        </div>
+    <!-- PL-S4P (como tabla) -->
+    <table style="border: 2px solid #000; width: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <caption style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000; caption-side: top;">PL-S4P</caption>
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0;">2</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</td>
+                <td style="width: 40px; height: 45px; border-right: 1px solid #000; text-align: center; vertical-align: middle;"></td>
+                <td style="width: 40px; height: 45px; background-color: #e0e0e0;"></td>
+            </tr>
+        </tbody>
+    </table>
 
-        <!-- ===== SECCIÓN Lubricacion PARA 4T-501C ===== -->
-        <div style="background:#c0c0c0; font-weight:bold; font-size:14pt; text-align:center; padding: 12px; margin: 40px 0 25px 0; border: 1px solid #000; border-radius: 5px;">
-            Puntos de lubricacion (gramos)
-        </div>
-
-        <div style="display: flex; gap: 250px; margin-bottom: 40px;">
-            <!-- PL-S2P -->
-            <div style="border: 2px solid #000; width: 280px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S2P</div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">2</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">3</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">4</div>
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 2P</div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                    
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;"> 
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                </div>
-            </div>
-
-            <!-- PL-S4P -->
-            <div style="border: 2px solid #000; width: 200px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-S4P</div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0; border-right: 1px solid #000;">1</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">2</div>
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 120px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold;">Segmentos 4P</div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; display: flex; align-items: center; justify-content: center;">
-                        
-                    </div>
-                    <div style="width: 40px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                </div>
-            </div>
-
-            <!-- PL-CS -->
-            <div style="border: 2px solid #000; width: 220px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1);">
-                <div style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000;">PL-CS</div>
-                <div style="display: flex; border-bottom: 1px solid #000;">
-                    <div style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</div>
-                    <div style="width: 40px; text-align: center; padding: 8px 0;">1</div>
-                </div>
-                <div style="display: flex;">
-                    <div style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; white-space: nowrap;">Consola de suspensión</div>
-                    <div style="width: 80px; height: 45px; border-right: 1px solid #000; background-color: #e0e0e0;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ===== VERIFICACIONES FINALES ===== -->
-        <div style="display: flex; gap: 30px; margin-top: 30px; margin-bottom: 30px; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-weight: bold;">Limpieza de uniones</span>
-                <div style="border: 1px solid #000; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                    <input type="checkbox" style="width: 20px; height: 20px; margin: 0;">
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-weight: bold;">Verificación de continuidad horquillas</span>
-                <div style="border: 1px solid #000; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                    <input type="checkbox" style="width: 20px; height: 20px; margin: 0;">
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-weight: bold;">Verificación de continuidad RPDs</span>
-                <div style="border: 1px solid #000; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                    <input type="checkbox" style="width: 20px; height: 20px; margin: 0;">
-                </div>
-            </div>
-        </div>
+    <!-- PL-CS (como tabla) -->
+    <table style="border: 2px solid #000; width: 220px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); border-collapse: collapse; background: white;">
+        <caption style="background-color: #bcbcbc; padding: 10px; text-align: center; font-weight: bold; font-size: 16px; border-bottom: 2px solid #000; caption-side: top;">PL-CS</caption>
+        <thead>
+            <tr style="border-bottom: 1px solid #000;">
+                <th style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0;">&nbsp;</th>
+                <th style="width: 40px; text-align: center; padding: 8px 0;">1</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="width: 160px; border-right: 1px solid #000; padding: 8px; background-color: #f0f0f0; font-weight: bold; white-space: nowrap;">Consola de suspensión</td>
+                <td style="width: 80px; height: 45px; background-color: #e0e0e0;"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 <!-- ===== POSICIÓN FINAL - CORREGIDA CON FILTRO DE LÍNEAS ===== -->
 <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
