@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Intercambiar Balancines{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Intercambio de Balancines</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Balancín que necesita Mantenimiento (OH)</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr>
+                            <th>Código:</th>
+                            <td><strong>{{ balancin_necesita_oh.codigo }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Tipo:</th>
+                            <td>{{ balancin_necesita_oh.tipo_balancin_codigo }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ubicación actual:</th>
+                            <td>
+                                Línea {{ balancin_necesita_oh.torre.linea.nombre }} - 
+                                Torre {{ balancin_necesita_oh.torre.numero_torre }} 
+                                ({{ balancin_necesita_oh.get_sentido_display }})
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Balancín disponible (recién mantenido)</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formIntercambio">
+                        <input type="hidden" name="balancin_sale_id" value="{{ balancin_necesita_oh.codigo }}">
+                        
+                        <div class="mb-3">
+                            <label for="balancin_entra" class="form-label">Seleccionar balancín de reemplazo *</label>
+                            <select class="form-select" id="balancin_entra" name="balancin_entra_id" required>
+                                <option value="">-- Seleccionar balancín disponible --</option>
+                                {% for b in balancines_disponibles %}
+                                <option value="{{ b.codigo }}">
+                                    {{ b.codigo }} - Última ubicación: L{{ b.torre.linea.nombre }} T{{ b.torre.numero_torre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-exchange-alt"></i> Realizar Intercambio
+                        </button>
+                        <a href="{% url 'mantenimiento_balancines' %}" class="btn btn-secondary">
+                            Cancelar
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('formIntercambio').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        balancin_sale_id: document.querySelector('[name="balancin_sale_id"]').value,
+        balancin_entra_id: document.querySelector('[name="balancin_entra_id"]').value,
+        observaciones: document.querySelector('[name="observaciones"]').value
+    };
+    
+    if (!formData.balancin_entra_id) {
+        alert('Debe seleccionar un balancín de reemplazo');
+        return;
+    }
+    
+    fetch('/api/realizar-intercambio/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ Intercambio realizado\n\nBalancín instalado: ${data.balancin_instalado}\nBalancín retirado: ${data.balancin_retirado}\nUbicación: ${data.ubicacion}\nOT: ${data.formulario_id}`);
+            window.location.href = "{% url 'mantenimiento_balancines' %}";
+        } else {
+            alert('❌ Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error de conexión: ' + error);
+    });
+});
+</script>
+{% endblock %}

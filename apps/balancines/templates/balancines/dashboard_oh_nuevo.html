@@ -287,9 +287,6 @@
             <button class="btn btn-light border" onclick="window.location.reload()" title="Actualizar">
                 <i class="fas fa-sync-alt"></i>
             </button>
-            <a href="{% url 'exportar_oh_excel' %}" class="btn" style="background: linear-gradient(135deg, #06d6a0 0%, #05b588 100%); color: white; border: none;">
-                <i class="fas fa-file-excel me-1"></i> Exportar
-            </a>
             <a href="{% url 'inventario_principal' %}" class="btn btn-light border">
                 <i class="fas fa-arrow-left me-1"></i> Volver
             </a>
@@ -313,7 +310,7 @@
             <div class="col-md-3">
                 <label class="form-label"><i class="fas fa-flag me-2 text-primary"></i>Torre</label>
                 <input type="text" name="torre" class="form-control" 
-                       placeholder="N° torre" value="{{ torre_filtro }}">
+                    placeholder="N° torre" value="{{ torre_filtro }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label"><i class="fas fa-exclamation-triangle me-2 text-primary"></i>Estado</label>
@@ -525,9 +522,6 @@
                 </div>
             </div>
 
-            <!-- Tarjetas de resumen por línea -->
-            <div class="row mb-3" id="lineaSummary"></div>
-
             <!-- Tarjetas de balancines -->
             <div class="row" id="tarjetasContainer">
                 {% for item in historial %}
@@ -575,7 +569,7 @@
                                                 {% elif item.estado == 'alerta' %}bg-warning
                                                 {% elif item.estado == 'normal' %}bg-success
                                                 {% else %}bg-secondary{% endif %}"
-                                                 style="width: {% widthratio ultimo_oh.horas item.rango_oh_horas 100 %}%">
+                                                style="width: {% widthratio ultimo_oh.horas item.rango_oh_horas 100 %}%">
                                             </div>
                                         {% else %}
                                             <div class="progress-bar bg-secondary" style="width: 0%"></div>
@@ -600,7 +594,7 @@
                                             <div class="small">{{ oh.fecha }}</div>
                                             <div class="small">{{ oh.horas }}h</div>
                                             <span class="badge 
-                                                {% if oh.backlog < 0 %}bg-danger
+                                                {% if oh.backlog < 0 %} bg-danger
                                                 {% elif oh.backlog < 5000 %}bg-warning
                                                 {% else %}bg-success{% endif %}">
                                                 {{ oh.backlog }}
@@ -641,19 +635,19 @@
                             </span>
                             <div>
                                 <a href="{% url 'registrar_oh_balancin' item.balancin_codigo %}" 
-                                   class="btn btn-sm btn-outline-primary" 
-                                   title="Registrar OH">
+                                class="btn btn-sm btn-outline-primary" 
+                                title="Registrar OH">
                                     <i class="fas fa-plus-circle"></i> OH
                                 </a>
-                                <!-- Temporalmente, para probar, agrega este enlace en alguna tarjeta -->
-<a href="/crear-formulario/{{ item.balancin_codigo }}/" class="btn btn-sm btn-success">
-  Formulario
-</a>
- <a href="{% url 'historial_balancin' item.balancin_codigo %}" 
-   class="btn btn-info btn-sm" 
-   title="Ver historial completo">
-    <i class="fas fa-history me-1"></i> Historial
-</a>
+                                <!--  enlaces para formualrio y para historiald e torre  -->
+                                <a href="/crear-formulario/{{ item.balancin_codigo }}/" class="btn btn-sm btn-success">
+                                                    Formulario
+                                </a>
+                                <a href="{% url 'historial_balancin' item.balancin_codigo %}" 
+                                class="btn btn-info btn-sm" 
+                                title="Ver historial completo">
+                                <i class="fas fa-history me-1"></i> Historial
+                                </a>
                             </div>
                         </div>
                     </div>

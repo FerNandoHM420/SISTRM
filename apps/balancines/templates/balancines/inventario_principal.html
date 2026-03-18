@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        <!-- Dashboard Inventario -->
+        <!-- Dashboard OH -->
         <div class="col-xl-4 col-lg-6">
             <div class="card h-100 shadow-lg border-0 hover-card">
                 <div class="card-header bg-gradient-secondary text-white py-4">
@@ -237,12 +237,12 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="balancines-tab" data-bs-toggle="tab" data-bs-target="#balancines" type="button" role="tab">
-                                <i class="fas fa-cogs me-2"></i>Balancines
+                                <i class="fas fa-cogs me-2"></i>Repuestos de Balancines
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="adicionales-tab" data-bs-toggle="tab" data-bs-target="#adicionales" type="button" role="tab">
-                                <i class="fas fa-tools me-2"></i>Adicionales
+                                <i class="fas fa-tools me-2"></i>Repuestos Adicionales
                             </button>
                         </li>
                     </ul>
@@ -333,8 +333,8 @@
                         <label class="form-label">Tipo de repuesto:</label>
                         <select class="form-select" id="tipoDashboard">
                             <option value="todos">Todos</option>
-                            <option value="balancines">Balancines</option>
-                            <option value="adicionales">Adicionales</option>
+                            <option value="balancines">Repuestos Balancines</option>
+                            <option value="adicionales">Repuestos Adicionales</option>
                         </select>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -432,9 +432,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="exportarDashboard">
-                    <i class="fas fa-download me-2"></i>Exportar Reporte
-                </button>
+               
             </div>
         </div>
     </div>
@@ -773,15 +771,14 @@ document.addEventListener('DOMContentLoaded', function() {
             tipoChart = new Chart(ctx2, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Entradas', 'Salidas', 'Creaciones', 'Actualizaciones'],
+                    labels: ['Entradas', 'Salidas'],
                     datasets: [{
                         data: [
                             data.distribucion.entradas || 0,
                             data.distribucion.salidas || 0,
-                            data.distribucion.creaciones || 0,
-                            data.distribucion.actualizaciones || 0
+                           
                         ],
-                        backgroundColor: ['#28a745', '#dc3545', '#007bff', '#ffc107'],
+                        backgroundColor: ['#28a745', '#dc3545'],
                         borderWidth: 0
                     }]
                 },

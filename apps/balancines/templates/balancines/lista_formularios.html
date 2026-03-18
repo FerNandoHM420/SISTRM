@@ -12,22 +12,37 @@
         <div>
             <span class="badge bg-info me-2">Total: {{ total_formularios }}</span>
             <span class="badge bg-success">Repuestos usados: {{ total_repuestos_usados }}</span>
+
+            
         </div>
+        
     </div>
 
-    <!-- Tarjetas de resumen -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">{{ total_formularios }}</h5>
-                    <p class="card-text">Formularios totales</p>
-                </div>
+    
 
+   <!-- Tarjetas de resumen -->
+<div class="row mb-4 align-items-center">
 
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_formularios }}</h5>
+                <p class="card-text">Formularios totales</p>
             </div>
         </div>
     </div>
+
+    <!-- Botón a la derecha -->
+    <div class="col-md-9 d-flex justify-content-end">
+        <a href="{% url 'inventario_principal' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+</div>
+    </div>
+    
+    
 
     <!-- Tabla de formularios -->
     <div class="card">

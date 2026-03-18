@@ -2771,9 +2771,7 @@ def api_dashboard_inventario(request):
         
         data['distribucion']['entradas'] += historial_balancin.filter(tipo_movimiento='entrada').count()
         data['distribucion']['salidas'] += historial_balancin.filter(tipo_movimiento='salida').count()
-        data['distribucion']['creaciones'] += historial_balancin.filter(tipo_movimiento='creacion').count()
-        data['distribucion']['actualizaciones'] += historial_balancin.filter(tipo_movimiento='actualizacion').count()
-    
+  
     if tipo in ['todos', 'adicionales']:
         historial_adicional = HistorialAdicional.objects.filter(
             fecha_movimiento__gte=fecha_limite
@@ -2785,8 +2783,7 @@ def api_dashboard_inventario(request):
         
         data['distribucion']['entradas'] += historial_adicional.filter(tipo_movimiento='entrada').count()
         data['distribucion']['salidas'] += historial_adicional.filter(tipo_movimiento='salida').count()
-        data['distribucion']['creaciones'] += historial_adicional.filter(tipo_movimiento='creacion').count()
-        data['distribucion']['actualizaciones'] += historial_adicional.filter(tipo_movimiento='actualizacion').count()
+    
     
     # Calcular movimientos por día (últimos 7 días)
     for i in range(6, -1, -1):
@@ -2886,3 +2883,364 @@ def api_dashboard_inventario(request):
     )[:10]
     
     return JsonResponse(data)
+
+
+# ========== DASHBOARD DE ALERTAS ==========
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .services.alertas_oh import ServicioAlertasOH
+
+@login_required
+def dashboard_alertas(request):
+    """
+    Vista del dashboard de alertas OH
+    """
+    alertas = ServicioAlertasOH.obtener_alertas_activas(incluir_leidas=False)
+    estadisticas = ServicioAlertasOH.obtener_estadisticas()
+    
+    # Para debug - imprimir en consola
+    print(f"Alertas encontradas: {alertas.count()}")
+    print(f"Estadísticas: {estadisticas}")
+    
+    context = {
+        'alertas': alertas,
+        'stats': estadisticas,
+    }
+    return render(request, 'balancines/dashboard_alertas.html', context)
+
+
+# ========== MARCAR ALERTA COMO LEÍDA ==========
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+import json
+from .models import AlertaOH
+
+@login_required
+@require_POST
+@csrf_exempt
+def marcar_alerta_leida(request):
+    """
+    API para marcar una alerta como leída
+    """
+    try:
+        data = json.loads(request.body)
+        alerta_id = data.get('alerta_id')
+        
+        alerta = AlertaOH.objects.get(id=alerta_id)
+        alerta.marcar_como_leida(usuario=request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Alerta marcada como leída'
+        })
+    except AlertaOH.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Alerta no encontrada'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+        
+        
+        # ========== INTERFAZ DE MANTENIMIENTO ==========
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from .models import Linea
+
+
+@login_required
+def mantenimiento_balancines(request):
+    lineas = Linea.objects.all().order_by('id')
+    
+    # Obtener datos
+    disponibles = list(BalancinIndividual.objects.filter(
+        estado__in=['OPERANDO', 'OH_PENDIENTE']
+    ).select_related('torre__linea'))
+    
+    # Ordenar en Python
+    disponibles.sort(key=lambda x: (
+        x.torre.linea.id,
+        int(''.join(filter(str.isdigit, x.torre.numero_torre)) or 0),
+        x.torre.numero_torre,
+        x.sentido
+    ))
+    
+    en_mantenimiento = list(BalancinIndividual.objects.filter(
+        estado='MANTENIMIENTO'
+    ).select_related('torre__linea'))
+    
+    en_mantenimiento.sort(key=lambda x: (
+        x.torre.linea.id,
+        int(''.join(filter(str.isdigit, x.torre.numero_torre)) or 0),
+        x.torre.numero_torre,
+        x.sentido
+    ))
+    
+    context = {
+        'lineas': lineas,
+        'disponibles': disponibles,
+        'en_mantenimiento': en_mantenimiento,
+    }
+    return render(request, 'balancines/mantenimiento.html', context)
+
+
+
+
+# Agregar/Reemplazar la vista de cambio de estado
+
+@login_required
+@require_POST
+def cambiar_estado_mantenimiento(request):
+    """
+    Cambia el estado de un balancín (entrada/salida de mantenimiento)
+    """
+    try:
+        import json
+        from django.utils import timezone
+        from .services.alertas_oh import ServicioAlertasOH
+        
+        # Intentar obtener datos del cuerpo de la petición
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Datos JSON inválidos'
+            }, status=400)
+        
+        balancin_id = data.get('balancin_id')
+        accion = data.get('accion')
+        observaciones = data.get('observaciones', '')
+        
+        if not balancin_id or not accion:
+            return JsonResponse({
+                'success': False,
+                'error': 'Faltan datos requeridos'
+            }, status=400)
+        
+        # Obtener el balancín
+        try:
+            balancin = BalancinIndividual.objects.get(codigo=balancin_id)
+        except BalancinIndividual.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': f'Balancín {balancin_id} no encontrado'
+            }, status=404)
+        
+        estado_anterior = balancin.estado
+        
+        if accion == 'entrar':
+            # Cambiar a mantenimiento
+            balancin.estado = 'MANTENIMIENTO'
+            balancin.observaciones_estado = observaciones or f"Entra a mantenimiento - {timezone.now().strftime('%d/%m/%Y %H:%M')}"
+            balancin.save()
+            
+            # Registrar en historial
+            HistorialBalancin.objects.create(
+                balancin=balancin,
+                estado_anterior=estado_anterior,
+                estado_nuevo='MANTENIMIENTO',
+                accion='ENTRADA_MANTENIMIENTO',
+                observaciones=observaciones,
+                usuario=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Balancín {balancin.codigo} marcado como EN MANTENIMIENTO',
+                'nuevo_estado': 'MANTENIMIENTO'
+            })
+            
+        elif accion == 'salir':
+            # Cambiar a operando
+            balancin.estado = 'OPERANDO'
+            balancin.observaciones_estado = observaciones or f"Sale de mantenimiento - {timezone.now().strftime('%d/%m/%Y %H:%M')}"
+            balancin.save()
+            
+            # Resolver alertas pendientes (opcional, sin requerir formulario)
+            alertas_resueltas = 0
+            try:
+                from .models import AlertaOH
+                alertas = AlertaOH.objects.filter(balancin=balancin, resuelta=False)
+                alertas_resueltas = alertas.count()
+                alertas.update(
+                    resuelta=True,
+                    fecha_resolucion=timezone.now()
+                )
+            except Exception as e:
+                print(f"Error resolviendo alertas: {e}")
+            
+            # Registrar en historial
+            HistorialBalancin.objects.create(
+                balancin=balancin,
+                estado_anterior=estado_anterior,
+                estado_nuevo='OPERANDO',
+                accion='SALIDA_MANTENIMIENTO',
+                observaciones=observaciones,
+                usuario=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Balancín {balancin.codigo} marcado como OPERANDO',
+                'nuevo_estado': 'OPERANDO',
+                'alertas_resueltas': alertas_resueltas
+            })
+            
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': f'Acción no válida: {accion}'
+            }, status=400)
+            
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+
+@login_required
+def intercambiar_balancin(request, codigo_balancin):
+    """
+    Vista para intercambiar un balancín que necesita mantenimiento
+    por otro que acaba de salir de mantenimiento
+    """
+    from .models import Torre, FormularioReacondicionamiento
+    from django.db.models import Q
+    
+    # Balancín que necesita mantenimiento (el que está en torre)
+    balancin_necesita_oh = get_object_or_404(BalancinIndividual, codigo=codigo_balancin)
+    
+    # Buscar balancines que acaban de salir de mantenimiento (estado OPERANDO pero con formulario reciente)
+    # Idealmente deberían estar en stock o en tránsito
+    balancines_disponibles = BalancinIndividual.objects.filter(
+        estado='OPERANDO'
+    ).exclude(
+        codigo=codigo_balancin
+    ).select_related('torre__linea').order_by('torre__linea__id', 'torre__numero_torre')
+    
+    # Torres disponibles para reubicar (si es necesario)
+    torres_disponibles = Torre.objects.all().order_by('linea__id', 'numero_torre')
+    
+    context = {
+        'balancin_necesita_oh': balancin_necesita_oh,
+        'balancines_disponibles': balancines_disponibles,
+        'torres_disponibles': torres_disponibles,
+    }
+    return render(request, 'balancines/intercambiar_balancin.html', context)
+
+
+@login_required
+@require_POST
+def realizar_intercambio(request):
+    """
+    Procesa el intercambio circular de balancines
+    """
+    try:
+        import json
+        from django.utils import timezone
+        
+        data = json.loads(request.body)
+        
+        # Datos del intercambio
+        balancin_sale_id = data.get('balancin_sale_id')  # El que necesita OH
+        balancin_entra_id = data.get('balancin_entra_id')  # El que viene de mantenimiento
+        observaciones = data.get('observaciones', '')
+        
+        if not all([balancin_sale_id, balancin_entra_id]):
+            return JsonResponse({
+                'success': False,
+                'error': 'Se requieren ambos balancines para el intercambio'
+            }, status=400)
+        
+        # Obtener los balancines
+        balancin_sale = get_object_or_404(BalancinIndividual, codigo=balancin_sale_id)
+        balancin_entra = get_object_or_404(BalancinIndividual, codigo=balancin_entra_id)
+        
+        # Verificar que el que entra esté OPERANDO
+        if balancin_entra.estado != 'OPERANDO':
+            return JsonResponse({
+                'success': False,
+                'error': f'El balancín {balancin_entra.codigo} no está disponible (estado: {balancin_entra.estado})'
+            }, status=400)
+        
+        # Guardar ubicación original del que sale
+        torre_origen = balancin_sale.torre
+        sentido_origen = balancin_sale.sentido
+        
+        # ===== INTERCAMBIO =====
+        
+        # 1. El balancín que entra (recién mantenido) ocupa el lugar del que sale
+        balancin_entra.torre = torre_origen
+        balancin_entra.sentido = sentido_origen
+        balancin_entra.estado = 'OPERANDO'
+        balancin_entra.observaciones_estado = f"Instalado en reemplazo de {balancin_sale.codigo}"
+        balancin_entra.save()
+        
+        # 2. El balancín que sale (necesita OH) va a mantenimiento
+        # (opcionalmente podría ir a una torre destino si se especifica)
+        balancin_sale.estado = 'MANTENIMIENTO'
+        balancin_sale.torre = None  # Opcional: puede quedar sin torre
+        balancin_sale.observaciones_estado = f"Retirado para mantenimiento. Reemplazado por {balancin_entra.codigo}"
+        balancin_sale.save()
+        
+        # Registrar movimientos en historial
+        HistorialBalancin.objects.create(
+            balancin=balancin_entra,
+            estado_anterior='OPERANDO',
+            estado_nuevo='OPERANDO',
+            accion='INSTALACION_POST_MANTENIMIENTO',
+            observaciones=f"Instalado en torre {torre_origen.linea.nombre} T{torre_origen.numero_torre} {sentido_origen}",
+            usuario=request.user
+        )
+        
+        HistorialBalancin.objects.create(
+            balancin=balancin_sale,
+            estado_anterior='OPERANDO',
+            estado_nuevo='MANTENIMIENTO',
+            accion='RETIRO_PARA_OH',
+            observaciones=f"Retirado para mantenimiento. Reemplazado por {balancin_entra.codigo}",
+            usuario=request.user
+        )
+        
+        # Crear formulario (OT) para el balancín que entra a mantenimiento
+        from .models import FormularioReacondicionamiento
+        formulario = FormularioReacondicionamiento.objects.create(
+            codigo_formulario=f"OT-{timezone.now().strftime('%Y%m%d%H%M%S')}-{balancin_sale.codigo[-4:]}",
+            tipo=balancin_sale.tipo_balancin_codigo or 'DESCONOCIDO',
+            balancin=balancin_sale,
+            fecha=timezone.now().date(),
+            horas_funcionamiento=0,  # Se completará después
+            linea_inicial=torre_origen.linea.nombre,
+            torre_inicial=torre_origen.numero_torre,
+            linea_final='',  # Si se mueve a otra torre después
+            torre_final='',
+            usuario_creacion=request.user
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Intercambio realizado correctamente',
+            'formulario_id': formulario.codigo_formulario,
+            'balancin_instalado': balancin_entra.codigo,
+            'balancin_retirado': balancin_sale.codigo,
+            'ubicacion': f"{torre_origen.linea.nombre} T{torre_origen.numero_torre} {sentido_origen}"
+        })
+        
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

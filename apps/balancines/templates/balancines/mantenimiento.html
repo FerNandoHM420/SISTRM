@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Mantenimiento{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Gestión de Mantenimiento de Balancines</h1>
+    
+    <div class="row">
+        <!-- Balancines disponibles para entrar a mantenimiento -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle"></i>
+                        Balancines Disponibles
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ disponibles.count }} total</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if disponibles %}
+                    <div class="accordion" id="accordionDisponibles">
+                        {% regroup disponibles by torre.linea.nombre as lineas_list %}
+                        {% for linea in lineas_list %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDisp{{ forloop.counter }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                        type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseDisp{{ forloop.counter }}">
+                                    <strong>Línea {{ linea.grouper }}</strong>
+                                    <span class="badge bg-secondary ms-2">{{ linea.list|length }} balancines</span>
+                                </button>
+                            </h2>
+                            <div id="collapseDisp{{ forloop.counter }}" 
+                                class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                                data-bs-parent="#accordionDisponibles">
+                                <div class="accordion-body p-0">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Balancín</th>
+                                                <th>Torre</th>
+                                                <th>Sentido</th>
+                                                <th>Estado</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for b in linea.list %}
+                                            <tr>
+                                                <td><code>{{ b.codigo }}</code></td>
+                                                <td>T{{ b.torre.numero_torre }}</td>
+                                                <td>{{ b.get_sentido_display }}</td>
+                                                <td>
+                                                    {% if b.estado == 'OH_PENDIENTE' %}
+                                                        <span class="badge bg-danger">OH Pendiente</span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">Operando</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+    <a href="/intercambiar/{{ b.codigo }}/"
+       class="btn btn-sm btn-warning">
+        <i class="fas fa-exchange-alt"></i> Intercambiar
+    </a>
+</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No hay balancines disponibles</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Balancines en mantenimiento -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tools"></i>
+                        Balancines en Mantenimiento
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ en_mantenimiento.count }} total</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if en_mantenimiento %}
+                    <div class="accordion" id="accordionMantenimiento">
+                        {% regroup en_mantenimiento by torre.linea.nombre as lineas_mant_list %}
+                        {% for linea in lineas_mant_list %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingMant{{ forloop.counter }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                        type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseMant{{ forloop.counter }}">
+                                    <strong>Línea {{ linea.grouper }}</strong>
+                                    <span class="badge bg-secondary ms-2">{{ linea.list|length }} balancines</span>
+                                </button>
+                            </h2>
+                            <div id="collapseMant{{ forloop.counter }}" 
+                                class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                                data-bs-parent="#accordionMantenimiento">
+                                <div class="accordion-body p-0">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Balancín</th>
+                                                <th>Torre</th>
+                                                <th>Sentido</th>
+                                                <th>Desde</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for b in linea.list %}
+                                            <tr>
+                                                <td><code>{{ b.codigo }}</code></td>
+                                                <td>T{{ b.torre.numero_torre }}</td>
+                                                <td>{{ b.get_sentido_display }}</td>
+                                                <td>{{ b.fecha_cambio_estado|date:"d/m/Y H:i" }}</td>
+                                                                              <td>
+    <a href="/intercambiar/{{ b.codigo }}/"
+       class="btn btn-sm btn-warning">
+        <i class="fas fa-exchange-alt"></i> Intercambiar
+    </a>
+</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No hay balancines en mantenimiento</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para observaciones (igual que antes) -->
+<div class="modal fade" id="modalObservaciones" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Observaciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalBalancinId">
+                <input type="hidden" id="modalAccion">
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea class="form-control" id="observaciones" rows="3" 
+                        placeholder="Ingrese observaciones..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmar">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = new bootstrap.Modal(document.getElementById('modalObservaciones'));
+    let accionActual = '';
+    let balancinIdActual = '';
+    
+    // Botones de entrar a mantenimiento
+    document.querySelectorAll('.btn-entrar-mantenimiento').forEach(btn => {
+        btn.addEventListener('click', function() {
+            balancinIdActual = this.dataset.id;
+            accionActual = 'entrar';
+            document.getElementById('modalTitle').textContent = 'Entrar a Mantenimiento - ' + balancinIdActual;
+            document.getElementById('modalBalancinId').value = balancinIdActual;
+            document.getElementById('modalAccion').value = 'entrar';
+            document.getElementById('observaciones').value = '';
+            modal.show();
+        });
+    });
+    
+    // Botones de salir de mantenimiento
+    document.querySelectorAll('.btn-salir-mantenimiento').forEach(btn => {
+        btn.addEventListener('click', function() {
+            balancinIdActual = this.dataset.id;
+            accionActual = 'salir';
+            document.getElementById('modalTitle').textContent = 'Finalizar Mantenimiento - ' + balancinIdActual;
+            document.getElementById('modalBalancinId').value = balancinIdActual;
+            document.getElementById('modalAccion').value = 'salir';
+            document.getElementById('observaciones').value = '';
+            modal.show();
+        });
+    });
+    
+    // Confirmar acción
+    document.getElementById('btnConfirmar').addEventListener('click', function() {
+        const balancinId = document.getElementById('modalBalancinId').value;
+        const accion = document.getElementById('modalAccion').value;
+        const observaciones = document.getElementById('observaciones').value;
+        
+        fetch('/api/cambiar-estado-mantenimiento/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                balancin_id: balancinId,
+                accion: accion,
+                observaciones: observaciones
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error de conexión: ' + error);
+        });
+    });
+});
+</script>
+{% endblock %}

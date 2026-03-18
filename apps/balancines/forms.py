@@ -2,9 +2,12 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from .models import BalancinIndividual, TipoBalancin, Torre, Linea
 
 Usuario = get_user_model()
+
+# ========== IMPORTACIÓN DIFERIDA ==========
+# Importamos los modelos aquí mismo para que estén disponibles
+from .models import BalancinIndividual, TipoBalancin, Torre, Linea, HistorialOH
 
 # ========== FORMULARIOS DE AUTENTICACIÓN ==========
 class RegistroForm(UserCreationForm):
@@ -96,7 +99,7 @@ class BalancinIndividualForm(forms.ModelForm):
     """Formulario para balancines instalados en torres"""
     
     class Meta:
-        model = BalancinIndividual
+        model = BalancinIndividual  # ← AHORA SÍ, directamente la clase
         fields = ['codigo', 'torre', 'sentido', 'rango_horas_cambio_oh', 'observaciones']
         widgets = {
             'codigo': forms.TextInput(attrs={
@@ -136,9 +139,9 @@ class BalancinIndividualForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Formato amigable para mostrar torres
         self.fields['torre'].queryset = Torre.objects.select_related('linea', 'seccion').all()
-        self.fields['torre'].label_from_instance = lambda obj: f"L{obj.linea_id} - Torre {obj.numero_torre} (Secc: {obj.seccion.nombre})"
+        self.fields['torre'].label_from_instance = lambda obj: f"L{obj.linea.nombre} - Torre {obj.numero_torre} (Secc: {obj.seccion.nombre})"
         
-        # Si ya hay una torre seleccionada, no mostrar el queryset completo
+        # Si ya hay una torre seleccionada, no permitir cambiarla
         if self.instance and self.instance.pk:
             self.fields['torre'].disabled = True
     
@@ -274,7 +277,7 @@ class RegistrarOHForm(forms.Form):
 # ========== FORMULARIO PARA TIPO DE BALANCÍN ==========
 class TipoBalancinForm(forms.ModelForm):
     class Meta:
-        model = TipoBalancin
+        model = TipoBalancin  # ← AHORA SÍ, directamente la clase
         fields = ['codigo', 'tipo', 'cantidad_total']
         widgets = {
             'codigo': forms.TextInput(attrs={
@@ -385,5 +388,3 @@ class NuevoOHForm(forms.Form):
         torre = obj.torre
         linea = torre.linea.nombre if torre and torre.linea else 'N/A'
         return f"{obj.codigo} - {linea} T{torre.numero_torre} ({obj.get_sentido_display()})"
-
-

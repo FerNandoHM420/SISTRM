@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Alerta de Balancin</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 5px;">
+        <h2>Sistema de Gestion de Balancines</h2>
+    </div>
+    
+    <div style="padding: 20px; background-color: #ffffff; border: 1px solid #ddd;">
+        <div style="{% if alerta.nivel == 'ROJO' or alerta.nivel == 'VENCIDO' %}background-color: #dc3545;{% elif alerta.nivel == 'NARANJA' %}background-color: #fd7e14;{% else %}background-color: #ffc107;{% endif %} color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center;">
+            <h3>Alerta {{ alerta.get_nivel_display }}</h3>
+        </div>
+        
+        <p>Se ha detectado una alerta importante en el sistema:</p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Balancin:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ alerta.balancin.codigo }}</td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Ubicacion:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">Linea {{ alerta.balancin.torre.linea.nombre }} - Torre {{ alerta.balancin.torre.numero_torre }}</td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Sentido:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ alerta.balancin.get_sentido_display }}</td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Nivel:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>{{ alerta.get_nivel_display }}</strong></td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Backlog:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">{% if alerta.backlog_momento < 0 %}<span style="color: #dc3545;">{{ alerta.backlog_momento }} horas (excedido)</span>{% else %}{{ alerta.backlog_momento }} horas restantes{% endif %}</td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Horas:</td><td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ alerta.horas_operacion_momento }}</td></tr>
+                <tr><td style="padding: 8px; font-weight: bold;">Fecha:</td><td style="padding: 8px;">{{ alerta.fecha_generacion|date:"d/m/Y H:i" }}</td></tr>
+            </table>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="{{ sitio_url }}/dashboard-alertas/" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Ver en el sistema</a>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; padding: 20px; font-size: 12px; color: #666; border-top: 1px solid #ddd;">
+        <p>Mensaje automatico - Sistema de Gestion de Balancines</p>
+    </div>
+</body>
+</html>

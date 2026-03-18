@@ -102,6 +102,19 @@ path('api/historial-completo-filtros/', views.api_historial_completo_filtros, na
 # ===== DASHBOARD =====
 path('api/dashboard-inventario/', views.api_dashboard_inventario, name='api_dashboard_inventario'),
 
+path('dashboard-alertas/', views.dashboard_alertas, name='dashboard_alertas'),
+path('api/marcar-alerta-leida/', views.marcar_alerta_leida, name='marcar_alerta_leida'),
+
+path('mantenimiento/', views.mantenimiento_balancines, name='mantenimiento_balancines'),
+path('api/cambiar-estado-mantenimiento/', views.cambiar_estado_mantenimiento, name='cambiar_estado_mantenimiento'),
+
+
+
+# ========== INTERCAMBIO DE BALANCINES ==========
+re_path(r'^intercambiar/(?P<codigo_balancin>.+)/$', views.intercambiar_balancin, name='intercambiar_balancin'),
+
+path('api/realizar-intercambio/', views.realizar_intercambio, name='realizar_intercambio'),
+
 
 
 ]

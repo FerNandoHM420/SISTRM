@@ -1,0 +1,212 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Alertas OH{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            Alertas de OverHaul
+        </h1>
+        <div>
+            <span class="badge bg-danger me-2">Críticas: {{ stats.criticas }}</span>
+            <span class="badge bg-warning me-2">Pendientes: {{ stats.no_leidas }}</span>
+            <span class="badge bg-secondary">Total: {{ stats.total_activas }}</span>
+        </div>
+    </div>
+    
+    <!-- Tarjetas de resumen rápido -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body text-center">
+                    <h3>{{ stats.por_nivel.VENCIDO }}</h3>
+                    <p class="mb-0">Vencidos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger" style="background-color: #dc3545 !important;">
+                <div class="card-body text-center">
+                    <h3>{{ stats.por_nivel.ROJO }}</h3>
+                    <p class="mb-0">Críticos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body text-center">
+                    <h3>{{ stats.por_nivel.NARANJA }}</h3>
+                    <p class="mb-0">Urgentes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning" style="background-color: #ffc107 !important;">
+                <div class="card-body text-center">
+                    <h3>{{ stats.por_nivel.AMARILLO }}</h3>
+                    <p class="mb-0">Próximos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabla de alertas -->
+    <div class="card">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i>
+                Alertas Activas ({{ alertas.count }})
+            </h5>
+            <button class="btn btn-sm btn-success" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Balancín</th>
+                            <th>Ubicación</th>
+                            <th>Sentido</th>
+                            <th>Nivel</th>
+                            <th>Backlog</th>
+                            <th>Generada</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alerta in alertas %}
+                        <tr class="table-{{ alerta.color_bootstrap }}">
+                            <td>
+                                <strong>{{ alerta.balancin.codigo }}</strong>
+                            </td>
+                            <td>
+                                {{ alerta.balancin.torre.linea.nombre }} - 
+                                T{{ alerta.balancin.torre.numero_torre }}
+                            </td>
+                            <td>{{ alerta.balancin.get_sentido_display }}</td>
+                            <td>
+                                <span class="badge bg-{{ alerta.color_bootstrap }}">
+                                    {{ alerta.get_nivel_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if alerta.backlog_momento < 0 %}
+                                    <span class="text-danger fw-bold">
+                                        {{ alerta.backlog_momento }}h
+                                    </span>
+                                {% else %}
+                                    {{ alerta.backlog_momento }}h
+                                {% endif %}
+                            </td>
+                            <td>{{ alerta.fecha_generacion|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if alerta.leida %}
+                                    <span class="badge bg-secondary">Leída</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Nueva</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not alerta.leida %}
+                                <button class="btn btn-sm btn-primary btn-marcar-leida" 
+                                        data-id="{{ alerta.id }}">
+                                    <i class="fas fa-check"></i> Marcar
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                                <h5>¡No hay alertas activas!</h5>
+                                <p class="text-muted">Todos los balancines están dentro de sus parámetros normales.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación simple -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle text-success"></i>
+                    Confirmación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" id="mensaje-modal">
+                Alerta marcada como leída
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para mostrar mensaje
+    function mostrarMensaje(mensaje) {
+        document.getElementById('mensaje-modal').textContent = mensaje;
+        const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
+        modal.show();
+    }
+    
+    // Marcar alerta como leída
+    document.querySelectorAll('.btn-marcar-leida').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const alertaId = this.dataset.id;
+            const fila = this.closest('tr');
+            const boton = this;
+            
+            // Deshabilitar botón mientras se procesa
+            boton.disabled = true;
+            boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            
+            fetch('/api/marcar-alerta-leida/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ alerta_id: alertaId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recargar para actualizar la vista
+                    location.reload();
+                } else {
+                    boton.disabled = false;
+                    boton.innerHTML = '<i class="fas fa-check"></i> Marcar';
+                    mostrarMensaje('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-check"></i> Marcar';
+                mostrarMensaje('Error de conexión');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

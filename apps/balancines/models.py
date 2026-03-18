@@ -185,11 +185,8 @@ class TipoBalancin(models.Model):
             Q(torre__tipo_balancin_descendente=self.codigo)
         ).count()
 
-
 # ========== BALANCINES INDIVIDUALES INSTALADOS EN TORRES ==========
 class BalancinIndividual(models.Model):
-    """Balancines físicos instalados en torres"""
-    
     class SentidoBalancin(models.TextChoices):
         ASCENDENTE = 'ASCENDENTE', 'Ascendente'
         DESCENDENTE = 'DESCENDENTE', 'Descendente'
@@ -226,6 +223,35 @@ class BalancinIndividual(models.Model):
     fecha_registro = models.DateTimeField(
         'Fecha de registro',
         auto_now_add=True
+    )
+    
+    # ===== NUEVOS CAMPOS DE ESTADO =====
+    ESTADO_CHOICES = [
+        ('OPERANDO', 'Operando'),
+        ('MANTENIMIENTO', 'En Mantenimiento'),
+        ('OH_PENDIENTE', 'OH Pendiente'),
+    ]
+    
+    estado = models.CharField(
+        'Estado',
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='OPERANDO',
+        db_index=True,
+        help_text='Estado actual del balancín'
+    )
+    
+    fecha_cambio_estado = models.DateTimeField(
+        'Fecha cambio de estado',
+        auto_now=True,
+        help_text='Última vez que cambió el estado'
+    )
+    
+    observaciones_estado = models.TextField(
+        'Observaciones del estado',
+        blank=True,
+        null=True,
+        help_text='Motivo del cambio de estado o notas adicionales'
     )
     
     class Meta:
@@ -266,7 +292,6 @@ class BalancinIndividual(models.Model):
         if ultimo_oh and ultimo_oh.horas_operacion:
             return ultimo_oh.horas_operacion >= self.rango_horas_cambio_oh
         return False
-
 
 # ========== ÓRDENES DE HORAS (OH) DE BALANCINES ==========
 class BalancinOH(models.Model):
@@ -831,3 +856,159 @@ class TecnicoFormulario(models.Model):
     
     def __str__(self):
         return f"{self.formulario.codigo_formulario} - {self.usuario.nombre}"
+    
+    
+# ========== ALERTAS DE OVERHAUL ==========
+class AlertaOH(models.Model):
+    """
+    Alertas automáticas generadas cuando un balancín necesita mantenimiento
+    """
+    
+    NIVEL_CHOICES = [
+        ('VERDE', 'Normal'),
+        ('AMARILLO', 'Aviso - 1 mes'),
+        ('NARANJA', 'Próximo - 2 semanas'),
+        ('ROJO', 'Urgente - 1 semana'),
+        ('VENCIDO', 'Vencido'),
+    ]
+    
+    # Relación con el balancín
+    balancin = models.ForeignKey(
+        'BalancinIndividual',
+        on_delete=models.CASCADE,
+        related_name='alertas_oh',
+        verbose_name='Balancín',
+        db_column='balancin_codigo',
+        to_field='codigo'
+    )
+    
+    # Datos de la alerta
+    nivel = models.CharField(
+        'Nivel de alerta',
+        max_length=20,
+        choices=NIVEL_CHOICES,
+        db_index=True
+    )
+    
+    backlog_momento = models.IntegerField(
+        'Backlog al momento de la alerta',
+        help_text='Horas restantes (positivo) o excedidas (negativo)'
+    )
+    
+    horas_operacion_momento = models.PositiveIntegerField(
+        'Horas de operación al momento',
+        help_text='Horas registradas cuando se generó la alerta'
+    )
+    
+    # Fechas
+    fecha_generacion = models.DateTimeField(
+        'Fecha de generación',
+        auto_now_add=True,
+        db_index=True
+    )
+    
+    fecha_estimada_vencimiento = models.DateField(
+        'Fecha estimada de vencimiento',
+        null=True,
+        blank=True,
+        help_text='Fecha estimada para backlog = 0'
+    )
+    
+    # Estado de la alerta
+    leida = models.BooleanField(
+        'Leída',
+        default=False,
+        db_index=True
+    )
+    
+    fecha_lectura = models.DateTimeField(
+        'Fecha de lectura',
+        null=True,
+        blank=True
+    )
+    
+    resuelta = models.BooleanField(
+        'Resuelta',
+        default=False,
+        db_index=True
+    )
+    
+    fecha_resolucion = models.DateTimeField(
+        'Fecha de resolución',
+        null=True,
+        blank=True
+    )
+    
+    # Relación con el mantenimiento que la resolvió
+    formulario_resolucion = models.ForeignKey(
+        'FormularioReacondicionamiento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='alertas_resueltas',
+        verbose_name='Formulario que resolvió la alerta'
+    )
+    
+    # Usuarios relacionados
+    usuario_lectura = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='alertas_leidas',
+        verbose_name='Usuario que leyó la alerta'
+    )
+    
+    # Metadatos
+    observaciones = models.TextField(
+        'Observaciones',
+        blank=True,
+        help_text='Notas adicionales sobre la alerta'
+    )
+    
+    class Meta:
+        db_table = 'app_alerta_oh'
+        verbose_name = 'Alerta de OverHaul'
+        verbose_name_plural = 'Alertas de OverHaul'
+        ordering = ['-fecha_generacion']
+        indexes = [
+            models.Index(fields=['nivel', 'leida', 'resuelta']),
+            models.Index(fields=['balancin', '-fecha_generacion']),
+            models.Index(fields=['fecha_estimada_vencimiento']),
+        ]
+    
+    def __str__(self):
+        return f"{self.balancin.codigo} - {self.get_nivel_display()} - {self.fecha_generacion.strftime('%d/%m/%Y')}"
+    
+    @property
+    def color_bootstrap(self):
+        """Color para la interfaz"""
+        colores = {
+            'VERDE': 'success',
+            'AMARILLO': 'warning',
+            'NARANJA': 'warning',  # Usaremos naranja personalizado en CSS
+            'ROJO': 'danger',
+            'VENCIDO': 'dark'
+        }
+        return colores.get(self.nivel, 'secondary')
+    
+    @property
+    def es_critica(self):
+        """Indica si la alerta es crítica (ROJO o VENCIDO)"""
+        return self.nivel in ['ROJO', 'VENCIDO']
+    
+    def marcar_como_leida(self, usuario=None):
+        """Marca la alerta como leída"""
+        self.leida = True
+        self.fecha_lectura = timezone.now()
+        if usuario:
+            self.usuario_lectura = usuario
+        self.save(update_fields=['leida', 'fecha_lectura', 'usuario_lectura'])
+    
+    def marcar_como_resuelta(self, formulario=None):
+        """Marca la alerta como resuelta"""
+        self.resuelta = True
+        self.fecha_resolucion = timezone.now()
+        if formulario:
+            self.formulario_resolucion = formulario
+        self.save(update_fields=['resuelta', 'fecha_resolucion', 'formulario_resolucion'])

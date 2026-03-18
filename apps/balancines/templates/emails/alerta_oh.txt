@@ -1,0 +1,25 @@
+SISTEMA DE GESTIÓN DE BALANCINES
+================================
+
+ALERTA {{ alerta.get_nivel_display|upper }}
+{{ alerta.nivel|stringformat:"s"|center:32 }}
+
+Detalles de la alerta:
+---------------------
+Balancín: {{ alerta.balancin.codigo }}
+Ubicación: Línea {{ alerta.balancin.torre.linea.nombre }} - Torre {{ alerta.balancin.torre.numero_torre }}
+Sentido: {{ alerta.balancin.get_sentido_display }}
+Nivel: {{ alerta.get_nivel_display }}
+{% if alerta.backlog_momento < 0 %}
+Backlog: {{ alerta.backlog_momento }} horas (EXCEDIDO)
+{% else %}
+Backlog: {{ alerta.backlog_momento }} horas restantes
+{% endif %}
+Horas de operación: {{ alerta.horas_operacion_momento }}
+Fecha: {{ alerta.fecha_generacion|date:"d/m/Y H:i" }}
+
+Para ver más detalles, ingresa al sistema:
+{{ sitio_url }}/dashboard-alertas/
+
+---
+Mensaje automático - Sistema de Gestión de Balancines

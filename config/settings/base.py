@@ -124,3 +124,16 @@ AUTH_USER_MODEL = 'balancines.Usuario'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+SITE_URL = config("SITE_URL", default="http://localhost:8000")
+
+
+
+# Email Configuration - Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'miguefernandohuanca@gmail.com'
+EMAIL_HOST_PASSWORD = 'eelqecqedemiriu'
+DEFAULT_FROM_EMAIL = 'miguefernandohuanca@gmail.com'
