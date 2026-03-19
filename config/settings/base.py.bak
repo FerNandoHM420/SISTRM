@@ -56,12 +56,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # AGREGAR ESTA LÍNEA AL FINAL
-                'apps.balancines.context_processors.notificaciones_globales',
             ],
         },
     },
 ]
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database - ¡ESTA ES LA PARTE CRÍTICA!

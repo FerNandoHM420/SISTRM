@@ -603,9 +603,10 @@ class HistorialOH(models.Model):
         if self.fecha_oh and not self.anio:
             self.anio = self.fecha_oh.year
         
-        # Calcular backlog si no está definido
-        if self.horas_operacion and self.rango_oh_horas and self.backlog is None:
+        # ===== SIEMPRE recalcular backlog cuando hay horas y rango =====
+        if self.horas_operacion is not None and self.rango_oh_horas:
             self.backlog = self.rango_oh_horas - self.horas_operacion
+            print(f"⚙️ Backlog calculado: {self.rango_oh_horas} - {self.horas_operacion} = {self.backlog}")
         
         super().save(*args, **kwargs)
     
@@ -865,11 +866,9 @@ class AlertaOH(models.Model):
     """
     
     NIVEL_CHOICES = [
-        ('VERDE', 'Normal'),
-        ('AMARILLO', 'Aviso - 1 mes'),
-        ('NARANJA', 'Próximo - 2 semanas'),
-        ('ROJO', 'Urgente - 1 semana'),
-        ('VENCIDO', 'Vencido'),
+    ('VERDE', 'Normal'),
+    ('ALERTA', 'Alerta'),
+    ('VENCIDO', 'Vencido'),
     ]
     
     # Relación con el balancín
@@ -982,13 +981,12 @@ class AlertaOH(models.Model):
     
     @property
     def color_bootstrap(self):
-        """Color para la interfaz"""
+        """Color para la interfaz según el nivel"""
         colores = {
-            'VERDE': 'success',
-            'AMARILLO': 'warning',
-            'NARANJA': 'warning',  # Usaremos naranja personalizado en CSS
-            'ROJO': 'danger',
-            'VENCIDO': 'dark'
+            'ALERTA': 'warning',     # 🟡 Amarillo
+            'CRITICO': 'danger',      # 🔴 Rojo
+            'VENCIDO': 'orange',      # 🟠 Naranja (personalizado)
+            'VERDE': 'success',       # 🟢 Verde
         }
         return colores.get(self.nivel, 'secondary')
     

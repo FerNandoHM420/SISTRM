@@ -1154,7 +1154,6 @@ def exportar_oh_excel(request):
     
     return response
 
-
 @login_required
 def dashboard_oh_nuevo(request):
     """Dashboard con gráficos de estado por torre y listado detallado"""
@@ -1169,117 +1168,114 @@ def dashboard_oh_nuevo(request):
     lineas = Linea.objects.all().order_by('nombre')
     tipos = TipoBalancin.objects.all().order_by('codigo')
     
-    # ===== PARTE 2: OBTENER DATOS AGRUPADOS POR BALANCÍN =====
-    from django.db import connection
-    import json
+    # ===== OBTENER TODOS LOS BALANCINES CON SU ÚLTIMO OH =====
+    from django.db.models import OuterRef, Subquery, Count
     
-    # Consulta para obtener todos los OH dinámicamente
-    query = """
-        SELECT 
-            linea_nombre,
-            torre_numero,
-            sentido,
-            tipo_balancin,
-            rango_oh_horas,
-            TO_CHAR(inicio_oc, 'Mon-YY') as inicio_oc,
-            horas_promedio_dia,
-            factor_correccion,
-            balancin_codigo,
-            COUNT(*) as total_ohs,
-            json_agg(
-                json_build_object(
-                    'numero', numero_oh,
-                    'fecha', TO_CHAR(fecha_oh, 'Mon-YY'),
-                    'anio', anio,
-                    'horas', horas_operacion,
-                    'backlog', backlog,
-                    'dia', dia_semana
-                ) ORDER BY numero_oh
-            ) as todos_oh
-        FROM app_historial_oh
-    """
+    # Obtener todos los balancines
+    balancines = BalancinIndividual.objects.select_related(
+        'torre__linea'
+    ).annotate(
+        total_oh=Count('historial_oh_completo')
+    )
     
+    # Aplicar filtro por balancín si existe
     if balancin_filtro:
-        query += f" WHERE balancin_codigo = '{balancin_filtro}'"
+        balancines = balancines.filter(codigo=balancin_filtro)
     
-    query += """
-        GROUP BY 
-            balancin_codigo,
-            linea_nombre, 
-            torre_numero, 
-            sentido, 
-            tipo_balancin, 
-            rango_oh_horas,
-            inicio_oc,
-            horas_promedio_dia,
-            factor_correccion
-        ORDER BY linea_nombre, 
-            CASE 
-                WHEN torre_numero ~ '^[0-9]+$' THEN LPAD(torre_numero, 3, '0')
-                ELSE LPAD(SUBSTRING(torre_numero FROM '^[0-9]+'), 3, '0') || SUBSTRING(torre_numero FROM '[A-Z]+$')
-            END,
-            sentido
-    """
+    # ===== ORDENAR EN PYTHON (para manejar números correctamente) =====
+    balancines_list = list(balancines)
     
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        columns = [col[0] for col in cursor.description]
-        historial = []
+    # Función para extraer el número de la torre (ej: "6A" → 6)
+    def extraer_numero_torre(torre_numero):
+        import re
+        match = re.search(r'\d+', torre_numero)
+        return int(match.group()) if match else 0
+    
+    # Ordenar: por línea, luego por número de torre, luego por sentido
+    balancines_list.sort(key=lambda b: (
+        b.torre.linea.id if b.torre else 0,
+        extraer_numero_torre(b.torre.numero_torre) if b.torre else 0,
+        b.torre.numero_torre if b.torre else '',  # Para ordenar 1A antes que 1B
+        b.sentido
+    ))
+    
+    # ===== CONSTRUIR HISTORIAL CON DATOS EN VIVO =====
+    historial = []
+    
+    for b in balancines_list:
+        # Obtener todos los OH de este balancín (ordenados por número)
+        todos_oh_qs = HistorialOH.objects.filter(
+            balancin=b
+        ).order_by('numero_oh').values(
+            'numero_oh', 'fecha_oh', 'anio', 'horas_operacion', 'backlog', 'dia_semana'
+        )
         
-        for row in cursor.fetchall():
-            item = dict(zip(columns, row))
-            
-            todos_oh_str = item['todos_oh']
-            if todos_oh_str:
-                if isinstance(todos_oh_str, str):
-                    todos_oh = json.loads(todos_oh_str)
-                else:
-                    todos_oh = todos_oh_str
-            else:
-                todos_oh = []
-            
-            item['todos_oh'] = todos_oh
-            historial.append(item)
+        # Convertir a lista de diccionarios
+        oh_list = []
+        for oh in todos_oh_qs:
+            oh_list.append({
+                'numero': oh['numero_oh'],
+                'fecha': oh['fecha_oh'].strftime('%b-%y'),
+                'anio': oh['anio'],
+                'horas': oh['horas_operacion'],
+                'backlog': oh['backlog'],
+                'dia': oh['dia_semana']
+            })
+        
+        # Obtener el último OH directamente de la base de datos (SIN JSON)
+        ultimo_oh = HistorialOH.objects.filter(
+            balancin=b
+        ).order_by('-fecha_oh').first()
+        
+        # Calcular backlog actual (del último OH)
+        if ultimo_oh:
+            backlog_actual = ultimo_oh.backlog
+            horas_actuales = ultimo_oh.horas_operacion
+        else:
+            backlog_actual = b.rango_horas_cambio_oh  # Si no hay OH, backlog = rango completo
+            horas_actuales = 0
+        
+        # Calcular estado según backlog_actual
+        if b.total_oh == 0:
+            estado = 'sin_oh'
+        elif backlog_actual < 0:
+            estado = 'critico'
+        elif backlog_actual < 5000:
+            estado = 'alerta'
+        else:
+            estado = 'normal'
+        
+        item = {
+            'linea_nombre': b.torre.linea.nombre if b.torre else 'N/A',
+            'torre_numero': b.torre.numero_torre if b.torre else '0',
+            'sentido': b.sentido,
+            'tipo_balancin': b.tipo_balancin_codigo or '',
+            'rango_oh_horas': b.rango_horas_cambio_oh,
+            'inicio_oc': 'May-14',  # Este dato deberías tenerlo en algún lado
+            'balancin_codigo': b.codigo,
+            'total_ohs': b.total_oh,
+            'todos_oh': oh_list,
+            'horas_actuales': horas_actuales,
+            'backlog_actual': backlog_actual,  # ← VALOR EN VIVO
+            'estado': estado,
+        }
+        historial.append(item)
     
     # ===== APLICAR FILTROS ADICIONALES =====
     if linea_filtro:
         historial = [item for item in historial if item['linea_nombre'] == linea_filtro]
     if torre_filtro:
         historial = [item for item in historial if torre_filtro.lower() in item['torre_numero'].lower()]
-    
-    # ===== PARTE 3: CALCULAR ESTADOS =====
-    total_normal = 0
-    total_alerta = 0
-    total_critico = 0
-    total_sin_oh = 0
-    
-    for item in historial:
-        if item['total_ohs'] == 0:
-            estado = 'sin_oh'
-            total_sin_oh += 1
-        else:
-            ultimo_oh = item['todos_oh'][-1] if item['todos_oh'] else None
-            ultimo_backlog = ultimo_oh.get('backlog') if ultimo_oh else None
-            
-            if ultimo_backlog is None:
-                estado = 'sin_oh'
-                total_sin_oh += 1
-            elif ultimo_backlog < 0:
-                estado = 'critico'
-                total_critico += 1
-            elif ultimo_backlog < 5000:
-                estado = 'alerta'
-                total_alerta += 1
-            else:
-                estado = 'normal'
-                total_normal += 1
-        
-        item['estado'] = estado
-    
     if estado_filtro:
         historial = [item for item in historial if item['estado'] == estado_filtro]
     
-    # ===== PARTE 4: DATOS PARA GRÁFICOS =====
+    # ===== CALCULAR ESTADÍSTICAS =====
+    total_normal = sum(1 for item in historial if item['estado'] == 'normal')
+    total_alerta = sum(1 for item in historial if item['estado'] == 'alerta')
+    total_critico = sum(1 for item in historial if item['estado'] == 'critico')
+    total_sin_oh = sum(1 for item in historial if item['estado'] == 'sin_oh')
+    
+    # ===== DATOS PARA GRÁFICOS =====
     labels_lineas = []
     data_normal = []
     data_alerta = []
@@ -1308,28 +1304,21 @@ def dashboard_oh_nuevo(request):
         etiqueta = f"{item['linea_nombre']} T{item['torre_numero']} {sentido_short}"
         torres_labels.append(etiqueta)
         
-        ultimo_oh = item['todos_oh'][-1] if item['todos_oh'] else None
-        ultimo_backlog = ultimo_oh.get('backlog') if ultimo_oh else None
+        backlog = item['backlog_actual']
         
-        if ultimo_backlog is None:
+        if backlog is None:
             backlog_data.append(0)
             backlog_colors.append('#6c757d')
         else:
-            backlog_data.append(ultimo_backlog)
-            if ultimo_backlog < 0:
+            backlog_data.append(backlog)
+            if backlog < 0:
                 backlog_colors.append('#dc3545')
-            elif ultimo_backlog < 5000:
+            elif backlog < 5000:
                 backlog_colors.append('#ffc107')
             else:
                 backlog_colors.append('#28a745')
     
     total_balancines = len(historial)
-    total_oh = sum(item['total_ohs'] for item in historial)
-    
-    total_oh1 = sum(1 for item in historial for oh in item['todos_oh'] if oh['numero'] == 1)
-    total_oh2 = sum(1 for item in historial for oh in item['todos_oh'] if oh['numero'] == 2)
-    total_oh3 = sum(1 for item in historial for oh in item['todos_oh'] if oh['numero'] == 3)
-    
     balancines_asc = sum(1 for item in historial if item['sentido'] == 'ASCENDENTE')
     balancines_desc = total_balancines - balancines_asc
     
@@ -1337,6 +1326,9 @@ def dashboard_oh_nuevo(request):
     porcentaje_normal = (total_normal / total_con_oh * 100) if total_con_oh > 0 else 0
     porcentaje_alerta = (total_alerta / total_con_oh * 100) if total_con_oh > 0 else 0
     porcentaje_critico = (total_critico / total_con_oh * 100) if total_con_oh > 0 else 0
+    
+    # ===== IMPORTAR JSON PARA LOS GRÁFICOS =====
+    import json
     
     context = {
         'lineas': lineas,
@@ -1349,10 +1341,6 @@ def dashboard_oh_nuevo(request):
         'total_balancines': total_balancines,
         'balancines_asc': balancines_asc,
         'balancines_desc': balancines_desc,
-        'total_oh': total_oh,
-        'total_oh1': total_oh1,
-        'total_oh2': total_oh2,
-        'total_oh3': total_oh3,
         'total_normal': total_normal,
         'total_alerta': total_alerta,
         'total_critico': total_critico,
@@ -1370,7 +1358,6 @@ def dashboard_oh_nuevo(request):
     }
     
     return render(request, 'balancines/dashboard_oh_nuevo.html', context)
-
 
 @login_required
 def registrar_oh_balancin(request, codigo):
@@ -2898,16 +2885,11 @@ def dashboard_alertas(request):
     alertas = ServicioAlertasOH.obtener_alertas_activas(incluir_leidas=False)
     estadisticas = ServicioAlertasOH.obtener_estadisticas()
     
-    # Para debug - imprimir en consola
-    print(f"Alertas encontradas: {alertas.count()}")
-    print(f"Estadísticas: {estadisticas}")
-    
     context = {
         'alertas': alertas,
         'stats': estadisticas,
     }
     return render(request, 'balancines/dashboard_alertas.html', context)
-
 
 # ========== MARCAR ALERTA COMO LEÍDA ==========
 from django.http import JsonResponse

@@ -50,7 +50,7 @@
 
         <!-- Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto text-center text-lg-start">
+          <ul class="navbar-nav ms-auto text-center text-lg-start align-items-center">
 
             <li class="nav-item">
               <a class="nav-link" href="/">
@@ -63,6 +63,105 @@
                 <a class="nav-link" href="/dashboard/">
                   <i class="fas fa-tachometer-alt me-1"></i> Usuario
                 </a>
+              </li>
+
+              <!-- ===== NOTIFICACIONES MEJORADAS ===== -->
+              <li class="nav-item dropdown me-2">
+                <a class="nav-link position-relative" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-bell" style="font-size: 1.2rem;"></i>
+                  {% if total_notificaciones > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                      {{ total_notificaciones }}
+                    </span>
+                  {% endif %}
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificacionesDropdown" style="width: 400px; max-height: 500px; overflow-y: auto; padding: 0;">
+                  <div class="dropdown-header d-flex justify-content-between align-items-center bg-light p-3 border-bottom">
+  <h6 class="mb-0 fw-bold">Notificaciones</h6>
+  <div>
+    {% if total_vencido > 0 %}
+      <span class="badge bg-dark me-1" title="Vencidos">{{ total_vencido }}</span>
+    {% endif %}
+    {% if total_rojo > 0 %}
+      <span class="badge bg-danger me-1" title="Críticos">{{ total_rojo }}</span>
+    {% endif %}
+    {% if total_naranja > 0 %}
+      <span class="badge bg-warning text-dark" title="Urgentes">{{ total_naranja }}</span>
+    {% endif %}
+  </div>
+</div>
+                  
+                  <div id="lista-notificaciones">
+                    {% for alerta in notificaciones %}
+                      <div class="border-bottom" data-id="{{ alerta.id }}">
+                        <!-- Toda la notificación es clickeable para ir al dashboard -->
+                        <a href="{% url 'dashboard_alertas' %}" class="text-decoration-none">
+                          <div class="px-3 py-2 bg-white hover-bg-light" style="cursor: pointer; transition: background 0.2s;">
+                            <div class="d-flex align-items-start">
+                              <div class="me-2 mt-1">
+                                {% if alerta.nivel == 'ROJO' or alerta.nivel == 'VENCIDO' %}
+                                  <i class="fas fa-exclamation-circle text-danger fs-5"></i>
+                                {% elif alerta.nivel == 'NARANJA' %}
+                                  <i class="fas fa-exclamation-triangle text-warning fs-5"></i>
+                                {% elif alerta.nivel == 'AMARILLO' %}
+                                  <i class="fas fa-clock text-warning fs-5"></i>
+                                {% else %}
+                                  <i class="fas fa-check-circle text-success fs-5"></i>
+                                {% endif %}
+                              </div>
+                              <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                  <strong class="text-dark">{{ alerta.balancin.codigo }}</strong>
+                                  <small class="text-muted">{{ alerta.fecha_generacion|timesince }}</small>
+                                </div>
+                                <div class="small text-secondary">
+                                  Línea {{ alerta.balancin.torre.linea.nombre }} - 
+                                  T{{ alerta.balancin.torre.numero_torre }} 
+                                  ({{ alerta.balancin.get_sentido_display }})
+                                </div>
+                                <div class="small d-flex justify-content-between align-items-center mt-1">
+                                  <span class="badge bg-{{ alerta.color_bootstrap }}">
+                                    {{ alerta.get_nivel_display }}
+                                  </span>
+                                  <span class="fw-bold">
+                                    {% if alerta.backlog_momento < 0 %}
+                                      <span class="text-danger">{{ alerta.backlog_momento }}h</span>
+                                    {% else %}
+                                      <span class="text-dark">{{ alerta.backlog_momento }}h</span>
+                                    {% endif %}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                        <!-- Botones de acción -->
+                        <div class="px-3 py-2 bg-light d-flex justify-content-end gap-2 border-top">
+                          <a href="{% url 'dashboard_alertas' %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> Ver detalles
+                          </a>
+                          <button class="btn btn-sm btn-outline-primary btn-marcar-leida" 
+                                  data-id="{{ alerta.id }}">
+                            <i class="fas fa-check"></i> Marcar leída
+                          </button>
+                        </div>
+                      </div>
+                    {% empty %}
+                      <div class="dropdown-item text-center py-4">
+                        <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
+                        <p class="mb-1 fw-bold">No hay notificaciones</p>
+                        <small class="text-muted">Todo está en orden</small>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  
+                  {% if total_notificaciones > 5 %}
+                    <div class="dropdown-divider m-0"></div>
+                    <a href="{% url 'dashboard_alertas' %}" class="dropdown-item text-center text-primary fw-bold py-3">
+                      Ver todas las notificaciones ({{ total_notificaciones }}) →
+                    </a>
+                  {% endif %}
+                </div>
               </li>
 
               <li class="nav-item">
@@ -145,7 +244,111 @@
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
 
+    <!-- JavaScript para notificaciones mejorado -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para actualizar el contador de notificaciones
+        function actualizarContador() {
+            const contador = document.querySelector('.badge.bg-danger');
+            const lista = document.getElementById('lista-notificaciones');
+            const itemsRestantes = lista.querySelectorAll('.border-bottom[data-id]').length;
+            
+            if (contador) {
+                if (itemsRestantes > 0) {
+                    contador.textContent = itemsRestantes;
+                } else {
+                    contador.remove();
+                    
+                    // Mostrar mensaje de vacío si no hay notificaciones
+                    if (lista.children.length === 0 || (lista.children.length === 1 && lista.children[0].querySelector('.text-center.py-4'))) {
+                        // Ya está vacío
+                    } else {
+                        lista.innerHTML = `
+                            <div class="dropdown-item text-center py-4">
+                                <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
+                                <p class="mb-1 fw-bold">No hay notificaciones</p>
+                                <small class="text-muted">Todo está en orden</small>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        }
+
+        // Marcar notificaciones como leídas
+        document.querySelectorAll('.btn-marcar-leida').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const alertaId = this.dataset.id;
+                const notificacionDiv = this.closest('.border-bottom');
+                const boton = this;
+                
+                // Deshabilitar botón mientras procesa
+                boton.disabled = true;
+                boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                fetch('/api/marcar-alerta-leida/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ alerta_id: alertaId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Eliminar la notificación completa (incluyendo botones)
+                        if (notificacionDiv) {
+                            notificacionDiv.remove();
+                        }
+                        
+                        // Actualizar contador
+                        actualizarContador();
+                    } else {
+                        alert('Error: ' + data.message);
+                        boton.disabled = false;
+                        boton.innerHTML = '<i class="fas fa-check"></i> Marcar leída';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    boton.disabled = false;
+                    boton.innerHTML = '<i class="fas fa-check"></i> Marcar leída';
+                });
+            });
+        });
+
+        // Estilo hover para las notificaciones
+        const style = document.createElement('style');
+        style.textContent = `
+            .hover-bg-light:hover {
+                background-color: #f8f9fa !important;
+            }
+            .dropdown-item:active {
+                background-color: transparent !important;
+            }
+        `;
+        document.head.appendChild(style);
+    });
+    </script>
+
     {% block extra_js %}{% endblock %}
 
   </body>
 </html>
+
+
+<style>
+    .badge.bg-orange {
+        background-color: #ff7300 !important;
+        color: white;
+    }
+    .table-orange {
+        --bs-table-bg: #ff9d00;
+        --bs-table-striped-bg: #ff9100;
+        --bs-table-hover-bg: #ff7700;
+    }
+</style>

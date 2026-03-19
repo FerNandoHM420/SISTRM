@@ -6,6 +6,8 @@ services:
          while ! pg_isready -h db -p 5432 -U proyecto_user; do echo 'Esperando DB...'; sleep 2; done &&
          echo 'PostgreSQL listo!' &&
          python manage.py migrate &&
+         echo '⚙️ Generando alertas de OH...' &&
+         python manage.py generar_alertas_oh &&
          python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app

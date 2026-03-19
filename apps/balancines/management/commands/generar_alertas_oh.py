@@ -57,10 +57,8 @@ class Command(BaseCommand):
                 f'   Procesados: {resultados["procesados"]} balancines\n'
                 f'   Alertas generadas: {resultados["alertas_generadas"]}\n'
                 f'   Por nivel:\n'
-                f'     🔴 ROJAS: {resultados["alertas_por_nivel"]["ROJO"]}\n'
-                f'     🟠 NARANJAS: {resultados["alertas_por_nivel"]["NARANJA"]}\n'
-                f'     🟡 AMARILLAS: {resultados["alertas_por_nivel"]["AMARILLO"]}\n'
-                f'     ⚫ VENCIDAS: {resultados["alertas_por_nivel"]["VENCIDO"]}\n'
+                f'     ⚫ VENCIDAS: {resultados["alertas_por_nivel"].get("VENCIDO", 0)}\n'
+                f'     🟠 ALERTAS: {resultados["alertas_por_nivel"].get("ALERTA", 0)}\n'
                 f'   ⏱️  Tiempo: {duracion:.2f} segundos'
             ))
             

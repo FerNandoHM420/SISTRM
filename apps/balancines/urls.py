@@ -115,6 +115,4 @@ re_path(r'^intercambiar/(?P<codigo_balancin>.+)/$', views.intercambiar_balancin,
 
 path('api/realizar-intercambio/', views.realizar_intercambio, name='realizar_intercambio'),
 
-
-
 ]

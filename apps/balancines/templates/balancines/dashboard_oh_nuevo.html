@@ -549,32 +549,20 @@
                         </div>
 
                         <div class="card-body"> 
-                            <!-- Progreso actual usando el último OH -->
+                            <!-- Progreso actual usando horas actuales -->
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between small mb-1">
                                     <span>Progreso actual</span>
-                                    {% with ultimo_oh=item.todos_oh|last %}
-                                        {% if ultimo_oh %}
-                                            <span class="fw-bold">{{ ultimo_oh.horas }} / {{ item.rango_oh_horas }} h</span>
-                                        {% else %}
-                                            <span class="fw-bold">0 / {{ item.rango_oh_horas }} h</span>
-                                        {% endif %}
-                                    {% endwith %}
+                                    <span class="fw-bold">{{ item.horas_actuales }} / {{ item.rango_oh_horas }} h</span>
                                 </div>
                                 <div class="progress" style="height: 10px;">
-                                    {% with ultimo_oh=item.todos_oh|last %}
-                                        {% if ultimo_oh %}
-                                            <div class="progress-bar 
-                                                {% if item.estado == 'critico' %}bg-danger
-                                                {% elif item.estado == 'alerta' %}bg-warning
-                                                {% elif item.estado == 'normal' %}bg-success
-                                                {% else %}bg-secondary{% endif %}"
-                                                style="width: {% widthratio ultimo_oh.horas item.rango_oh_horas 100 %}%">
-                                            </div>
-                                        {% else %}
-                                            <div class="progress-bar bg-secondary" style="width: 0%"></div>
-                                        {% endif %}
-                                    {% endwith %}
+                                    <div class="progress-bar 
+                                        {% if item.estado == 'critico' %}bg-danger
+                                        {% elif item.estado == 'alerta' %}bg-warning
+                                        {% elif item.estado == 'normal' %}bg-success
+                                        {% else %}bg-secondary{% endif %}"
+                                        style="width: {% widthratio item.horas_actuales item.rango_oh_horas 100 %}%">
+                                    </div>
                                 </div>
                             </div>
 
@@ -607,13 +595,21 @@
                                 </div>
                             </div>
 
-                            <!-- Información adicional -->
+                            <!-- Información adicional con backlog actual -->
                             <div class="row small text-muted">
                                 <div class="col-6">
                                     <i class="fas fa-calendar-alt me-1"></i> Inicio: {{ item.inicio_oc }}
                                 </div>
                                 <div class="col-6">
-                                    <i class="fas fa-chart-line me-1"></i> Total OH: {{ item.todos_oh|length }}
+                                    <i class="fas fa-chart-line me-1"></i> Total OH: {{ item.total_ohs }}
+                                </div>
+                            </div>
+                            <div class="row small text-muted mt-1">
+                                <div class="col-12">
+                                    <i class="fas fa-hourglass-half me-1"></i> Backlog actual: 
+                                    <strong class="{% if item.backlog_actual < 0 %}text-danger{% elif item.backlog_actual < 5000 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ item.backlog_actual }} h
+                                    </strong>
                                 </div>
                             </div>
                         </div>
@@ -639,14 +635,13 @@
                                 title="Registrar OH">
                                     <i class="fas fa-plus-circle"></i> OH
                                 </a>
-                                <!--  enlaces para formualrio y para historiald e torre  -->
                                 <a href="/crear-formulario/{{ item.balancin_codigo }}/" class="btn btn-sm btn-success">
-                                                    Formulario
+                                    Formulario
                                 </a>
                                 <a href="{% url 'historial_balancin' item.balancin_codigo %}" 
                                 class="btn btn-info btn-sm" 
                                 title="Ver historial completo">
-                                <i class="fas fa-history me-1"></i> Historial
+                                    <i class="fas fa-history me-1"></i> Historial
                                 </a>
                             </div>
                         </div>
@@ -674,7 +669,7 @@
     // Gráfico de torta - Distribución por Estado
     var ctxPie = document.getElementById('estadoPieChart').getContext('2d');
     new Chart(ctxPie, {
-        type: 'doughnut',  // Cambiado a doughnut para mejor estilo
+        type: 'doughnut',
         data: {
             labels: ['Normal', 'Alerta', 'Crítico', 'Sin OH'],
             datasets: [{
@@ -705,7 +700,7 @@
         }
     });
     
-    // Gráfico de barras - Estado por Línea (con colores mejorados)
+    // Gráfico de barras - Estado por Línea
     var ctxBar = document.getElementById('lineaBarChart').getContext('2d');
     new Chart(ctxBar, {
         type: 'bar',
@@ -757,7 +752,7 @@
         }
     });
     
-    // Gráfico de columnas - Backlog por Torre (mejorado)
+    // Gráfico de columnas - Backlog por Torre
     var ctxBacklog = document.getElementById('backlogBarChart').getContext('2d');
     new Chart(ctxBacklog, {
         type: 'bar',
@@ -871,21 +866,22 @@
         });
 
         const summaryDiv = document.getElementById('lineaSummary');
-        summaryDiv.innerHTML = '';
-        
-        Object.keys(lineas).forEach(linea => {
-            const data = lineas[linea];
-            summaryDiv.innerHTML += `
-                <div class="col-md-3 mb-2">
-                    <div class="card bg-light">
-                        <div class="card-body p-2">
-                            <h6 class="mb-1">${linea}</h6>
-                            
+        if (summaryDiv) {
+            summaryDiv.innerHTML = '';
+            
+            Object.keys(lineas).forEach(linea => {
+                const data = lineas[linea];
+                summaryDiv.innerHTML += `
+                    <div class="col-md-3 mb-2">
+                        <div class="card bg-light">
+                            <div class="card-body p-2">
+                                <h6 class="mb-1">${linea}</h6>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
     }
 </script>
 {% endblock %}
