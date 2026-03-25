@@ -16,11 +16,12 @@ services:
     env_file:
       - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.base
+      - DJANGO_SETTINGS_MODULE=config.settings.development
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
+
   db:
     image: postgres:15-alpine
     volumes:
@@ -36,6 +37,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+    restart: unless-stopped
 
 volumes:
   postgres_data:

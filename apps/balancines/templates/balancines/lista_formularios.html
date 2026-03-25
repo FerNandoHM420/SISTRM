@@ -20,7 +20,7 @@
 
     
 
-   <!-- Tarjetas de resumen -->
+<!-- Tarjetas de resumen -->
 <div class="row mb-4 align-items-center">
 
     <div class="col-md-3">
@@ -77,21 +77,24 @@
                                 <small class="text-muted">{{ f.balancin.torre }}</small>
                             </td>
                             <td>{{ f.tipo }}</td>
-                           <td>
-    <i class="fas fa-arrow-right text-success"></i>
-    {{ f.linea_inicial }} T{{ f.torre_inicial }}/{% if f.balancin.sentido == 'ASCENDENTE' %}ASC{% else %}DESC{% endif %}
-    → 
-    {{ f.linea_final }} T{{ f.torre_final }}/{% if f.sentido_final == 'ASCENDENTE' %}ASC{% else %}DESC{% endif %}
-</td>
-                           <td>
+                            <td>
+                                <i class="fas fa-arrow-right text-success"></i>
+                                {{ f.linea_inicial }} T{{ f.torre_inicial }}/{% 
+                                    if f.balancin.sentido == 'ASCENDENTE' %}ASC{% 
+                                        else %}DESC{% endif %}
+                                    → {{ f.linea_final }} T{{ f.torre_final }}/{%
+                                        if f.sentido_final == 'ASCENDENTE' %}ASC{% 
+                                            else %}DESC{% endif %}
+                                        </td>
+                        <td>
     {% if f.realizado_por_recambio %}
         <div class="mb-1">
-          {{ f.realizado_por_recambio.nombre }}
-           
+        {{ f.realizado_por_recambio.nombre }}
+        
         </div>
         
         {% if f.tecnicos.all %}
-          
+
                     {% for t in f.tecnicos.all %}
                         {% if t.usuario.id != f.realizado_por_recambio.id %}
                             <span >{{ t.usuario.nombre }}</span>
@@ -116,7 +119,7 @@
                             </td>
                             <td>
                                 <a href="{% url 'detalle_formulario' f.codigo_formulario %}" 
-                                   class="btn btn-sm btn-outline-primary">
+                                class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </td>

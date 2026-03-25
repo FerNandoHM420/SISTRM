@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registro de Trabajos - Taller{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-clipboard-list text-primary me-2"></i>
+                Registro de Trabajos del Taller
+            </h1>
+            <p class="text-muted mt-1">Registro diario de actividades en el Taller de Reparaciones Mayores</p>
+        </div>
+        <div>
+            <a href="{% url 'crear_trabajo_taller' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nuevo Registro
+            </a>
+        </div>
+    </div>
+
+    
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Fecha desde</label>
+                    <input type="date" name="fecha_desde" class="form-control" value="{{ fecha_desde }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha hasta</label>
+                    <input type="date" name="fecha_hasta" class="form-control" value="{{ fecha_hasta }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Área</label>
+                    <select name="area" class="form-select">
+                        <option value="">Todas</option>
+                        <option value="mecanica" {% if area_filtro == 'mecanica' %}selected{% endif %}>Mecánica</option>
+                        <option value="electromecanica" {% if area_filtro == 'electromecanica' %}selected{% endif %}>Electromecánica</option>
+                        <option value="electronica" {% if area_filtro == 'electronica' %}selected{% endif %}>Electrónica</option>
+                        <option value="soldadura" {% if area_filtro == 'soldadura' %}selected{% endif %}>Soldadura</option>
+                        <option value="inspeccion" {% if area_filtro == 'inspeccion' %}selected{% endif %}>Inspección</option>
+                        <option value="general" {% if area_filtro == 'general' %}selected{% endif %}>General</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Turno</label>
+                    <select name="turno" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="manana" {% if turno_filtro == 'manana' %}selected{% endif %}>Mañana</option>
+                        <option value="tarde" {% if turno_filtro == 'tarde' %}selected{% endif %}>Tarde</option>
+                        <option value="noche" {% if turno_filtro == 'noche' %}selected{% endif %}>Noche</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Técnico</label>
+                    <select name="tecnico" class="form-select">
+                        <option value="">Todos</option>
+                        {% for tecnico in tecnicos %}
+                        <option value="{{ tecnico.id }}" {% if tecnico_filtro == tecnico.id|stringformat:"s" %}selected{% endif %}>
+                            {{ tecnico.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Filtrar
+                    </button>
+                    <a href="{% url 'lista_trabajos_taller' %}" class="btn btn-secondary">
+                        <i class="fas fa-eraser me-2"></i>Limpiar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de trabajos por fecha -->
+    {% if registros_por_fecha %}
+        {% for fecha_key, grupo in registros_por_fecha.items %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="far fa-calendar-alt me-2"></i>
+                    {{ grupo.fecha|date:"l, d \\d\\e F \\d\\e Y" }}
+                    <span class="badge bg-primary ms-2">{{ grupo.registros|length }} trabajos</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Turno</th>
+                                <th>Área</th>
+                                <th>Descripción</th>
+                             
+                               
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for registro in grupo.registros %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{% if registro.turno == 'manana' %}success{% elif registro.turno == 'tarde' %}warning{% else %}secondary{% endif %}">
+                                        {{ registro.get_turno_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ registro.get_area_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ registro.descripcion|truncatechars:60 }}</strong>
+                                    {% if registro.observaciones %}
+                                    <br>
+                                    <small class="text-muted">{{ registro.observaciones|truncatechars:40 }}</small>
+                                    {% endif %}
+                                </td>
+                              
+                                
+                                <td>
+                                    <a href="{% url 'detalle_trabajo_taller' registro.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            No hay trabajos registrados para los filtros seleccionados.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

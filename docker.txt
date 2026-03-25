@@ -82,3 +82,10 @@ git push origin main
 docker build -t miguelfhm/sistrm .
 docker push miguelfhm/sistrm:latest
 
+
+
+1: Crear las migraciones
+docker exec -it proyectonuevo-web-1 python manage.py makemigrations balancines
+2: Aplicar las migraciones
+docker exec -it proyectonuevo-web-1 python manage.py migrate balancines
+

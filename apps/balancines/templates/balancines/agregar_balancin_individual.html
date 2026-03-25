@@ -73,13 +73,7 @@
                             <!-- ✅ CAMPO CÓDIGO: AUTO-SUGERIDO -->
                             {% elif field.name == 'codigo' %}
                                 <div class="input-group">
-                                    <input type="text" 
-                                           name="codigo" 
-                                           id="id_codigo"
-                                           class="form-control" 
-                                           placeholder="Ej: BAL-16N/4TR-420C-001"
-                                           value="{% if tipo_predefinido %}Cargando...{% endif %}"
-                                           required>
+                                    <input type="text" name="codigo" id="id_codigo" class="form-control" placeholder="Ej: BAL-16N/4TR-420C-001"value="{% if tipo_predefinido %}Cargando...{% endif %}" required>
                                     <button class="btn btn-outline-secondary" type="button" id="btnGenerarCodigo">
                                         <i class="fas fa-sync-alt"></i> Generar
                                     </button>

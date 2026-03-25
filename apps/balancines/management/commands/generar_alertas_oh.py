@@ -57,6 +57,7 @@ class Command(BaseCommand):
                 f'   Procesados: {resultados["procesados"]} balancines\n'
                 f'   Alertas generadas: {resultados["alertas_generadas"]}\n'
                 f'   Por nivel:\n'
+                f'      CRITICAS: {resultados["alertas_por_nivel"].get("CRITICA", 0)}\n'
                 f'     ⚫ VENCIDAS: {resultados["alertas_por_nivel"].get("VENCIDO", 0)}\n'
                 f'     🟠 ALERTAS: {resultados["alertas_por_nivel"].get("ALERTA", 0)}\n'
                 f'   ⏱️  Tiempo: {duracion:.2f} segundos'

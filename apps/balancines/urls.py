@@ -64,7 +64,7 @@ urlpatterns = [
     path('inventario/repuestos-balancin/<str:item>/salida/', views.salida_stock_balancin, name='salida_stock_balancin'),    
     
     # ========== EXPORTAR DATOS ==========
-    path('inventario/exportar-oh-excel/', views.exportar_oh_excel, name='exportar_oh_excel'),
+
     
     # ========== INVENTARIO - REPUESTOS ADICIONALES ==========
     path('inventario/repuestos-adicionales/', views.lista_repuestos_adicionales, name='lista_repuestos_adicionales'),
@@ -114,5 +114,15 @@ path('api/cambiar-estado-mantenimiento/', views.cambiar_estado_mantenimiento, na
 re_path(r'^intercambiar/(?P<codigo_balancin>.+)/$', views.intercambiar_balancin, name='intercambiar_balancin'),
 
 path('api/realizar-intercambio/', views.realizar_intercambio, name='realizar_intercambio'),
+
+
+
+# apps/balancines/urls.py
+
+# Agrega estas URLs al final del archivo
+path('trabajos/', views.lista_trabajos_taller, name='lista_trabajos_taller'),
+path('trabajos/nuevo/', views.crear_trabajo_taller, name='crear_trabajo_taller'),
+path('trabajos/<int:pk>/', views.detalle_trabajo_taller, name='detalle_trabajo_taller'),
+path('trabajos/<int:pk>/editar/', views.editar_trabajo_taller, name='editar_trabajo_taller'),
 
 ]

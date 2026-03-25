@@ -17,7 +17,7 @@
     <!-- Tarjetas de módulos del inventario -->
     <div class="row g-4">
         <!-- Tipos de Balancín -->
-        <div class="col-xl-4 col-lg-6">
+        <div class="col-xl-4 col-lg-4">
             <div class="card h-100 shadow-lg border-0 hover-card">
                 <div class="card-header bg-gradient-primary text-white py-4">
                     <h4 class="mb-0"><i class="fas fa-list"></i> Tipos de Balancín</h4>
@@ -40,7 +40,7 @@
 <div class="col-xl-4 col-lg-6">
     <div class="card h-100 shadow-lg border-0 hover-card">
         <div class="card-header py-4" style="background: linear-gradient(135deg, #001aff 0%, #7acaff 100%); color: white;">
-            <h4 class="mb-0"><i class="fas fa-tower"></i> Formularios De Control</h4>
+ <h4 class="mb-0"><i class="fas fa-clipboard-list"></i> Formularios De Control</h4>
         </div>
         <div class="card-body">
             <p class="card-text">
@@ -93,10 +93,10 @@
         </div>
 
         <!-- Dashboard OH -->
-        <div class="col-xl-4 col-lg-6">
+        <div class="col-xl-4 col-lg-4">
             <div class="card h-100 shadow-lg border-0 hover-card">
                 <div class="card-header bg-gradient-secondary text-white py-4">
-                    <h4 class="mb-0"><i class="fas fa-chart-line"></i> Dashboard OH</h4>
+                    <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i> Dashboard OH</h4>
                 </div>
                 <div class="card-body">
                     <p class="card-text">
@@ -112,6 +112,24 @@
             </div>
         </div>
 
+     <!-- Trabajos -->
+<div class="col-xl-4 col-lg-6">
+    <div class="card h-100 shadow-lg border-0 hover-card">
+        <div class="card-header bg-gradient-secondary text-white py-4">
+   <h4 class="mb-0">    <i class="fas fa-clipboard-list me-2"></i> Trabajos</h4>
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+                Trabajos que se realizan y se realizaron en el Taller de Reparaciones Mayores
+            </p>
+            <div class="mt-3">
+                <a href="{% url 'lista_trabajos_taller' %}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-clipboard-list"></i> Ver Registro de Trabajos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
         <!-- Búsqueda Rápida -->
         <div class="col-xl-4 col-lg-6">
             <div class="card h-100 shadow-lg border-0 hover-card">

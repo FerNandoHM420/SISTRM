@@ -1,10 +1,25 @@
+# ============================================================
+# BALANCINES - MODELOS
+# ============================================================
+
+# ========== DJANGO CORE ==========
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-# ========== USUARIOS ==========
+# ========== PYTHON STANDARD LIBRARY ==========
+from datetime import datetime, timedelta
+import re
+
+
+# ============================================================
+# USUARIOS Y AUTENTICACIÓN
+# ============================================================
+
 class UsuarioManager(BaseUserManager):
+    """Manager personalizado para el modelo Usuario"""
+    
     def create_user(self, email, nombre, password=None, **extra_fields):
         if not email:
             raise ValueError('El usuario debe tener un email')
@@ -21,7 +36,10 @@ class UsuarioManager(BaseUserManager):
         extra_fields.setdefault('rol', 'jefe')
         return self.create_user(email, nombre, password, **extra_fields)
 
+
 class Usuario(AbstractBaseUser, PermissionsMixin):
+    """Modelo personalizado de usuario"""
+    
     class RolUsuario(models.TextChoices):
         JEFE = 'jefe', _('Jefe')
         SUPERVISOR = 'supervisor', _('Supervisor')
@@ -39,6 +57,15 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nombre']
     
+    class Meta:
+        db_table = 'app_usuario'
+        verbose_name = _('usuario')
+        verbose_name_plural = _('usuarios')
+        ordering = ['-fecha_registro']
+    
+    def __str__(self):
+        return f"{self.nombre} ({self.email})"
+    
     def get_username(self):
         return self.email
     
@@ -49,15 +76,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     @property
     def date_joined(self):
         return self.fecha_registro
-    
-    class Meta:
-        db_table = 'app_usuario'
-        verbose_name = _('usuario')
-        verbose_name_plural = _('usuarios')
-        ordering = ['-fecha_registro']
-    
-    def __str__(self):
-        return f"{self.nombre} ({self.email})"
     
     def get_full_name(self):
         return self.nombre
@@ -77,7 +95,10 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def es_tecnico(self):
         return self.rol == 'tecnico'
 
+
 class RegistroActividad(models.Model):
+    """Registro de actividades de usuarios"""
+    
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='actividades')
     accion = models.CharField(max_length=255)
     fecha = models.DateTimeField(auto_now_add=True)
@@ -93,9 +114,13 @@ class RegistroActividad(models.Model):
         return f"{self.usuario.email} - {self.accion} - {self.fecha}"
 
 
-# ========== CATÁLOGOS (Líneas, Secciones, Torres) ==========
+# ============================================================
+# CATÁLOGOS (Líneas, Secciones, Torres)
+# ============================================================
+
 class Linea(models.Model):
     """Líneas de producción"""
+    
     id = models.AutoField(primary_key=True)
     nombre = models.CharField('Nombre', max_length=100)
     color = models.CharField('Color Bootstrap', max_length=30, default='secondary')
@@ -111,8 +136,10 @@ class Linea(models.Model):
     def __str__(self):
         return self.nombre
 
+
 class Seccion(models.Model):
     """Secciones de las líneas"""
+    
     id = models.AutoField(primary_key=True)
     nombre = models.CharField('Nombre', max_length=50)
     
@@ -125,8 +152,10 @@ class Seccion(models.Model):
     def __str__(self):
         return self.nombre
 
+
 class Torre(models.Model):
     """Torres donde se instalan los balancines"""
+    
     id = models.AutoField(primary_key=True)
     linea = models.ForeignKey(Linea, on_delete=models.CASCADE, related_name='torres', db_column='linea_id')
     seccion = models.ForeignKey(Seccion, on_delete=models.CASCADE, related_name='torres', db_column='seccion_id')
@@ -147,7 +176,10 @@ class Torre(models.Model):
         return f"L{self.linea_id}-T{self.numero_torre} (Secc:{self.seccion.nombre})"
 
 
-# ========== TIPOS / MODELOS DE BALANCINES ==========
+# ============================================================
+# TIPOS / MODELOS DE BALANCINES
+# ============================================================
+
 class TipoBalancin(models.Model):
     """Modelos/tipos de balancines (catálogo)"""
     
@@ -185,18 +217,33 @@ class TipoBalancin(models.Model):
             Q(torre__tipo_balancin_descendente=self.codigo)
         ).count()
 
-# ========== BALANCINES INDIVIDUALES INSTALADOS EN TORRES ==========
+
+# ============================================================
+# BALANCINES INDIVIDUALES INSTALADOS EN TORRES
+# ============================================================
+
 class BalancinIndividual(models.Model):
+    """Balancines individuales instalados en torres"""
+    
     class SentidoBalancin(models.TextChoices):
         ASCENDENTE = 'ASCENDENTE', 'Ascendente'
         DESCENDENTE = 'DESCENDENTE', 'Descendente'
     
+    ESTADO_CHOICES = [
+        ('OPERANDO', 'Operando'),
+        ('MANTENIMIENTO', 'En Mantenimiento'),
+        ('OH_PENDIENTE', 'OH Pendiente'),
+    ]
+    
+    # Identificación
     codigo = models.CharField(
         'Código',
         max_length=50,
         primary_key=True,
         help_text='Ej: BAL-16N/4TR-0001'
     )
+    
+    # Relaciones
     torre = models.ForeignKey(
         Torre,
         on_delete=models.CASCADE,
@@ -204,6 +251,8 @@ class BalancinIndividual(models.Model):
         verbose_name='Torre',
         db_column='torre_id'
     )
+    
+    # Características
     sentido = models.CharField(
         'Sentido',
         max_length=20,
@@ -215,23 +264,8 @@ class BalancinIndividual(models.Model):
         default=40000,
         help_text='Horas de operación antes de requerir mantenimiento'
     )
-    observaciones = models.TextField(
-        'Observaciones',
-        blank=True,
-        null=True
-    )
-    fecha_registro = models.DateTimeField(
-        'Fecha de registro',
-        auto_now_add=True
-    )
     
-    # ===== NUEVOS CAMPOS DE ESTADO =====
-    ESTADO_CHOICES = [
-        ('OPERANDO', 'Operando'),
-        ('MANTENIMIENTO', 'En Mantenimiento'),
-        ('OH_PENDIENTE', 'OH Pendiente'),
-    ]
-    
+    # Estado
     estado = models.CharField(
         'Estado',
         max_length=20,
@@ -240,19 +274,21 @@ class BalancinIndividual(models.Model):
         db_index=True,
         help_text='Estado actual del balancín'
     )
-    
     fecha_cambio_estado = models.DateTimeField(
         'Fecha cambio de estado',
         auto_now=True,
         help_text='Última vez que cambió el estado'
     )
-    
     observaciones_estado = models.TextField(
         'Observaciones del estado',
         blank=True,
         null=True,
         help_text='Motivo del cambio de estado o notas adicionales'
     )
+    
+    # Metadatos
+    observaciones = models.TextField('Observaciones', blank=True, null=True)
+    fecha_registro = models.DateTimeField('Fecha de registro', auto_now_add=True)
     
     class Meta:
         db_table = 'app_balancinindividual'
@@ -271,8 +307,7 @@ class BalancinIndividual(models.Model):
         """Obtener el código del tipo de balancín desde la torre"""
         if self.sentido == 'ASCENDENTE':
             return self.torre.tipo_balancin_ascendente
-        else:
-            return self.torre.tipo_balancin_descendente
+        return self.torre.tipo_balancin_descendente
     
     @property
     def tipo_balancin(self):
@@ -293,7 +328,11 @@ class BalancinIndividual(models.Model):
             return ultimo_oh.horas_operacion >= self.rango_horas_cambio_oh
         return False
 
-# ========== ÓRDENES DE HORAS (OH) DE BALANCINES ==========
+
+# ============================================================
+# ÓRDENES DE HORAS (OH) DE BALANCINES
+# ============================================================
+
 class BalancinOH(models.Model):
     """Órdenes de horas de balancines"""
     
@@ -322,7 +361,10 @@ class BalancinOH(models.Model):
         return f"{self.balancin.codigo} - OH#{self.numero_oh}"
 
 
-# ========== HISTORIAL DE BALANCINES ==========
+# ============================================================
+# HISTORIAL DE BALANCINES
+# ============================================================
+
 class HistorialBalancin(models.Model):
     """Historial de cambios en balancines"""
     
@@ -356,7 +398,10 @@ class HistorialBalancin(models.Model):
         return f"{self.balancin.codigo} - {self.estado_anterior} → {self.estado_nuevo}"
 
 
-# ========== INVENTARIO DE REPUESTOS ==========
+# ============================================================
+# INVENTARIO DE REPUESTOS
+# ============================================================
+
 class RepuestoBalancin(models.Model):
     """Repuestos para balancines"""
     
@@ -381,6 +426,7 @@ class RepuestoBalancin(models.Model):
     @property
     def en_stock(self):
         return self.cantidad > 0
+
 
 class RepuestoAdicional(models.Model):
     """Repuestos adicionales"""
@@ -407,8 +453,9 @@ class RepuestoAdicional(models.Model):
     def en_stock(self):
         return self.cantidad > 0
 
+
 class HistorialRepuesto(models.Model):
-    """Historial de movimientos de repuestos"""
+    """Historial de movimientos de repuestos de balancín"""
     
     TIPO_MOVIMIENTO = [
         ('entrada', 'Entrada'),
@@ -435,6 +482,7 @@ class HistorialRepuesto(models.Model):
     
     def __str__(self):
         return f"{self.repuesto.item} - {self.tipo_movimiento} ({self.cantidad})"
+
 
 class HistorialAdicional(models.Model):
     """Historial para repuestos adicionales"""
@@ -475,7 +523,10 @@ class HistorialAdicional(models.Model):
         return f"{self.repuesto.item} - {self.tipo_movimiento} ({self.cantidad})"
 
 
-# ========== ACTIVITY LOG ==========
+# ============================================================
+# ACTIVITY LOG
+# ============================================================
+
 class ActivityLog(models.Model):
     """Registro de todas las actividades del sistema"""
     
@@ -542,11 +593,14 @@ class ActivityLog(models.Model):
         return f"{self.get_action_display()} - {self.get_module_display()} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
 
-# ========== NUEVO: HISTORIAL COMPLETO DE OH ==========
+# ============================================================
+# HISTORIAL COMPLETO DE OH
+# ============================================================
+
 class HistorialOH(models.Model):
     """Historial completo de Órdenes de Horas (OH) - Versión desnormalizada"""
     
-    # ===== IDENTIFICACIÓN =====
+    # Identificación
     balancin = models.ForeignKey(
         BalancinIndividual,
         on_delete=models.CASCADE,
@@ -555,19 +609,19 @@ class HistorialOH(models.Model):
         to_field='codigo'
     )
     
-    # ===== DATOS FIJOS (desnormalizados para consultas rápidas) =====
+    # Datos fijos (desnormalizados para consultas rápidas)
     linea_nombre = models.CharField('Línea', max_length=50)
     torre_numero = models.CharField('Torre', max_length=10)
     sentido = models.CharField('Sentido', max_length=20)
     tipo_balancin = models.CharField('Tipo', max_length=50)
     rango_oh_horas = models.IntegerField('Rango OH (horas)')
     
-    # ===== DATOS DE CONFIGURACIÓN =====
+    # Datos de configuración
     inicio_oc = models.DateField('Inicio OC')
     horas_promedio_dia = models.IntegerField('Horas promedio/día')
     factor_correccion = models.DecimalField('Factor', max_digits=3, decimal_places=2, default=1.00)
     
-    # ===== DATOS DEL OH =====
+    # Datos del OH
     numero_oh = models.IntegerField('N° OH')
     fecha_oh = models.DateField('Fecha OH')
     horas_operacion = models.IntegerField('Horas operación', null=True, blank=True)
@@ -575,7 +629,7 @@ class HistorialOH(models.Model):
     anio = models.IntegerField('Año', null=True, blank=True)
     dia_semana = models.CharField('Día semana', max_length=20, blank=True)
     
-    # ===== METADATOS =====
+    # Metadatos
     observaciones = models.TextField('Observaciones', blank=True)
     fecha_registro = models.DateTimeField('Fecha registro', auto_now_add=True)
     usuario_registro = models.CharField('Usuario', max_length=100, blank=True)
@@ -603,10 +657,9 @@ class HistorialOH(models.Model):
         if self.fecha_oh and not self.anio:
             self.anio = self.fecha_oh.year
         
-        # ===== SIEMPRE recalcular backlog cuando hay horas y rango =====
+        # Recalcular backlog cuando hay horas y rango
         if self.horas_operacion is not None and self.rango_oh_horas:
             self.backlog = self.rango_oh_horas - self.horas_operacion
-            print(f"⚙️ Backlog calculado: {self.rango_oh_horas} - {self.horas_operacion} = {self.backlog}")
         
         super().save(*args, **kwargs)
     
@@ -614,11 +667,21 @@ class HistorialOH(models.Model):
         return f"{self.linea_nombre} T{self.torre_numero} {self.sentido} - OH#{self.numero_oh}"
 
 
+# ============================================================
+# CONFIGURACIÓN DE REPUESTOS POR TIPO
+# ============================================================
 
 class ConfiguracionRepuestosPorTipo(models.Model):
-    """
-    Configuración de qué repuestos necesita cada tipo de balancín
-    """
+    """Configuración de qué repuestos necesita cada tipo de balancín"""
+    
+    GRUPO_CHOICES = [
+        ('POLEAS', 'Poleas'),
+        ('SEGMENTOS_2P', 'Segmentos 2P'),
+        ('SEGMENTOS_4P', 'Segmentos 4P'),
+        ('CONJUNTOS', 'Conjuntos'),
+        ('OTROS', 'Otros'),
+    ]
+    
     tipo_balancin = models.ForeignKey(
         'TipoBalancin',
         on_delete=models.CASCADE,
@@ -627,7 +690,6 @@ class ConfiguracionRepuestosPorTipo(models.Model):
         db_column='tipo_balancin_codigo',
         to_field='codigo'
     )
-    
     repuesto = models.ForeignKey(
         'RepuestoBalancin',
         on_delete=models.PROTECT,
@@ -641,9 +703,9 @@ class ConfiguracionRepuestosPorTipo(models.Model):
     id_original = models.CharField('ID Excel', max_length=20, help_text='Ej: 10870308')
     descripcion = models.TextField('Descripción')
     cantidad_por_balancin = models.PositiveIntegerField('Cantidad por balancín', default=1)
-    
-    # NUEVOS CAMPOS
     cantidad_total = models.PositiveIntegerField('Cantidad total', default=0)
+    
+    # Jerarquía
     es_conjunto = models.BooleanField('Es un conjunto', default=False)
     conjunto_padre = models.ForeignKey(
         'self',
@@ -655,13 +717,6 @@ class ConfiguracionRepuestosPorTipo(models.Model):
     )
     
     # Agrupación visual
-    GRUPO_CHOICES = [
-        ('POLEAS', 'Poleas'),
-        ('SEGMENTOS_2P', 'Segmentos 2P'),
-        ('SEGMENTOS_4P', 'Segmentos 4P'),
-        ('CONJUNTOS', 'Conjuntos'),
-        ('OTROS', 'Otros'),
-    ]
     grupo = models.CharField('Grupo', max_length=20, choices=GRUPO_CHOICES, default='OTROS')
     orden = models.PositiveIntegerField('Orden', default=0)
     
@@ -675,10 +730,14 @@ class ConfiguracionRepuestosPorTipo(models.Model):
     def __str__(self):
         return f"{self.tipo_balancin.codigo} - {self.id_original}"
 
+
+# ============================================================
+# FORMULARIOS DE REACONDICIONAMIENTO
+# ============================================================
+
 class FormularioReacondicionamiento(models.Model):
-    """
-    Cabecera del formulario de control de reacondicionamiento
-    """
+    """Cabecera del formulario de control de reacondicionamiento"""
+    
     TIPO_CHOICES = [
         ('4T-501C', '4T-501C'),
         ('6T-501C', '6T-501C'),
@@ -693,6 +752,7 @@ class FormularioReacondicionamiento(models.Model):
         ('4T/4N-420C', '4T/4N-420C'),
     ]
     
+    # Identificación
     codigo_formulario = models.CharField(
         'Código formulario',
         max_length=50,
@@ -700,6 +760,8 @@ class FormularioReacondicionamiento(models.Model):
         help_text='Ej: TRM-FCRB-16N-4TR-420C-001'
     )
     tipo = models.CharField('Tipo', max_length=20, choices=TIPO_CHOICES)
+    
+    # Relaciones
     balancin = models.ForeignKey(
         'BalancinIndividual',
         on_delete=models.PROTECT,
@@ -724,13 +786,13 @@ class FormularioReacondicionamiento(models.Model):
     linea_final = models.CharField('Línea final', max_length=50, blank=True)
     torre_final = models.CharField('Torre final', max_length=50, blank=True)
     sentido_final = models.CharField(
-    'Sentido final',
-    max_length=20,
-    choices=BalancinIndividual.SentidoBalancin.choices,
-    null=True,
-    blank=True,
-    help_text='ASCENDENTE o DESCENDENTE según la torre de destino'
-)
+        'Sentido final',
+        max_length=20,
+        choices=BalancinIndividual.SentidoBalancin.choices,
+        null=True,
+        blank=True,
+        help_text='ASCENDENTE o DESCENDENTE según la torre de destino'
+    )
     
     # Análisis predictivo
     control_particulas = models.BooleanField('Control de partículas magnéticas', default=False)
@@ -788,9 +850,8 @@ class FormularioReacondicionamiento(models.Model):
 
 
 class ItemFormularioReacondicionamiento(models.Model):
-    """
-    Detalle de los repuestos usados en un formulario
-    """
+    """Detalle de los repuestos usados en un formulario"""
+    
     formulario = models.ForeignKey(
         FormularioReacondicionamiento,
         on_delete=models.CASCADE,
@@ -826,16 +887,11 @@ class ItemFormularioReacondicionamiento(models.Model):
     
     def __str__(self):
         return f"{self.formulario.codigo_formulario} - {self.repuesto.item}"
-    
-    
-    
-    
-    
-# Al final, agrega el nuevo modelo:
+
+
 class TecnicoFormulario(models.Model):
-    """
-    Técnicos que participaron en el reacondicionamiento
-    """
+    """Técnicos que participaron en el reacondicionamiento"""
+    
     formulario = models.ForeignKey(
         'FormularioReacondicionamiento',
         on_delete=models.CASCADE,
@@ -857,18 +913,19 @@ class TecnicoFormulario(models.Model):
     
     def __str__(self):
         return f"{self.formulario.codigo_formulario} - {self.usuario.nombre}"
-    
-    
-# ========== ALERTAS DE OVERHAUL ==========
+
+
+# ============================================================
+# ALERTAS DE OVERHAUL
+# ============================================================
+
 class AlertaOH(models.Model):
-    """
-    Alertas automáticas generadas cuando un balancín necesita mantenimiento
-    """
+    """Alertas automáticas generadas cuando un balancín necesita mantenimiento"""
     
     NIVEL_CHOICES = [
-    ('VERDE', 'Normal'),
-    ('ALERTA', 'Alerta'),
-    ('VENCIDO', 'Vencido'),
+        ('VERDE', 'Normal'),
+        ('ALERTA', 'Alerta'),
+        ('VENCIDO', 'Vencido'),
     ]
     
     # Relación con el balancín
@@ -888,12 +945,10 @@ class AlertaOH(models.Model):
         choices=NIVEL_CHOICES,
         db_index=True
     )
-    
     backlog_momento = models.IntegerField(
         'Backlog al momento de la alerta',
         help_text='Horas restantes (positivo) o excedidas (negativo)'
     )
-    
     horas_operacion_momento = models.PositiveIntegerField(
         'Horas de operación al momento',
         help_text='Horas registradas cuando se generó la alerta'
@@ -905,7 +960,6 @@ class AlertaOH(models.Model):
         auto_now_add=True,
         db_index=True
     )
-    
     fecha_estimada_vencimiento = models.DateField(
         'Fecha estimada de vencimiento',
         null=True,
@@ -914,29 +968,10 @@ class AlertaOH(models.Model):
     )
     
     # Estado de la alerta
-    leida = models.BooleanField(
-        'Leída',
-        default=False,
-        db_index=True
-    )
-    
-    fecha_lectura = models.DateTimeField(
-        'Fecha de lectura',
-        null=True,
-        blank=True
-    )
-    
-    resuelta = models.BooleanField(
-        'Resuelta',
-        default=False,
-        db_index=True
-    )
-    
-    fecha_resolucion = models.DateTimeField(
-        'Fecha de resolución',
-        null=True,
-        blank=True
-    )
+    leida = models.BooleanField('Leída', default=False, db_index=True)
+    fecha_lectura = models.DateTimeField('Fecha de lectura', null=True, blank=True)
+    resuelta = models.BooleanField('Resuelta', default=False, db_index=True)
+    fecha_resolucion = models.DateTimeField('Fecha de resolución', null=True, blank=True)
     
     # Relación con el mantenimiento que la resolvió
     formulario_resolucion = models.ForeignKey(
@@ -983,17 +1018,16 @@ class AlertaOH(models.Model):
     def color_bootstrap(self):
         """Color para la interfaz según el nivel"""
         colores = {
-            'ALERTA': 'warning',     # 🟡 Amarillo
-            'CRITICO': 'danger',      # 🔴 Rojo
-            'VENCIDO': 'orange',      # 🟠 Naranja (personalizado)
-            'VERDE': 'success',       # 🟢 Verde
+            'ALERTA': 'warning',
+            'VENCIDO': 'orange',
+            'VERDE': 'success',
         }
         return colores.get(self.nivel, 'secondary')
     
     @property
     def es_critica(self):
-        """Indica si la alerta es crítica (ROJO o VENCIDO)"""
-        return self.nivel in ['ROJO', 'VENCIDO']
+        """Indica si la alerta es crítica"""
+        return self.nivel in ['VENCIDO']
     
     def marcar_como_leida(self, usuario=None):
         """Marca la alerta como leída"""
@@ -1010,3 +1044,204 @@ class AlertaOH(models.Model):
         if formulario:
             self.formulario_resolucion = formulario
         self.save(update_fields=['resuelta', 'fecha_resolucion', 'formulario_resolucion'])
+
+
+# ============================================================
+# REGISTRO DE TRABAJOS DEL TALLER
+# ============================================================
+
+class RegistroTallerDiario(models.Model):
+    """Registro diario de actividades del taller"""
+    
+    AREA_CHOICES = [
+        ('mecanica', 'Mecánica'),
+        ('electromecanica', 'Electromecánica'),
+        ('electronica', 'Electrónica'),
+        ('soldadura', 'Soldadura'),
+        ('inspeccion', 'Inspección'),
+        ('general', 'General'),
+    ]
+    
+    TURNO_CHOICES = [
+        ('T1', 'T1'),
+        ('T2', 'T2'),
+        ('T3', 'T3'),
+        ('T4', 'T4'),
+        ('T5', 'T5'),
+        ('T6', 'T6'),
+    ]
+    
+    # Datos del registro
+    fecha = models.DateField('Fecha', blank=True, null=True, help_text='Fecha del trabajo (se asigna automáticamente)')
+    turno = models.CharField('Turno', max_length=20, choices=TURNO_CHOICES, blank=True, null=True)
+    area = models.CharField('Área', max_length=20, choices=AREA_CHOICES)
+    
+    # Descripción del trabajo
+    descripcion = models.TextField('¿Qué se hizo?')
+    observaciones = models.TextField('Observaciones', blank=True)
+    
+    # Tipo de balancín
+    tipo_balancin = models.ForeignKey(
+        'TipoBalancin',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='registros_taller',
+        verbose_name='Tipo de balancín trabajado'
+    )
+    cantidad_balancines = models.PositiveIntegerField(
+        'Cantidad de balancines',
+        default=0,
+        help_text='Número de balancines trabajados'
+    )
+    
+    # Técnico (el que inició sesión)
+    tecnico = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='trabajos_registrados',
+        verbose_name='Técnico que realizó el trabajo',
+        limit_choices_to={'rol__in': ['tecnico', 'supervisor']}
+    )
+    
+    # Insumos
+    repuestos_balancin_usados = models.ManyToManyField(
+        'RepuestoBalancin',
+        through='RegistroRepuestoBalancin',
+        blank=True,
+        verbose_name='Repuestos de balancín usados'
+    )
+    repuestos_adicionales_usados = models.ManyToManyField(
+        'RepuestoAdicional',
+        through='RegistroRepuestoAdicional',
+        blank=True,
+        verbose_name='Repuestos adicionales usados'
+    )
+    consumibles = models.TextField(
+        'Consumibles utilizados',
+        blank=True,
+        help_text='Ej: Soldadura E7018 (2kg), Aceite hidráulico (5L), Grasa (1kg)'
+    )
+    
+    # Metadatos
+    registrado_por = models.ForeignKey(
+        'Usuario',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='registros_creados',
+        verbose_name='Registrado por'
+    )
+    fecha_registro = models.DateTimeField('Fecha de registro', auto_now_add=True)
+    actualizado_en = models.DateTimeField('Última actualización', auto_now=True)
+    
+    class Meta:
+        db_table = 'app_registro_taller_diario'
+        verbose_name = 'Registro de Taller'
+        verbose_name_plural = 'Registros del Taller'
+        ordering = ['-fecha', '-fecha_registro']
+    
+    def __str__(self):
+        return f"{self.fecha} - {self.get_area_display()}: {self.descripcion[:50]}"
+
+
+class RegistroRepuestoBalancin(models.Model):
+    """Repuestos de balancín usados en un registro"""
+    
+    registro = models.ForeignKey(RegistroTallerDiario, on_delete=models.CASCADE)
+    repuesto = models.ForeignKey('RepuestoBalancin', on_delete=models.PROTECT)
+    cantidad = models.DecimalField('Cantidad', max_digits=10, decimal_places=2)
+    stock_antes = models.PositiveIntegerField('Stock antes', null=True, blank=True)
+    stock_despues = models.PositiveIntegerField('Stock después', null=True, blank=True)
+    
+    class Meta:
+        db_table = 'app_registro_repuesto_balancin'
+    
+    def save(self, *args, **kwargs):
+        from django.utils import timezone
+        
+        # Asegurar que cantidad es un número
+        if isinstance(self.cantidad, str):
+            try:
+                self.cantidad = float(self.cantidad)
+            except ValueError:
+                self.cantidad = 0
+        
+        if not self.stock_antes:
+            self.stock_antes = self.repuesto.cantidad
+        
+        # Calcular nuevo stock
+        nuevo_stock = int(self.stock_antes) - int(self.cantidad)
+        self.stock_despues = max(0, nuevo_stock)
+        
+        # Actualizar el stock del repuesto
+        self.repuesto.cantidad = self.stock_despues
+        self.repuesto.fecha_ultimo_movimiento = timezone.now()
+        self.repuesto.fecha_ultima_salida = timezone.now()
+        self.repuesto.save()
+        
+        # Registrar en historial
+        try:
+            from .models import HistorialRepuesto
+            HistorialRepuesto.objects.create(
+                repuesto=self.repuesto,
+                tipo_movimiento='salida',
+                cantidad=-self.cantidad,
+                stock_restante=self.stock_despues,
+                observaciones=f"Uso en taller - {self.registro.descripcion[:100]}"
+            )
+        except Exception as e:
+            print(f"Error al guardar historial: {e}")
+        
+        super().save(*args, **kwargs)
+
+
+class RegistroRepuestoAdicional(models.Model):
+    """Repuestos adicionales usados en un registro"""
+    
+    registro = models.ForeignKey(RegistroTallerDiario, on_delete=models.CASCADE)
+    repuesto = models.ForeignKey('RepuestoAdicional', on_delete=models.PROTECT)
+    cantidad = models.DecimalField('Cantidad', max_digits=10, decimal_places=2)
+    stock_antes = models.PositiveIntegerField('Stock antes', null=True, blank=True)
+    stock_despues = models.PositiveIntegerField('Stock después', null=True, blank=True)
+    
+    class Meta:
+        db_table = 'app_registro_repuesto_adicional'
+    
+    def save(self, *args, **kwargs):
+        from django.utils import timezone
+        
+        # Asegurar que cantidad es un número
+        if isinstance(self.cantidad, str):
+            try:
+                self.cantidad = float(self.cantidad)
+            except ValueError:
+                self.cantidad = 0
+        
+        if not self.stock_antes:
+            self.stock_antes = self.repuesto.cantidad
+        
+        # Calcular nuevo stock
+        nuevo_stock = int(self.stock_antes) - int(self.cantidad)
+        self.stock_despues = max(0, nuevo_stock)
+        
+        # Actualizar el stock del repuesto
+        self.repuesto.cantidad = self.stock_despues
+        self.repuesto.fecha_ultimo_movimiento = timezone.now()
+        self.repuesto.fecha_ultima_salida = timezone.now()
+        self.repuesto.save()
+        
+        # Registrar en historial
+        try:
+            from .models import HistorialAdicional
+            HistorialAdicional.objects.create(
+                repuesto=self.repuesto,
+                tipo_movimiento='salida',
+                cantidad=-self.cantidad,
+                stock_restante=self.stock_despues,
+                observaciones=f"Uso en taller - {self.registro.descripcion[:100]}"
+            )
+        except Exception as e:
+            print(f"Error al guardar historial: {e}")
+        
+        super().save(*args, **kwargs)

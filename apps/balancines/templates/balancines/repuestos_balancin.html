@@ -1,7 +1,8 @@
-<!-- templates/app/inventario/repuestos_balancin.html -->
+<!-- templates/balancines/repuestos_adicionales.html -->
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Repuestos para Balancines - Sistema TRM{% endblock %}
+{% block title %}Repuestos Adicionales - Sistema TRM{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-4 py-4">
@@ -9,24 +10,25 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 fw-bold text-primary">
-                <i class="fas fa-cogs"></i> Repuestos para Balancines
+                <i class="fas fa-tools"></i> Repuestos Adicionales
             </h1>
-            <p class="text-muted mb-0">Gestión de repuestos específicos para balancines</p>
+            <p class="text-muted mb-0">Gestión de repuestos generales, herramientas y consumibles</p>
         </div>
         <div>
             <a href="{% url 'inventario_principal' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
-            <a href="{% url 'agregar_repuesto_balancin' %}" class="btn btn-primary">
+            <a href="{% url 'agregar_repuesto_adicional' %}" class="btn btn-primary ms-2">
                 <i class="fas fa-plus"></i> Agregar Repuesto
             </a>
+            
         </div>
     </div>
 
-    <!-- Estadísticas -->
+    <!-- Tarjetas de estadísticas -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white">
+            <div class="card bg-primary text-white shadow-sm">
                 <div class="card-body text-center">
                     <h5 class="card-title">Total Repuestos</h5>
                     <h2 class="mb-0">{{ total_repuestos }}</h2>
@@ -34,7 +36,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
+            <div class="card bg-success text-white shadow-sm">
                 <div class="card-body text-center">
                     <h5 class="card-title">Cantidad Total</h5>
                     <h2 class="mb-0">{{ total_cantidad }}</h2>
@@ -42,122 +44,137 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-white">
+            <div class="card bg-warning text-white shadow-sm">
                 <div class="card-body text-center">
                     <h5 class="card-title">Stock Bajo</h5>
-                    <h2 class="mb-0">{{ repuestos_bajo_stock.count }}</h2>
+                    <h2 class="mb-0">{{ repuestos_bajo_stock|length }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-danger text-white">
+            <div class="card bg-danger text-white shadow-sm">
                 <div class="card-body text-center">
                     <h5 class="card-title">Sin Stock</h5>
-                    <h2 class="mb-0">{{ repuestos_sin_stock.count }}</h2>
+                    <h2 class="mb-0">{{ repuestos_sin_stock|length }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
+   
 
     <!-- Filtros -->
-    <div class="card shadow mb-4">
+    <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros</h5>
+         
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-8">
-                    <div class="btn-group" role="group">
-                        <a href="{% url 'lista_repuestos_balancin' %}" 
-                           class="btn btn-outline-secondary {% if not stock_filtro %}active{% endif %}">
-                            Todos
+               
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="liveSearch" 
+                               placeholder="🔍 Buscar en tiempo real..." 
+                               value="{{ query|default:'' }}">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        {% if query %}
+                        <a href="{% url 'lista_repuestos_adicionales' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
                         </a>
-                        <a href="{% url 'lista_repuestos_balancin' %}?stock=bajo" 
-                           class="btn btn-outline-warning {% if stock_filtro == 'bajo' %}active{% endif %}">
-                            <i class="fas fa-exclamation-triangle"></i> Stock Bajo (<5)
-                        </a>
-                        <a href="{% url 'lista_repuestos_balancin' %}?stock=agotado" 
-                           class="btn btn-outline-danger {% if stock_filtro == 'agotado' %}active{% endif %}">
-                            <i class="fas fa-times-circle"></i> Sin Stock
-                        </a>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <form method="get" class="d-flex">
-                        <input type="text" class="form-control me-2" placeholder="Buscar repuesto..." 
-                               name="q" value="{{ request.GET.q|default:'' }}">
-                        <button class="btn btn-outline-primary" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
             </div>
+           
         </div>
     </div>
 
     <!-- Lista de repuestos -->
-    <div class="card shadow">
+    <div class="card shadow-sm">
         <div class="card-header bg-light">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fas fa-list"></i> Lista de Repuestos
-                    <span class="badge bg-primary ms-2">{{ repuestos|length }}</span>
+                    <i class="fas fa-list"></i> Lista de Repuestos Adicionales
+                    <span class="badge bg-primary ms-2" id="totalVisible">{{ repuestos|length }}</span>
                 </h5>
                 <div>
-                    <a href="{% url 'agregar_repuesto_balancin' %}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-plus"></i> Agregar Nuevo
-                    </a>
+                    <button class="btn btn-sm btn-outline-secondary" id="refreshBtn" title="Actualizar">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="card-body">
-            {% if repuestos %}
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped">
+                <table class="table table-hover table-striped mb-0" id="repuestosTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Código</th>
-                            <th>Descripción</th>
-                            <th>Cantidad</th>
-                            <th>Ubicación</th>
-                            <th>Último Movimiento</th>
-                            <th class="text-center">Acciones</th>
+                            <th style="width: 15%">Código</th>
+                            <th style="width: 30%">Descripción</th>
+                            <th style="width: 10%" class="text-center">Cantidad</th>
+                            <th style="width: 15%">Ubicación</th>
+                            <th style="width: 15%">Último Movimiento</th>
+                            <th style="width: 15%" class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for repuesto in repuestos %}
-                        <tr>
+                        <tr data-item="{{ repuesto.item|lower }}">
                             <td>
-                                <strong>{{ repuesto.item }}</strong>
-                            </td>
-                            <td>
-                                {{ repuesto.descripcion|truncatechars:50 }}
-                                {% if repuesto.observaciones %}
-                                <small class="text-muted d-block">{{ repuesto.observaciones|truncatechars:30 }}</small>
+                                <strong class="text-primary">{{ repuesto.item }}</strong>
+                                {% if repuesto.stock_minimo %}
+                                <small class="text-muted d-block">Mín: {{ repuesto.stock_minimo }}</small>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if repuesto.cantidad > 10 %}
-                                <span class="badge bg-success fs-6">{{ repuesto.cantidad }}</span>
-                                {% elif repuesto.cantidad > 0 %}
-                                <span class="badge bg-warning text-dark fs-6">{{ repuesto.cantidad }}</span>
+                                {{ repuesto.descripcion|truncatechars:60 }}
+                                {% if repuesto.observaciones %}
+                                <i class="fas fa-comment text-muted ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="{{ repuesto.observaciones|truncatechars:100 }}"></i>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if repuesto.cantidad <= 0 %}
+                                    <span class="badge bg-danger fs-6 p-2">
+                                        <i class="fas fa-ban me-1"></i> {{ repuesto.cantidad }}
+                                    </span>
+                                {% elif repuesto.cantidad <= repuesto.stock_minimo|default:5 %}
+                                    <span class="badge bg-warning text-dark fs-6 p-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> {{ repuesto.cantidad }}
+                                    </span>
                                 {% else %}
-                                <span class="badge bg-danger fs-6">{{ repuesto.cantidad }}</span>
+                                    <span class="badge bg-success fs-6 p-2">
+                                        <i class="fas fa-check-circle me-1"></i> {{ repuesto.cantidad }}
+                                    </span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if repuesto.ubicacion %}
-                                <i class="fas fa-map-marker-alt text-muted"></i>
+                                <i class="fas fa-map-marker-alt text-muted me-1"></i>
                                 {{ repuesto.ubicacion|truncatechars:20 }}
                                 {% else %}
                                 <span class="text-muted">No especificada</span>
                                 {% endif %}
                             </td>
-                            <td>{{ repuesto.fecha_ultimo_movimiento|date:"d/m/Y" }}</td>
+                            <td>
+                                <small>
+                                    <i class="far fa-calendar-alt text-muted me-1"></i>
+                                    {{ repuesto.fecha_ultimo_movimiento|date:"d/m/Y"|default:"-" }}
+                                </small>
+                                {% if repuesto.fecha_ultimo_movimiento %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    {{ repuesto.fecha_ultimo_movimiento|date:"H:i" }}
+                                </small>
+                                {% endif %}
+                            </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <!-- Botón Detalles (Modal) -->
+                                    <!-- Botón Detalles -->
                                     <button type="button" class="btn btn-outline-primary" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#detalleModal{{ repuesto.item|slugify }}"
@@ -165,7 +182,7 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     
-                                    <!-- Botón Entrada Stock (Modal) -->
+                                    <!-- Botón Entrada Stock -->
                                     <button type="button" class="btn btn-outline-success" 
                                             data-bs-toggle="modal"
                                             data-bs-target="#entradaModal{{ repuesto.item|slugify }}"
@@ -173,7 +190,7 @@
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
                                     
-                                    <!-- Botón Salida Stock (Modal) -->
+                                    <!-- Botón Salida Stock -->
                                     <button type="button" class="btn btn-outline-danger"
                                             data-bs-toggle="modal"
                                             data-bs-target="#salidaModal{{ repuesto.item|slugify }}"
@@ -183,31 +200,34 @@
                                 </div>
                             </td>
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">No hay repuestos adicionales registrados</h4>
+                                <p class="text-muted mb-4">Comienza agregando el primer repuesto adicional.</p>
+                                <a href="{% url 'agregar_repuesto_adicional' %}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-plus me-2"></i> Agregar Primer Repuesto
+                                </a>
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No hay repuestos registrados</h4>
-                <p class="text-muted mb-4">Comienza agregando el primer repuesto para balancines.</p>
-                <a href="{% url 'agregar_repuesto_balancin' %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-plus me-2"></i> Agregar Primer Repuesto
-                </a>
-            </div>
-            {% endif %}
         </div>
         <div class="card-footer bg-light">
-            <div class="row">
+            <div class="row align-items-center">
                 <div class="col-md-6">
                     <small class="text-muted">
-                        <i class="fas fa-info-circle"></i> Mostrando {{ repuestos|length }} repuestos
+                        <i class="fas fa-info-circle me-1"></i>
+                        Mostrando <span id="visibleCount">{{ repuestos|length }}</span> de {{ total_repuestos }} repuestos
                     </small>
                 </div>
                 <div class="col-md-6 text-end">
                     <small class="text-muted">
-                        <i class="fas fa-sync-alt"></i> Actualizado: {% now "d/m/Y H:i" %}
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Actualizado: {% now "d/m/Y H:i:s" %}
                     </small>
                 </div>
             </div>
@@ -215,7 +235,7 @@
     </div>
 </div>
 
-<!-- ========== MODALES (FUERA DE LA TABLA) ========== -->
+<!-- ========== MODALES ========== -->
 {% for repuesto in repuestos %}
 <!-- Modal Detalles -->
 <div class="modal fade" id="detalleModal{{ repuesto.item|slugify }}" tabindex="-1">
@@ -223,36 +243,72 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-info-circle"></i> {{ repuesto.item }}
+                    <i class="fas fa-info-circle me-2"></i> {{ repuesto.item }}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>Código:</strong> {{ repuesto.item }}</p>
-                        <p><strong>Descripción:</strong> {{ repuesto.descripcion }}</p>
-                        <p><strong>Cantidad:</strong> 
-                            <span class="badge {% if repuesto.cantidad > 10 %}bg-success{% elif repuesto.cantidad > 0 %}bg-warning{% else %}bg-danger{% endif %}">
-                                {{ repuesto.cantidad }}
-                            </span>
-                        </p>
+                        <div class="mb-3">
+                            <label class="text-muted small">Código</label>
+                            <p class="mb-0 fw-bold">{{ repuesto.item }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">Descripción</label>
+                            <p class="mb-0">{{ repuesto.descripcion|default:"-" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">Cantidad</label>
+                            <p class="mb-0">
+                                {% if repuesto.cantidad <= 0 %}
+                                    <span class="badge bg-danger">{{ repuesto.cantidad }} unidades</span>
+                                {% elif repuesto.cantidad <= repuesto.stock_minimo|default:5 %}
+                                    <span class="badge bg-warning text-dark">{{ repuesto.cantidad }} unidades</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ repuesto.cantidad }} unidades</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% if repuesto.stock_minimo %}
+                        <div class="mb-3">
+                            <label class="text-muted small">Stock mínimo</label>
+                            <p class="mb-0">{{ repuesto.stock_minimo }} unidades</p>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Ubicación:</strong> {{ repuesto.ubicacion|default:"No especificada" }}</p>
-                        <p><strong>Ingreso:</strong> {{ repuesto.fecha_ingreso|date:"d/m/Y H:i" }}</p>
-                        <p><strong>Último movimiento:</strong> {{ repuesto.fecha_ultimo_movimiento|date:"d/m/Y H:i" }}</p>
+                        <div class="mb-3">
+                            <label class="text-muted small">Ubicación</label>
+                            <p class="mb-0">{{ repuesto.ubicacion|default:"No especificada" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">Fecha de ingreso</label>
+                            <p class="mb-0">{{ repuesto.fecha_ingreso|date:"d/m/Y H:i"|default:"-" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">Último movimiento</label>
+                            <p class="mb-0">{{ repuesto.fecha_ultimo_movimiento|date:"d/m/Y H:i"|default:"-" }}</p>
+                        </div>
+                        {% if repuesto.fecha_ultima_salida %}
+                        <div class="mb-3">
+                            <label class="text-muted small">Última salida</label>
+                            <p class="mb-0">{{ repuesto.fecha_ultima_salida|date:"d/m/Y H:i"|default:"-" }}</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% if repuesto.observaciones %}
                 <div class="mt-3">
-                    <h6>Observaciones:</h6>
+                    <hr>
+                    <label class="text-muted small">Observaciones</label>
                     <p class="mb-0">{{ repuesto.observaciones }}</p>
                 </div>
                 {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+               
             </div>
         </div>
     </div>
@@ -264,31 +320,44 @@
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-plus-circle"></i> Entrada de Stock
+                    <i class="fas fa-plus-circle me-2"></i> Entrada de Stock
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'entrada_stock_balancin' repuesto.item %}">
+            <form method="post" action="{% url 'entrada_stock_adicional' repuesto.item %}">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p><strong>Repuesto:</strong> {{ repuesto.item }}</p>
-                    <p><strong>Stock actual:</strong> {{ repuesto.cantidad }} unidades</p>
-                    
                     <div class="mb-3">
-                        <label class="form-label">Cantidad a agregar:</label>
+                        <label class="form-label fw-bold">Repuesto</label>
+                        <p class="mb-0">{{ repuesto.item }} - {{ repuesto.descripcion|truncatechars:50 }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock actual</label>
+                        <div class="alert alert-secondary mb-0 py-2">
+                            <i class="fas fa-boxes me-2"></i>
+                            {{ repuesto.cantidad }} unidades
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad a agregar <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" name="cantidad" 
                                min="1" value="1" required>
                     </div>
-                    
                     <div class="mb-3">
-                        <label class="form-label">Observaciones:</label>
+                        <label class="form-label">Observaciones</label>
                         <textarea class="form-control" name="observaciones" 
-                                  rows="2" placeholder="Motivo de la entrada..."></textarea>
+                                  rows="2" placeholder="Ej: Compra realizada el día..."></textarea>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Al registrar una entrada, el stock se actualizará automáticamente.
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Registrar Entrada</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i> Registrar Entrada
+                    </button>
                 </div>
             </form>
         </div>
@@ -301,33 +370,46 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-minus-circle"></i> Salida de Stock
+                    <i class="fas fa-minus-circle me-2"></i> Salida de Stock
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{% url 'salida_stock_balancin' repuesto.item %}">
+            <form method="post" action="{% url 'salida_stock_adicional' repuesto.item %}">
                 {% csrf_token %}
                 <div class="modal-body">
-                    <p><strong>Repuesto:</strong> {{ repuesto.item }}</p>
-                    <p><strong>Stock actual:</strong> {{ repuesto.cantidad }} unidades</p>
-                    
                     <div class="mb-3">
-                        <label class="form-label">Cantidad a retirar:</label>
+                        <label class="form-label fw-bold">Repuesto</label>
+                        <p class="mb-0">{{ repuesto.item }} - {{ repuesto.descripcion|truncatechars:50 }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock actual</label>
+                        <div class="alert alert-secondary mb-0 py-2">
+                            <i class="fas fa-boxes me-2"></i>
+                            {{ repuesto.cantidad }} unidades
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad a retirar <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" name="cantidad" 
                                min="1" max="{{ repuesto.cantidad }}" 
                                value="1" required>
                         <div class="form-text">Máximo disponible: {{ repuesto.cantidad }}</div>
                     </div>
-                    
                     <div class="mb-3">
-                        <label class="form-label">Observaciones:</label>
+                        <label class="form-label">Observaciones</label>
                         <textarea class="form-control" name="observaciones" 
-                                  rows="2" placeholder="Motivo de la salida..."></textarea>
+                                  rows="2" placeholder="Ej: Uso en taller, mantenimiento..."></textarea>
+                    </div>
+                    <div class="alert alert-warning small mb-0">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Esta acción no se puede deshacer. Verifica la cantidad.
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Registrar Salida</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-save me-1"></i> Registrar Salida
+                    </button>
                 </div>
             </form>
         </div>
@@ -335,14 +417,13 @@
 </div>
 {% endfor %}
 
-<!-- Modal de ayuda para historial -->
+<!-- Modal de ayuda -->
 <div class="modal fade" id="helpModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-question-circle me-2"></i>
-                    Ayuda - Historial de Actividades
+                    <i class="fas fa-question-circle me-2"></i> Ayuda - Gestión de Repuestos
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -360,13 +441,13 @@
                     <p class="small text-muted">Cuando se registra un repuesto por primera vez.</p>
                 </div>
                 <div class="mb-3">
-                    <h6><span class="badge bg-warning me-2">✏️</span> Actualización</h6>
-                    <p class="small text-muted">Cuando se modifica la información de un repuesto.</p>
+                    <h6><span class="badge bg-warning me-2">⚠️</span> Stock bajo</h6>
+                    <p class="small text-muted">Cuando la cantidad es menor a 5 unidades.</p>
                 </div>
                 <hr>
                 <p class="small text-muted mb-0">
                     <i class="fas fa-info-circle me-1"></i>
-                    El historial se actualiza automáticamente con cada acción en el sistema.
+                    Todas las transacciones quedan registradas en el historial.
                 </p>
             </div>
             <div class="modal-footer">
@@ -378,187 +459,275 @@
 
 <!-- Estilos personalizados -->
 <style>
-/* Estilos generales */
-.badge {
-    font-weight: 500;
-}
-.table-hover tbody tr:hover {
-    background-color: rgba(0, 123, 255, 0.05);
-}
 .card {
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 .card-header {
-    border-radius: 10px 10px 0 0 !important;
+    border-radius: 12px 12px 0 0 !important;
+    background-color: #f8f9fa;
+}
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    cursor: pointer;
 }
 .btn-group .btn {
-    border-radius: 5px !important;
+    border-radius: 6px !important;
     margin: 0 2px;
 }
 .modal-content {
-    border-radius: 10px;
+    border-radius: 12px;
 }
-.btn-group-sm > .btn {
-    padding: 0.25rem 0.5rem !important;
-    font-size: 0.875rem !important;
+.badge {
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
 }
-
-/* Estilos específicos para el historial de actividades */
-.activity-timeline {
-    position: relative;
+#liveSearch {
+    border-right: none;
 }
-
-.activity-item {
-    transition: all 0.3s ease;
-    cursor: default;
+#liveSearch:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
 }
-
-.activity-item:hover {
-    background-color: rgba(0, 123, 255, 0.05);
-    transform: translateX(5px);
-}
-
-.activity-icon {
-    position: relative;
-}
-
-.activity-icon .badge {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.activity-item:hover .activity-icon .badge {
-    transform: scale(1.1);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Colores personalizados para badges */
-.bg-success {
-    background-color: #28a745 !important;
-}
-.bg-danger {
-    background-color: #dc3545 !important;
-}
-.bg-primary {
-    background-color: #007bff !important;
-}
-.bg-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-}
-.bg-info {
-    background-color: #17a2b8 !important;
-}
-
-/* Animación de actualización */
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.refreshing {
-    animation: spin 1s linear infinite;
-}
-
-/* Estilo para texto de tiempo */
-.text-muted small {
-    font-size: 0.85rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .activity-item .row {
-        flex-direction: column;
-    }
-    .activity-item .col-auto {
-        margin-bottom: 10px;
-    }
-    .activity-item .text-end {
-        text-align: left !important;
-        margin-top: 5px;
-    }
+.alert {
+    border-radius: 8px;
 }
 </style>
 
 <!-- JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Botón de actualizar actividades
-    const refreshBtn = document.getElementById('refresh-activities');
+    // ========== LIVE SEARCH ==========
+    const searchInput = document.getElementById('liveSearch');
+    const tableBody = document.querySelector('#repuestosTable tbody');
+    const rows = tableBody ? tableBody.querySelectorAll('tr:not(.no-results)') : [];
+    const visibleCountSpan = document.getElementById('visibleCount');
+    const totalVisibleSpan = document.getElementById('totalVisible');
+    
+    function updateVisibleCount() {
+        let visible = 0;
+        rows.forEach(row => {
+            if (row.style.display !== 'none') visible++;
+        });
+        if (visibleCountSpan) visibleCountSpan.textContent = visible;
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            rows.forEach(row => {
+                const itemText = row.getAttribute('data-item') || '';
+                const rowText = row.textContent.toLowerCase();
+                
+                if (searchTerm === '' || rowText.includes(searchTerm) || itemText.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            updateVisibleCount();
+            
+            // Mostrar mensaje si no hay resultados
+            let noResultsRow = tableBody.querySelector('.no-results-row');
+            const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+            
+            if (visibleRows.length === 0 && rows.length > 0) {
+                if (!noResultsRow) {
+                    noResultsRow = document.createElement('tr');
+                    noResultsRow.className = 'no-results-row';
+                    noResultsRow.innerHTML = `
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No se encontraron repuestos que coincidan con "<strong>${searchTerm}</strong>"</p>
+                        </td>
+                    `;
+                    tableBody.appendChild(noResultsRow);
+                } else {
+                    noResultsRow.style.display = '';
+                    noResultsRow.querySelector('td').innerHTML = `
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No se encontraron repuestos que coincidan con "<strong>${searchTerm}</strong>"</p>
+                        </td>
+                    `;
+                }
+            } else if (noResultsRow) {
+                noResultsRow.style.display = 'none';
+            }
+        });
+    }
+    
+    // ========== FILTRO POR FECHAS ==========
+    const fechaDesde = document.getElementById('fecha_desde');
+    const fechaHasta = document.getElementById('fecha_hasta');
+    const filtrarFechasBtn = document.getElementById('filtrarFechas');
+    
+    if (filtrarFechasBtn) {
+        filtrarFechasBtn.addEventListener('click', function() {
+            const desde = fechaDesde.value;
+            const hasta = fechaHasta.value;
+            let url = window.location.pathname;
+            const params = new URLSearchParams();
+            
+            if (desde) params.append('fecha_desde', desde);
+            if (hasta) params.append('fecha_hasta', hasta);
+            if (stock_filtro) params.append('stock', '{{ stock_filtro }}');
+            if (query) params.append('q', '{{ query }}');
+            
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+            window.location.href = url;
+        });
+    }
+    
+    // ========== GRÁFICOS ==========
+    const graficosContainer = document.getElementById('graficosContainer');
+    const mostrarGraficosBtn = document.getElementById('mostrarGraficos');
+    
+    if (mostrarGraficosBtn) {
+        mostrarGraficosBtn.addEventListener('click', function() {
+            if (graficosContainer.style.display === 'none') {
+                graficosContainer.style.display = 'flex';
+                mostrarGraficosBtn.innerHTML = '<i class="fas fa-chart-line"></i> Ocultar Gráficos';
+                cargarGraficos();
+            } else {
+                graficosContainer.style.display = 'none';
+                mostrarGraficosBtn.innerHTML = '<i class="fas fa-chart-line"></i> Mostrar Gráficos';
+            }
+        });
+    }
+    
+    function cargarGraficos() {
+        // Top repuestos
+        const topCtx = document.getElementById('topRepuestosChart');
+        if (topCtx) {
+            fetch('/api/top-repuestos-adicionales/')
+                .then(response => response.json())
+                .then(data => {
+                    new Chart(topCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels || [],
+                            datasets: [{
+                                label: 'Veces usado',
+                                data: data.valores || [],
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { position: 'top' }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: { display: true, text: 'Cantidad de usos' }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error cargando top repuestos:', error));
+        }
+        
+        // Distribución por estado
+        const estadoCtx = document.getElementById('estadoRepuestosChart');
+        if (estadoCtx) {
+            fetch('/api/estado-repuestos-adicionales/')
+                .then(response => response.json())
+                .then(data => {
+                    new Chart(estadoCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.labels || ['Normal', 'Bajo Stock', 'Sin Stock'],
+                            datasets: [{
+                                data: data.valores || [0, 0, 0],
+                                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { position: 'bottom' }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error cargando distribución:', error));
+        }
+    }
+    
+    // ========== ACTUALIZAR PÁGINA ==========
+    const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', function() {
             const icon = this.querySelector('i');
-            
-            // Animación de carga
             icon.classList.add('fa-spin');
             this.disabled = true;
-            this.innerHTML = '<i class="fas fa-sync-alt fa-spin me-1"></i> Actualizando...';
-            
-            // Recargar la página después de 1 segundo
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
+            this.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Actualizando...';
+            setTimeout(() => location.reload(), 500);
         });
     }
     
-    // Validar que no se retire más del stock disponible en modales de salida
-    document.querySelectorAll('form[action*="salida_stock"]').forEach(form => {
+    // ========== EXPORTAR EXCEL ==========
+    const exportBtn = document.getElementById('exportExcelBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function(e) {
+            const icon = this.querySelector('i');
+            icon.classList.add('fa-spin');
+            setTimeout(() => icon.classList.remove('fa-spin'), 2000);
+        });
+    }
+    
+    // ========== VALIDACIÓN MODALES ==========
+    document.querySelectorAll('form[action*="salida_stock_adicional"]').forEach(form => {
         const cantidadInput = form.querySelector('input[name="cantidad"]');
-        const maxValue = parseInt(cantidadInput.getAttribute('max')) || 0;
+        const maxValue = parseInt(cantidadInput?.getAttribute('max')) || 0;
         
-        cantidadInput.addEventListener('change', function() {
-            const value = parseInt(this.value) || 0;
-            if (value > maxValue) {
-                alert(`No puedes retirar más de ${maxValue} unidades. Stock insuficiente.`);
-                this.value = maxValue;
-            }
-            if (value < 1) {
-                this.value = 1;
-            }
-        });
-        
-        cantidadInput.addEventListener('input', function() {
-            const value = parseInt(this.value) || 0;
-            if (value > maxValue) {
-                this.value = maxValue;
-            }
-        });
+        if (cantidadInput) {
+            cantidadInput.addEventListener('change', function() {
+                const value = parseInt(this.value) || 0;
+                if (value > maxValue) {
+                    alert(`⚠️ No puedes retirar más de ${maxValue} unidades. Stock insuficiente.`);
+                    this.value = maxValue;
+                }
+                if (value < 1) this.value = 1;
+            });
+        }
     });
     
-    // Auto-actualización cada 2 minutos (opcional)
-    let autoRefresh = false; // Cambiar a true si quieres auto-refresh
+    // ========== TOOLTIPS ==========
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(t => new bootstrap.Tooltip(t));
     
-    if (autoRefresh) {
-        setInterval(() => {
-            const refreshBtn = document.getElementById('refresh-activities');
-            if (refreshBtn && !refreshBtn.disabled) {
-                refreshBtn.click();
-            }
-        }, 120000); // 2 minutos
+    // ========== BOTÓN AYUDA ==========
+    const helpBtn = document.querySelector('[data-bs-target="#helpModal"]');
+    if (!helpBtn) {
+        const footer = document.querySelector('.card-footer');
+        if (footer) {
+            const helpLink = document.createElement('button');
+            helpLink.className = 'btn btn-sm btn-link text-muted ms-2';
+            helpLink.setAttribute('data-bs-toggle', 'modal');
+            helpLink.setAttribute('data-bs-target', '#helpModal');
+            helpLink.innerHTML = '<i class="fas fa-question-circle"></i> Ayuda';
+            footer.querySelector('.col-md-6:last-child').appendChild(helpLink);
+        }
     }
-    
-    // Tooltips para botones de acciones
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-    
-    // Efecto hover para actividades
-    document.querySelectorAll('.activity-item').forEach(item => {
-        item.addEventListener('mouseenter', function() {
-            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        });
-        
-        item.addEventListener('mouseleave', function() {
-            this.style.boxShadow = 'none';
-        });
-    });
 });
 </script>
 {% endblock %}

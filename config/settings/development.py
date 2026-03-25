@@ -2,7 +2,7 @@ from .base import *
 
 # Configuración de desarrollo
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 # Media files (para las imágenes)
 MEDIA_URL = '/media/'

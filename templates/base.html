@@ -1,241 +1,329 @@
+<!-- templates/base.html -->
 {% load static %}
 
 <!doctype html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d6efd" />
     <title>{% block title %}Taller de Reparaciones Mayores{% endblock %}</title>
 
     <!-- Bootstrap -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
     <!-- FontAwesome -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 
+    <style>
+        /* ========== MEJORAS RESPONSIVAS ========== */
+        :root {
+            --header-height: 60px;
+        }
+        
+        /* Navbar mejorado para móvil */
+        .navbar-brand {
+            font-size: 1rem;
+        }
+        @media (min-width: 768px) {
+            .navbar-brand {
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* Dropdown de notificaciones responsivo */
+        .dropdown-menu {
+            max-width: 95vw;
+            width: 100%;
+        }
+        @media (min-width: 576px) {
+            .dropdown-menu {
+                width: 400px;
+                max-width: 90vw;
+            }
+        }
+        
+        /* Cards responsivas */
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        /* Tablas responsivas */
+        .table-responsive {
+            border-radius: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Botones en móvil */
+        .btn-group-responsive {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        @media (max-width: 576px) {
+            .btn-group-responsive .btn {
+                flex: 1;
+                min-width: 80px;
+                font-size: 0.75rem;
+                padding: 0.4rem 0.5rem;
+            }
+        }
+        
+        /* Contenedor principal */
+        .container, .container-fluid {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        @media (min-width: 768px) {
+            .container, .container-fluid {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+        
+        /* Footer responsivo */
+        footer {
+            margin-top: 2rem;
+        }
+        footer .row {
+            text-align: center;
+        }
+        @media (min-width: 768px) {
+            footer .row {
+                text-align: left;
+            }
+            footer .text-md-end {
+                text-align: right !important;
+            }
+        }
+        
+        /* Ajustes de fuente en móvil */
+        @media (max-width: 576px) {
+            h1, .h1 {
+                font-size: 1.5rem;
+            }
+            h2, .h2 {
+                font-size: 1.25rem;
+            }
+            h3, .h3 {
+                font-size: 1.1rem;
+            }
+            .lead {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Mejoras de touch */
+        .btn, .nav-link, .dropdown-item {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Scroll suave */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Animaciones */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
     {% block extra_css %}{% endblock %}
-  </head>
+</head>
 
-  <body class="bg-light">
+<body class="bg-light">
 
-    <!-- NAVBAR -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-      <div class="container">
+    <!-- NAVBAR RESPONSIVA -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm sticky-top">
+        <div class="container">
+            <!-- Logo adaptable -->
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-rocket me-1"></i>
+                <span class="d-none d-md-inline">Taller de Reparaciones Mayores</span>
+                <span class="d-inline d-md-none">TRM</span>
+            </a>
 
-        <!-- Logo adaptable -->
-        <a class="navbar-brand fw-bold" href="/">
-          <i class="fas fa-rocket me-1"></i>
-          <span class="d-none d-md-inline">Taller de Reparaciones Mayores</span>
-          <span class="d-inline d-md-none">Taller</span>
-        </a>
+            <!-- Botón móvil -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <!-- Botón móvil -->
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <!-- Links -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto text-center text-lg-start align-items-center">
-
-            <li class="nav-item">
-              <a class="nav-link" href="/">
-                <i class="fas fa-home me-1"></i> Inicio
-              </a>
-            </li>
-
-            {% if user.is_authenticated %}
-              <li class="nav-item">
-                <a class="nav-link" href="/dashboard/">
-                  <i class="fas fa-tachometer-alt me-1"></i> Usuario
-                </a>
-              </li>
-
-              <!-- ===== NOTIFICACIONES MEJORADAS ===== -->
-              <li class="nav-item dropdown me-2">
-                <a class="nav-link position-relative" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="fas fa-bell" style="font-size: 1.2rem;"></i>
-                  {% if total_notificaciones > 0 %}
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
-                      {{ total_notificaciones }}
-                    </span>
-                  {% endif %}
-                </a>
-                <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificacionesDropdown" style="width: 400px; max-height: 500px; overflow-y: auto; padding: 0;">
-                  <div class="dropdown-header d-flex justify-content-between align-items-center bg-light p-3 border-bottom">
-  <h6 class="mb-0 fw-bold">Notificaciones</h6>
-  <div>
-    {% if total_vencido > 0 %}
-      <span class="badge bg-dark me-1" title="Vencidos">{{ total_vencido }}</span>
-    {% endif %}
-    {% if total_rojo > 0 %}
-      <span class="badge bg-danger me-1" title="Críticos">{{ total_rojo }}</span>
-    {% endif %}
-    {% if total_naranja > 0 %}
-      <span class="badge bg-warning text-dark" title="Urgentes">{{ total_naranja }}</span>
-    {% endif %}
-  </div>
-</div>
-                  
-                  <div id="lista-notificaciones">
-                    {% for alerta in notificaciones %}
-                      <div class="border-bottom" data-id="{{ alerta.id }}">
-                        <!-- Toda la notificación es clickeable para ir al dashboard -->
-                        <a href="{% url 'dashboard_alertas' %}" class="text-decoration-none">
-                          <div class="px-3 py-2 bg-white hover-bg-light" style="cursor: pointer; transition: background 0.2s;">
-                            <div class="d-flex align-items-start">
-                              <div class="me-2 mt-1">
-                                {% if alerta.nivel == 'ROJO' or alerta.nivel == 'VENCIDO' %}
-                                  <i class="fas fa-exclamation-circle text-danger fs-5"></i>
-                                {% elif alerta.nivel == 'NARANJA' %}
-                                  <i class="fas fa-exclamation-triangle text-warning fs-5"></i>
-                                {% elif alerta.nivel == 'AMARILLO' %}
-                                  <i class="fas fa-clock text-warning fs-5"></i>
-                                {% else %}
-                                  <i class="fas fa-check-circle text-success fs-5"></i>
-                                {% endif %}
-                              </div>
-                              <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-center">
-                                  <strong class="text-dark">{{ alerta.balancin.codigo }}</strong>
-                                  <small class="text-muted">{{ alerta.fecha_generacion|timesince }}</small>
-                                </div>
-                                <div class="small text-secondary">
-                                  Línea {{ alerta.balancin.torre.linea.nombre }} - 
-                                  T{{ alerta.balancin.torre.numero_torre }} 
-                                  ({{ alerta.balancin.get_sentido_display }})
-                                </div>
-                                <div class="small d-flex justify-content-between align-items-center mt-1">
-                                  <span class="badge bg-{{ alerta.color_bootstrap }}">
-                                    {{ alerta.get_nivel_display }}
-                                  </span>
-                                  <span class="fw-bold">
-                                    {% if alerta.backlog_momento < 0 %}
-                                      <span class="text-danger">{{ alerta.backlog_momento }}h</span>
-                                    {% else %}
-                                      <span class="text-dark">{{ alerta.backlog_momento }}h</span>
-                                    {% endif %}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+            <!-- Links -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto text-center text-lg-start align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i> Inicio
                         </a>
-                        <!-- Botones de acción -->
-                        <div class="px-3 py-2 bg-light d-flex justify-content-end gap-2 border-top">
-                          <a href="{% url 'dashboard_alertas' %}" class="btn btn-sm btn-outline-info">
-                            <i class="fas fa-eye"></i> Ver detalles
-                          </a>
-                          <button class="btn btn-sm btn-outline-primary btn-marcar-leida" 
-                                  data-id="{{ alerta.id }}">
-                            <i class="fas fa-check"></i> Marcar leída
-                          </button>
-                        </div>
-                      </div>
-                    {% empty %}
-                      <div class="dropdown-item text-center py-4">
-                        <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
-                        <p class="mb-1 fw-bold">No hay notificaciones</p>
-                        <small class="text-muted">Todo está en orden</small>
-                      </div>
-                    {% endfor %}
-                  </div>
-                  
-                  {% if total_notificaciones > 5 %}
-                    <div class="dropdown-divider m-0"></div>
-                    <a href="{% url 'dashboard_alertas' %}" class="dropdown-item text-center text-primary fw-bold py-3">
-                      Ver todas las notificaciones ({{ total_notificaciones }}) →
-                    </a>
-                  {% endif %}
-                </div>
-              </li>
+                    </li>
 
-              <li class="nav-item">
-                <span class="nav-link text-white">
-                  <i class="fas fa-user me-1"></i> {{ user.username }}
-                </span>
-              </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard/">
+                                <i class="fas fa-tachometer-alt me-1"></i> Usuario
+                            </a>
+                        </li>
 
-              <li class="nav-item">
-                <a class="nav-link" href="/logout/">
-                  <i class="fas fa-sign-out-alt me-1"></i> Salir
-                </a>
-              </li>
-            {% else %}
-              <li class="nav-item">
-                <a class="nav-link" href="/login/">
-                  <i class="fas fa-sign-in-alt me-1"></i> Ingresar
-                </a>
-              </li>
-            {% endif %}
+                        <!-- Notificaciones mejoradas -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link position-relative" href="#" id="notificacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bell" style="font-size: 1.2rem;"></i>
+                                {% if total_notificaciones > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                        {{ total_notificaciones }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificacionesDropdown" style="max-height: 500px; overflow-y: auto; padding: 0;">
+                                <!-- Contenido del dropdown -->
+                                <div class="dropdown-header d-flex justify-content-between align-items-center bg-light p-3 border-bottom">
+                                    <h6 class="mb-0 fw-bold">Notificaciones</h6>
+                                    <div>
+                                        {% if total_vencido > 0 %}
+                                            <span class="badge bg-dark me-1" title="Vencidos">{{ total_vencido }}</span>
+                                        {% endif %}
+                                        {% if total_rojo > 0 %}
+                                            <span class="badge bg-danger me-1" title="Críticos">{{ total_rojo }}</span>
+                                        {% endif %}
+                                        {% if total_naranja > 0 %}
+                                            <span class="badge bg-warning text-dark" title="Urgentes">{{ total_naranja }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div id="lista-notificaciones">
+                                    {% for alerta in notificaciones %}
+                                        <div class="border-bottom" data-id="{{ alerta.id }}">
+                                            <a href="{% url 'dashboard_alertas' %}" class="text-decoration-none">
+                                                <div class="px-3 py-2 bg-white hover-bg-light" style="cursor: pointer;">
+                                                    <div class="d-flex align-items-start">
+                                                        <div class="me-2 mt-1">
+                                                            {% if alerta.nivel == 'ROJO' or alerta.nivel == 'VENCIDO' %}
+                                                                <i class="fas fa-exclamation-circle text-danger fs-5"></i>
+                                                            {% elif alerta.nivel == 'NARANJA' %}
+                                                                <i class="fas fa-exclamation-triangle text-warning fs-5"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-check-circle text-success fs-5"></i>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                                                <strong class="text-dark">{{ alerta.balancin.codigo }}</strong>
+                                                                <small class="text-muted">{{ alerta.fecha_generacion|timesince }}</small>
+                                                            </div>
+                                                            <div class="small text-secondary">
+                                                                Línea {{ alerta.balancin.torre.linea.nombre }} - T{{ alerta.balancin.torre.numero_torre }}
+                                                            </div>
+                                                            <div class="small d-flex justify-content-between align-items-center mt-1 flex-wrap gap-1">
+                                                                <span class="badge bg-{{ alerta.color_bootstrap }}">
+                                                                    {{ alerta.get_nivel_display }}
+                                                                </span>
+                                                                <span class="fw-bold">
+                                                                    {% if alerta.backlog_momento < 0 %}
+                                                                        <span class="text-danger">{{ alerta.backlog_momento }}h</span>
+                                                                    {% else %}
+                                                                        <span class="text-dark">{{ alerta.backlog_momento }}h</span>
+                                                                    {% endif %}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            <div class="px-3 py-2 bg-light d-flex justify-content-end gap-2 border-top">
+                                                <a href="{% url 'dashboard_alertas' %}" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i> Ver
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-primary btn-marcar-leida" data-id="{{ alerta.id }}">
+                                                    <i class="fas fa-check"></i> Leída
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="dropdown-item text-center py-4">
+                                            <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
+                                            <p class="mb-1 fw-bold">No hay notificaciones</p>
+                                            <small class="text-muted">Todo está en orden</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                {% if total_notificaciones > 5 %}
+                                    <div class="dropdown-divider m-0"></div>
+                                    <a href="{% url 'dashboard_alertas' %}" class="dropdown-item text-center text-primary fw-bold py-3">
+                                        Ver todas ({{ total_notificaciones }}) →
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </li>
 
-          </ul>
+                        <li class="nav-item">
+                            <span class="nav-link text-white">
+                                <i class="fas fa-user me-1"></i> <span class="d-none d-sm-inline">{{ user.username }}</span>
+                            </span>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout/">
+                                <i class="fas fa-sign-out-alt me-1"></i> Salir
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/login/">
+                                <i class="fas fa-sign-in-alt me-1"></i> Ingresar
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
-      </div>
     </nav>
 
     <!-- MENSAJES -->
     {% if messages %}
     <div class="container mt-3">
-      {% for message in messages %}
-      <div
-        class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm"
-        role="alert"
-      >
-        {{ message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-        ></button>
-      </div>
-      {% endfor %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
     </div>
     {% endif %}
 
-    <!-- CONTENIDO -->
-    <main class="container py-4">
-      {% block content %}{% endblock %}
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="container py-3 py-md-4">
+        {% block content %}{% endblock %}
     </main>
 
-    <!-- FOOTER -->
+    <!-- FOOTER RESPONSIVO -->
     <footer class="bg-dark text-white mt-5 py-4">
-      <div class="container">
-        <div class="row text-center text-md-start">
-
-          <div class="col-12 col-md-6 mb-3 mb-md-0">
-            <h5 class="fw-bold">Mi Proyecto Django</h5>
-            <p class="mb-0">
-              EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"
-            </p>
-          </div>
-
-          <div class="col-12 col-md-6 text-center text-md-end">
-            <p class="mb-1">&copy; {% now "Y" %} - Todos los derechos reservados</p>
-            <img
-              src="{% static 'images/tel3.png' %}"
-              alt="Logo"
-              width="150"
-              class="img-fluid mt-2"
-            >
-          </div>
-
+        <div class="container">
+            <div class="row text-center text-md-start">
+                <div class="col-12 col-md-6 mb-3 mb-md-0">
+                    <h5 class="fw-bold">Mi Proyecto Django</h5>
+                    <p class="mb-0 small">
+                        EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"
+                    </p>
+                </div>
+                <div class="col-12 col-md-6 text-center text-md-end">
+                    <p class="mb-1 small">&copy; {% now "Y" %} - Todos los derechos reservados</p>
+                    <img src="{% static 'images/tel3.png' %}" alt="Logo" width="120" class="img-fluid mt-2">
+                </div>
+            </div>
         </div>
-      </div>
     </footer>
 
     <!-- Bootstrap JS -->
@@ -244,37 +332,8 @@
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
 
-    <!-- JavaScript para notificaciones mejorado -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Función para actualizar el contador de notificaciones
-        function actualizarContador() {
-            const contador = document.querySelector('.badge.bg-danger');
-            const lista = document.getElementById('lista-notificaciones');
-            const itemsRestantes = lista.querySelectorAll('.border-bottom[data-id]').length;
-            
-            if (contador) {
-                if (itemsRestantes > 0) {
-                    contador.textContent = itemsRestantes;
-                } else {
-                    contador.remove();
-                    
-                    // Mostrar mensaje de vacío si no hay notificaciones
-                    if (lista.children.length === 0 || (lista.children.length === 1 && lista.children[0].querySelector('.text-center.py-4'))) {
-                        // Ya está vacío
-                    } else {
-                        lista.innerHTML = `
-                            <div class="dropdown-item text-center py-4">
-                                <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
-                                <p class="mb-1 fw-bold">No hay notificaciones</p>
-                                <small class="text-muted">Todo está en orden</small>
-                            </div>
-                        `;
-                    }
-                }
-            }
-        }
-
         // Marcar notificaciones como leídas
         document.querySelectorAll('.btn-marcar-leida').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -285,7 +344,6 @@
                 const notificacionDiv = this.closest('.border-bottom');
                 const boton = this;
                 
-                // Deshabilitar botón mientras procesa
                 boton.disabled = true;
                 boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 
@@ -300,55 +358,33 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Eliminar la notificación completa (incluyendo botones)
-                        if (notificacionDiv) {
-                            notificacionDiv.remove();
-                        }
-                        
+                        if (notificacionDiv) notificacionDiv.remove();
                         // Actualizar contador
-                        actualizarContador();
+                        const contador = document.querySelector('.badge.bg-danger');
+                        if (contador) {
+                            const nuevoTotal = parseInt(contador.textContent) - 1;
+                            if (nuevoTotal > 0) {
+                                contador.textContent = nuevoTotal;
+                            } else {
+                                contador.remove();
+                            }
+                        }
                     } else {
                         alert('Error: ' + data.message);
                         boton.disabled = false;
-                        boton.innerHTML = '<i class="fas fa-check"></i> Marcar leída';
+                        boton.innerHTML = '<i class="fas fa-check"></i> Leída';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     boton.disabled = false;
-                    boton.innerHTML = '<i class="fas fa-check"></i> Marcar leída';
+                    boton.innerHTML = '<i class="fas fa-check"></i> Leída';
                 });
             });
         });
-
-        // Estilo hover para las notificaciones
-        const style = document.createElement('style');
-        style.textContent = `
-            .hover-bg-light:hover {
-                background-color: #f8f9fa !important;
-            }
-            .dropdown-item:active {
-                background-color: transparent !important;
-            }
-        `;
-        document.head.appendChild(style);
     });
     </script>
 
     {% block extra_js %}{% endblock %}
-
-  </body>
+</body>
 </html>
-
-
-<style>
-    .badge.bg-orange {
-        background-color: #ff7300 !important;
-        color: white;
-    }
-    .table-orange {
-        --bs-table-bg: #ff9d00;
-        --bs-table-striped-bg: #ff9100;
-        --bs-table-hover-bg: #ff7700;
-    }
-</style>

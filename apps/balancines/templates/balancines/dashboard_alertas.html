@@ -1,16 +1,5 @@
 
 
-<style>
-    .badge.bg-orange {
-        background-color: #fd7e14 !important;
-        color: white;
-    }
-    .table-orange {
-        --bs-table-bg: #fff3e0;
-        --bs-table-striped-bg: #ffe9cc;
-        --bs-table-hover-bg: #ffdec2;
-    }
-</style>
 
 {% extends 'base.html' %}
 {% load static %}
@@ -31,41 +20,6 @@
         </div>
     </div>
     
-    <!-- Tarjetas de resumen rápido -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-danger">
-                <div class="card-body text-center">
-                    <h3>{{ stats.por_nivel.VENCIDO }}</h3>
-                    <p class="mb-0">Vencidos</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger" style="background-color: #dc3545 !important;">
-                <div class="card-body text-center">
-                    <h3>{{ stats.por_nivel.ROJO }}</h3>
-                    <p class="mb-0">Críticos</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body text-center">
-                    <h3>{{ stats.por_nivel.NARANJA }}</h3>
-                    <p class="mb-0">Urgentes</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning" style="background-color: #ffc107 !important;">
-                <div class="card-body text-center">
-                    <h3>{{ stats.por_nivel.AMARILLO }}</h3>
-                    <p class="mb-0">Próximos</p>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <!-- Tabla de alertas -->
     <div class="card">

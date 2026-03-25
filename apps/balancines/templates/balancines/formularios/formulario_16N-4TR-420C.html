@@ -1,8 +1,4 @@
-    {% extends 'base.html' %}
-    {% load static %}
-    {% load matriz_filters %}
 
-    {% block title %}Formulario de Control - {{ balancin.codigo }}{% endblock %}
 
     {% block extra_css %}
     <style>
@@ -656,14 +652,11 @@
             <div>EMPRESA ESTATAL DE TRANSPORTE POR CABLE "MI TELEFERICO"</div>
             <div>TALLER DE REPARACIONES MAYORES</div>
             <div>FORMULARIO DE CONTROL DE REACONDICIONAMIENTO DE BALANCINES</div>
-            <div style="font-size: 12pt; margin-top: 10px;">
-                {{ tipo_balancin }} | {{ balancin.codigo }} | {{ linea_actual }} - Torre {{ torre_actual }} | {% now "d/m/Y" %}
-            </div>
+            
         </div>
 
         <form method="post">
             {% csrf_token %}
-            
             <!-- ===== DATOS GENERALES ===== -->
             <table class="excel-table">
                 <tr>
@@ -763,12 +756,10 @@
                             <tr>
                                 <td><code>{{ comp.id_original }}</code></td>
                                 <td>{{ comp.descripcion }}</td>
-                               <td style="text-align: center;">
-    <input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" readonly>
-</td> 
-                            <td style="text-align: center;">
-    <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" readonly>
-</td>
+                                <td style="text-align: center;"><input type="number" name="cantidad_{{ comp.id }}" value="{{ comp.cantidad }}" min="0" class="excel-input" readonly></td> 
+                                <td style="text-align: center;">
+                                    <input type="number" name="cantidad_total_{{ comp.id }}" value="{{ comp.cantidad_total }}" min="0" class="excel-input" readonly>
+                                </td>
                                 <td style="text-align: center;">
                                     <input type="radio" name="recambio_{{ comp.id }}" value="SI" class="excel-radio">
                                 </td>
@@ -816,9 +807,11 @@
     
     <!-- Buscador -->
     <div style="display: flex; padding: 10px; background-color: #f0f0f0; border-bottom: 1px solid #000;">
-        <input type="text" id="buscador-repuestos" placeholder="Buscar por ID o descripción..." 
-               style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
-        <button type="button" id="btn-agregar" class="btn btn-primary" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" disabled>Agregar</button>
+        <input type="text" id="buscador-repuestos" placeholder="Buscar por ID o descripción" 
+            style="flex: 1; padding: 8px; margin-right: 10px; border: 1px solid #999; border-radius: 3px;">
+        <button type="button" id="btn-agregar" class="btn btn-primary" 
+        style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;" 
+        disabled>Agregar</button>
     </div>
     
     <!-- Resultados de búsqueda -->
