@@ -1245,3 +1245,126 @@ class RegistroRepuestoAdicional(models.Model):
             print(f"Error al guardar historial: {e}")
         
         super().save(*args, **kwargs)
+        
+        
+        
+        
+        
+        # ============================================================
+# CONTROL DE HORAS EN VIVO
+# ============================================================
+
+class ControlHorasBalancin(models.Model):
+    """
+    Control de horas acumuladas de los balancines para cálculo en vivo.
+    Un registro por balancín. Independiente del historial OH.
+    """
+    
+    balancin = models.OneToOneField(
+        'BalancinIndividual',
+        on_delete=models.CASCADE,
+        related_name='control_horas',
+        verbose_name='Balancín'
+    )
+    
+    # Datos base (último punto de referencia)
+    horas_base = models.PositiveIntegerField(
+        'Horas base',
+        default=0,
+        help_text='Horas registradas en el último punto de referencia'
+    )
+    fecha_base = models.DateField(
+        'Fecha base',
+        default=timezone.now,
+        help_text='Fecha en que se registraron las horas base'
+    )
+    
+    # Horas calculadas en vivo (se actualizan al consultar)
+    horas_actuales = models.PositiveIntegerField(
+        'Horas actuales',
+        default=0,
+        help_text='Horas calculadas en tiempo real'
+    )
+    backlog_actual = models.IntegerField(
+        'Backlog actual',
+        default=0,
+        help_text='Horas restantes para mantenimiento'
+    )
+    
+    # Para auditoría
+    ultima_actualizacion = models.DateTimeField(
+        'Última actualización',
+        auto_now=True
+    )
+    ultimo_oh_relacionado = models.ForeignKey(
+        'HistorialOH',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='control_horas',
+        verbose_name='Último OH relacionado'
+    )
+    
+    class Meta:
+        db_table = 'app_control_horas_balancin'
+        verbose_name = 'Control de Horas de Balancín'
+        verbose_name_plural = 'Controles de Horas de Balancines'
+    
+    def __str__(self):
+        return f"{self.balancin.codigo} - {self.horas_actuales}h"
+    
+    def recalcular_horas(self, fecha_referencia=None):
+        """
+        Recalcula las horas actuales en vivo
+        """
+        if not fecha_referencia:
+            fecha_referencia = timezone.now().date()
+        
+        dias_transcurridos = (fecha_referencia - self.fecha_base).days
+        horas_adicionales = dias_transcurridos * 16  # 16 horas por día
+        
+        self.horas_actuales = self.horas_base + horas_adicionales
+        self.backlog_actual = self.balancin.rango_horas_cambio_oh - self.horas_actuales
+        
+        return self.horas_actuales
+    
+    def actualizar_base(self, nuevas_horas, nueva_fecha=None, nuevo_oh=None):
+        """
+        Actualiza la base (cuando se hace un nuevo OH o se reinicia el contador)
+        """
+        self.horas_base = nuevas_horas
+        if nueva_fecha:
+            self.fecha_base = nueva_fecha
+        else:
+            self.fecha_base = timezone.now().date()
+        
+        if nuevo_oh:
+            self.ultimo_oh_relacionado = nuevo_oh
+        
+        self.recalcular_horas()
+        self.save()
+    
+    @classmethod
+    def inicializar_para_balancin(cls, balancin):
+        """
+        Inicializa un registro de control para un balancín basado en su último OH
+        """
+        ultimo_oh = HistorialOH.objects.filter(balancin=balancin).order_by('-fecha_oh').first()
+        
+        if ultimo_oh:
+            horas_base = ultimo_oh.horas_operacion
+            fecha_base = ultimo_oh.fecha_oh
+        else:
+            horas_base = 0
+            fecha_base = timezone.now().date()
+        
+        control = cls.objects.create(
+            balancin=balancin,
+            horas_base=horas_base,
+            fecha_base=fecha_base,
+            ultimo_oh_relacionado=ultimo_oh
+        )
+        control.recalcular_horas()
+        control.save()
+        
+        return control

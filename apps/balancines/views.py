@@ -45,7 +45,7 @@ from .models import (
     # Usuarios y logs
     Usuario, ActivityLog,
     # Trabajos taller
-    RegistroTallerDiario, RegistroRepuestoBalancin, RegistroRepuestoAdicional
+    RegistroTallerDiario, RegistroRepuestoBalancin, RegistroRepuestoAdicional,ControlHorasBalancin
 )
 
 # ========== FORMULARIOS LOCALES ==========
@@ -2877,3 +2877,184 @@ def editar_trabajo_taller(request, pk):
     }
     
     return render(request, 'balancines/editar_trabajo.html', context)
+
+
+
+# ============================================================
+# API PARA HORAS EN VIVO (POLLING)
+# ============================================================
+
+# ============================================================
+# API PARA HORAS EN VIVO (usando ControlHorasBalancin)
+# ============================================================
+@login_required
+def api_horas_en_vivo(request):
+    """
+    API que devuelve horas actuales en vivo usando ControlHorasBalancin
+    Con soporte para filtros y ordenamiento
+    """
+    from django.utils import timezone
+    
+    # Obtener parámetros de filtro
+    linea_filtro = request.GET.get('linea', '')
+    
+    hoy = timezone.now().date()
+    
+    # Obtener todos los registros de control
+    controles = ControlHorasBalancin.objects.select_related(
+        'balancin', 'balancin__torre__linea'
+    )
+    
+    # Aplicar filtro por línea
+    if linea_filtro:
+        controles = controles.filter(balancin__torre__linea__nombre=linea_filtro)
+    
+    datos = []
+    
+    for control in controles:
+        # Recalcular horas en vivo
+        horas_actuales = control.recalcular_horas(hoy)
+        backlog = control.backlog_actual
+        
+        # Determinar estado
+        if backlog < 0:
+            estado = 'critico'
+            color = '#dc3545'
+        elif backlog < 5000:
+            estado = 'alerta'
+            color = '#ffc107'
+        else:
+            estado = 'normal'
+            color = '#28a745'
+        
+        # Extraer número de torre para ordenamiento
+        torre_numero = control.balancin.torre.numero_torre if control.balancin.torre else '0'
+        # Extraer solo el número para ordenar
+        import re
+        match = re.search(r'\d+', torre_numero)
+        numero_torre = int(match.group()) if match else 0
+        
+        datos.append({
+            'codigo': control.balancin.codigo,
+            'linea_nombre': control.balancin.torre.linea.nombre if control.balancin.torre else 'N/A',
+            'torre_numero': torre_numero,
+            'numero_torre_int': numero_torre,  # Para ordenar
+            'sentido': control.balancin.sentido,
+            'horas_actuales': round(horas_actuales, 0),
+            'backlog': round(backlog, 0),
+            'estado': estado,
+            'color': color,
+            'porcentaje': min(100, (horas_actuales / control.balancin.rango_horas_cambio_oh) * 100),
+            'ultimo_oh_fecha': control.ultimo_oh_relacionado.fecha_oh.strftime('%d/%m/%Y') if control.ultimo_oh_relacionado else '-',
+            'ultimo_oh_horas': control.horas_base,
+            'rango_oh': control.balancin.rango_horas_cambio_oh,
+        })
+    
+    # Ordenar por línea y luego por número de torre
+    datos.sort(key=lambda x: (x['linea_nombre'], x['numero_torre_int'], x['torre_numero'], x['sentido']))
+    
+    # Obtener todas las líneas para el filtro
+    lineas = Linea.objects.all().values_list('nombre', flat=True)
+    
+    # Calcular resumen
+    total_normal = sum(1 for d in datos if d['estado'] == 'normal')
+    total_alerta = sum(1 for d in datos if d['estado'] == 'alerta')
+    total_critico = sum(1 for d in datos if d['estado'] == 'critico')
+    
+    return JsonResponse({
+        'success': True,
+        'fecha_actual': hoy.strftime('%d/%m/%Y'),
+        'lineas': list(lineas),
+        'resumen': {
+            'total': len(datos),
+            'normal': total_normal,
+            'alerta': total_alerta,
+            'critico': total_critico,
+        },
+        'datos': datos,
+    })
+    
+    # ============================================================
+# DASHBOARD OH EN VIVO (con polling)
+# ============================================================
+
+@login_required
+def dashboard_oh_vivo(request):
+    """
+    Dashboard OH con actualización en vivo (polling cada 30 segundos)
+    """
+    context = {
+        'title': 'Dashboard OH - En Vivo',
+    }
+    return render(request, 'balancines/dashboard_oh_vivo.html', context)
+
+
+# ============================================================
+# REINICIAR CONTADOR DE UN BALANCÍN
+# ============================================================
+
+# ============================================================
+# REINICIAR CONTADOR DE UN BALANCÍN
+# ============================================================
+
+@login_required
+@require_POST
+@csrf_exempt
+def reiniciar_contador(request):
+    """
+    API para reiniciar el contador de horas de un balancín individual
+    """
+    try:
+        import json
+        data = json.loads(request.body)
+        balancin_codigo = data.get('balancin_codigo')
+        nuevas_horas = data.get('nuevas_horas', 0)
+        observaciones = data.get('observaciones', '')
+        
+        if not balancin_codigo:
+            return JsonResponse({'success': False, 'error': 'Balancín no especificado'}, status=400)
+        
+        balancin = get_object_or_404(BalancinIndividual, codigo=balancin_codigo)
+        
+        # Obtener o crear el control de horas
+        control, creado = ControlHorasBalancin.objects.get_or_create(
+            balancin=balancin
+        )
+        
+        # Registrar en HistorialOH (para mantener el historial)
+        nuevo_oh = HistorialOH.objects.create(
+            balancin=balancin,
+            numero_oh=(HistorialOH.objects.filter(balancin=balancin).count() + 1),
+            fecha_oh=timezone.now().date(),
+            horas_operacion=nuevas_horas,
+            observaciones=f"Reinicio de contador. {observaciones}",
+            linea_nombre=balancin.torre.linea.nombre if balancin.torre else 'N/A',
+            torre_numero=balancin.torre.numero_torre if balancin.torre else '0',
+            sentido=balancin.sentido,
+            tipo_balancin=balancin.tipo_balancin_codigo or 'N/A',
+            rango_oh_horas=balancin.rango_horas_cambio_oh,
+            inicio_oc='2014-05-01',
+            horas_promedio_dia=16,
+            factor_correccion=1.00,
+            backlog=balancin.rango_horas_cambio_oh - nuevas_horas,
+            anio=timezone.now().year,
+            dia_semana=timezone.now().strftime('%A'),
+            usuario_registro=request.user.email if request.user.is_authenticated else 'Sistema'
+        )
+        
+        # Actualizar el control de horas
+        control.actualizar_base(
+            nuevas_horas=nuevas_horas,
+            nueva_fecha=timezone.now().date(),
+            nuevo_oh=nuevo_oh
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Contador reiniciado para {balancin.codigo} a {nuevas_horas} horas',
+            'nuevas_horas': control.horas_actuales,
+            'nuevo_backlog': control.backlog_actual,
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

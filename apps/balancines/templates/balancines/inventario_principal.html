@@ -108,6 +108,11 @@
                             <i class="fas fa-chart-bar"></i> Ver Dashboard OH
                         </a>
                     </div>
+                    <div class="mt-3">
+                        <a href="{% url 'dashboard_oh_vivo' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-chart-bar"></i> Ver Dashboard en vivo
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -794,7 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         data: [
                             data.distribucion.entradas || 0,
                             data.distribucion.salidas || 0,
-                           
                         ],
                         backgroundColor: ['#28a745', '#dc3545'],
                         borderWidth: 0

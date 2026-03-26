@@ -125,4 +125,12 @@ path('trabajos/nuevo/', views.crear_trabajo_taller, name='crear_trabajo_taller')
 path('trabajos/<int:pk>/', views.detalle_trabajo_taller, name='detalle_trabajo_taller'),
 path('trabajos/<int:pk>/editar/', views.editar_trabajo_taller, name='editar_trabajo_taller'),
 
+
+# En el bloque de URLs, después de las APIs existentes
+path('api/horas-en-vivo/', views.api_horas_en_vivo, name='api_horas_en_vivo'),
+path('inventario/dashboard-oh-vivo/', views.dashboard_oh_vivo, name='dashboard_oh_vivo'),
+
+# ========== REINICIAR CONTADOR ==========
+path('api/reiniciar-contador/', views.reiniciar_contador, name='reiniciar_contador'),
+
 ]

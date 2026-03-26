@@ -43,6 +43,40 @@ class ServicioAlertasOH:
         ).order_by('-fecha_oh').first()
     
     @classmethod
+    def _obtener_destinatarios(cls, nivel):
+        """
+        Obtiene los destinatarios según el nivel de alerta
+        """
+        from apps.balancines.models import Usuario
+        
+        if nivel == 'CRITICO':
+            # Alertas críticas: enviar a JEFES y SUPERVISORES
+            usuarios = Usuario.objects.filter(
+                rol__in=['jefe', 'supervisor']
+            ).values_list('email', flat=True)
+        elif nivel == 'ALERTA':
+            # Alertas normales: enviar a SUPERVISORES y TÉCNICOS
+            usuarios = Usuario.objects.filter(
+                rol__in=['supervisor', 'tecnico']
+            ).values_list('email', flat=True)
+        elif nivel == 'VENCIDO':
+            # Alertas vencidas: enviar a TODOS
+            usuarios = Usuario.objects.filter(
+                rol__in=['jefe', 'supervisor', 'tecnico']
+            ).values_list('email', flat=True)
+        else:
+            usuarios = []
+        
+        destinatarios = list(usuarios)
+        
+        # Si no hay usuarios, usar email por defecto
+        if not destinatarios:
+            destinatarios = ['miguefernandohuanca@gmail.com']
+            print(f"⚠️ No hay usuarios registrados. Usando email por defecto")
+        
+        return destinatarios
+    
+    @classmethod
     def _enviar_email_inmediato(cls, alerta):
         """
         Envía email INMEDIATAMENTE cuando se crea una alerta
@@ -54,6 +88,9 @@ class ServicioAlertasOH:
             
             balancin = alerta.balancin
             torre = balancin.torre
+            
+            # Obtener destinatarios según el nivel
+            destinatarios = cls._obtener_destinatarios(alerta.nivel)
             
             # Mapeo de niveles
             if alerta.nivel == 'CRITICO':
@@ -87,23 +124,26 @@ Este es un mensaje automático del Sistema TRM
 Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
             """
             
-            # Destinatarios
-            destinatarios = ['miguefernandohuanca@gmail.com']
-            
             # Enviar email
-            resultado = send_mail(
-                subject=asunto,
-                message=mensaje,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=destinatarios,
-                fail_silently=False,
-            )
-            
-            if resultado == 1:
-                print(f"✅ Email enviado para alerta {alerta.id} - {balancin.codigo}")
-                return True
-            return False
-            
+            if destinatarios:
+                resultado = send_mail(
+                    subject=asunto,
+                    message=mensaje,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=destinatarios,
+                    fail_silently=False,
+                )
+                
+                if resultado == 1:
+                    print(f"✅ Email enviado a {len(destinatarios)} destinatarios para alerta {alerta.id} - {balancin.codigo}")
+                    return True
+                else:
+                    print(f"⚠️ Email no enviado (resultado: {resultado})")
+                    return False
+            else:
+                print(f"⚠️ No hay destinatarios para alerta {alerta.id}")
+                return False
+                
         except Exception as e:
             print(f"❌ Error enviando email: {e}")
             import traceback
@@ -120,18 +160,23 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
         ultimo_historial = cls.obtener_ultimo_historial(balancin)
         
         if not ultimo_historial:
+            print(f"⚠️ {balancin.codigo} no tiene historial OH")
             return None
         
         if ultimo_historial.backlog is None:
+            print(f"⚠️ {balancin.codigo} no tiene backlog calculado")
             return None
         
         backlog = ultimo_historial.backlog
         nivel = cls.determinar_nivel(backlog)
         
+        print(f"📊 {balancin.codigo}: Backlog={backlog}, Nivel={nivel}")
+        
         if nivel not in ['VENCIDO', 'ALERTA', 'CRITICO']:
+            print(f"✅ {balancin.codigo} está en nivel {nivel} - No se genera alerta")
             return None
         
-        # Verificar si ya existe una alerta activa
+        # Verificar si ya existe una alerta activa del mismo nivel
         alerta_existente = AlertaOH.objects.filter(
             balancin=balancin,
             nivel=nivel,
@@ -139,6 +184,11 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
         ).first()
         
         if alerta_existente and not forzar:
+            print(f"⚠️ Ya existe alerta {nivel} para {balancin.codigo} (ID: {alerta_existente.id})")
+            # 🔥 Reenviar email aunque la alerta ya exista
+            if enviar_email:
+                print(f"📧 Reenviando email para alerta existente {alerta_existente.id}")
+                cls._enviar_email_inmediato(alerta_existente)
             return alerta_existente
         
         # Calcular fecha estimada
@@ -160,6 +210,8 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
             observaciones=f"Alerta generada por backlog de {backlog} horas"
         )
         
+        print(f"📢 Alerta {nivel} creada para {balancin.codigo} (ID: {alerta.id})")
+        
         # Enviar email si está activado
         if enviar_email:
             cls._enviar_email_inmediato(alerta)
@@ -170,7 +222,6 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
     def generar_todas_las_alertas(cls, forzar=False, enviar_email=True):
         """
         Genera alertas para todos los balancines
-        Retorna estadísticas de las alertas generadas
         """
         from apps.balancines.models import BalancinIndividual
         
@@ -185,10 +236,16 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
             'errores': []
         }
         
+        print("🔍 Generando alertas para todos los balancines...")
+        
         for balancin in BalancinIndividual.objects.all():
             try:
                 resultados['procesados'] += 1
-                alerta = cls.generar_alerta_para_balancin(balancin, forzar, enviar_email)
+                alerta = cls.generar_alerta_para_balancin(
+                    balancin, 
+                    forzar=forzar,
+                    enviar_email=enviar_email
+                )
                 
                 if alerta:
                     resultados['alertas_generadas'] += 1
@@ -197,7 +254,7 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
                     
             except Exception as e:
                 resultados['errores'].append(f'{balancin.codigo}: {str(e)}')
-                print(f"Error generando alerta para {balancin.codigo}: {e}")
+                print(f"❌ Error en {balancin.codigo}: {e}")
         
         return resultados
     
