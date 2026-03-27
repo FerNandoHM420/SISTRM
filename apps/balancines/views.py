@@ -2879,57 +2879,83 @@ def editar_trabajo_taller(request, pk):
     return render(request, 'balancines/editar_trabajo.html', context)
 
 
-
-# ============================================================
-# API PARA HORAS EN VIVO (POLLING)
-# ============================================================
-
-# ============================================================
-# API PARA HORAS EN VIVO (usando ControlHorasBalancin)
-# ============================================================
 @login_required
 def api_horas_en_vivo(request):
     """
     API que devuelve horas actuales en vivo usando ControlHorasBalancin
-    Con soporte para filtros y ordenamiento
+    Las horas INCLUYEN las horas parciales del día actual
     """
     from django.utils import timezone
+    from django.core.cache import cache
+    from datetime import datetime
     
-    # Obtener parámetros de filtro
     linea_filtro = request.GET.get('linea', '')
-    
     hoy = timezone.now().date()
     
-    # Obtener todos los registros de control
+    # ===== CALCULAR HORAS QUE YA HAN PASADO HOY =====
+    ahora = datetime.now()
+    hora_inicio_dia = 6.5  # 06:30
+    hora_actual = ahora.hour + ahora.minute / 60
+    horas_hoy = max(0, hora_actual - hora_inicio_dia)
+    if horas_hoy > 16:
+        horas_hoy = 16
+    
+    # ===== MODO DESARROLLO: Forzar horas_base = 0 y fecha_base = hoy =====
+    # Esto hace que las horas totales = horas_hoy (solo horas del día actual)
+    MODO_DESARROLLO = True  # Cambia a False cuando quieras modo producción
+    
+    # Optimizar consulta: solo traer campos necesarios
     controles = ControlHorasBalancin.objects.select_related(
-        'balancin', 'balancin__torre__linea'
+        'balancin', 
+        'balancin__torre__linea',
+        'ultimo_oh_relacionado'
+    ).only(
+        'balancin__codigo',
+        'balancin__sentido',
+        'balancin__rango_horas_cambio_oh',
+        'balancin__torre__linea__nombre',
+        'balancin__torre__numero_torre',
+        'horas_base',
+        'fecha_base',
+        'ultimo_oh_relacionado__fecha_oh',
+        'ultimo_oh_relacionado__horas_operacion',
     )
     
-    # Aplicar filtro por línea
     if linea_filtro:
         controles = controles.filter(balancin__torre__linea__nombre=linea_filtro)
     
     datos = []
     
     for control in controles:
-        # Recalcular horas en vivo
-        horas_actuales = control.recalcular_horas(hoy)
-        backlog = control.backlog_actual
+        if MODO_DESARROLLO:
+            # ===== MODO DESARROLLO: Ignoramos horas_base y fecha_base =====
+            # Las horas totales son SOLO las horas de hoy
+            horas_actuales = horas_hoy
+            dias_transcurridos = 0
+        else:
+            # ===== MODO PRODUCCIÓN: Usamos horas_base y fecha_base =====
+            # Calcular días completos transcurridos
+            dias_transcurridos = (hoy - control.fecha_base).days
+            horas_actuales = control.horas_base + (dias_transcurridos * 16) + horas_hoy
+        
+        backlog = control.balancin.rango_horas_cambio_oh - horas_actuales
         
         # Determinar estado
         if backlog < 0:
             estado = 'critico'
             color = '#dc3545'
-        elif backlog < 5000:
+        elif backlog <= 5000:
             estado = 'alerta'
             color = '#ffc107'
         else:
             estado = 'normal'
             color = '#28a745'
         
+        # Calcular porcentaje basado en horas actuales
+        porcentaje = min(100, (horas_actuales / control.balancin.rango_horas_cambio_oh) * 100)
+        
         # Extraer número de torre para ordenamiento
         torre_numero = control.balancin.torre.numero_torre if control.balancin.torre else '0'
-        # Extraer solo el número para ordenar
         import re
         match = re.search(r'\d+', torre_numero)
         numero_torre = int(match.group()) if match else 0
@@ -2938,25 +2964,28 @@ def api_horas_en_vivo(request):
             'codigo': control.balancin.codigo,
             'linea_nombre': control.balancin.torre.linea.nombre if control.balancin.torre else 'N/A',
             'torre_numero': torre_numero,
-            'numero_torre_int': numero_torre,  # Para ordenar
+            'numero_torre_int': numero_torre,
             'sentido': control.balancin.sentido,
             'horas_actuales': round(horas_actuales, 0),
             'backlog': round(backlog, 0),
             'estado': estado,
             'color': color,
-            'porcentaje': min(100, (horas_actuales / control.balancin.rango_horas_cambio_oh) * 100),
+            'porcentaje': round(porcentaje, 1),
             'ultimo_oh_fecha': control.ultimo_oh_relacionado.fecha_oh.strftime('%d/%m/%Y') if control.ultimo_oh_relacionado else '-',
             'ultimo_oh_horas': control.horas_base,
             'rango_oh': control.balancin.rango_horas_cambio_oh,
+            'horas_hoy': round(horas_hoy, 2),
         })
     
-    # Ordenar por línea y luego por número de torre
+    # Ordenar en Python
     datos.sort(key=lambda x: (x['linea_nombre'], x['numero_torre_int'], x['torre_numero'], x['sentido']))
     
-    # Obtener todas las líneas para el filtro
-    lineas = Linea.objects.all().values_list('nombre', flat=True)
+    # Cache de líneas
+    lineas = cache.get('lineas_list')
+    if lineas is None:
+        lineas = list(Linea.objects.values_list('nombre', flat=True))
+        cache.set('lineas_list', lineas, 3600)
     
-    # Calcular resumen
     total_normal = sum(1 for d in datos if d['estado'] == 'normal')
     total_alerta = sum(1 for d in datos if d['estado'] == 'alerta')
     total_critico = sum(1 for d in datos if d['estado'] == 'critico')
@@ -2964,6 +2993,7 @@ def api_horas_en_vivo(request):
     return JsonResponse({
         'success': True,
         'fecha_actual': hoy.strftime('%d/%m/%Y'),
+        'horas_hoy': round(horas_hoy, 2),
         'lineas': list(lineas),
         'resumen': {
             'total': len(datos),
@@ -2973,8 +3003,8 @@ def api_horas_en_vivo(request):
         },
         'datos': datos,
     })
-    
-    # ============================================================
+
+# ============================================================
 # DASHBOARD OH EN VIVO (con polling)
 # ============================================================
 
@@ -2989,9 +3019,6 @@ def dashboard_oh_vivo(request):
     return render(request, 'balancines/dashboard_oh_vivo.html', context)
 
 
-# ============================================================
-# REINICIAR CONTADOR DE UN BALANCÍN
-# ============================================================
 
 # ============================================================
 # REINICIAR CONTADOR DE UN BALANCÍN
@@ -3003,12 +3030,15 @@ def dashboard_oh_vivo(request):
 def reiniciar_contador(request):
     """
     API para reiniciar el contador de horas de un balancín individual
+    El usuario ingresa un número, el sistema lo redondea al múltiplo de 16 más cercano (hacia abajo)
     """
     try:
         import json
+        from datetime import datetime
+        
         data = json.loads(request.body)
         balancin_codigo = data.get('balancin_codigo')
-        nuevas_horas = data.get('nuevas_horas', 0)
+        horas_ingresadas = data.get('nuevas_horas', 0)
         observaciones = data.get('observaciones', '')
         
         if not balancin_codigo:
@@ -3016,18 +3046,23 @@ def reiniciar_contador(request):
         
         balancin = get_object_or_404(BalancinIndividual, codigo=balancin_codigo)
         
+        horas_base_calculadas = (horas_ingresadas // 16) * 16
+        
+        # Calcular días que representa
+        dias_representados = horas_base_calculadas // 16
+        
         # Obtener o crear el control de horas
         control, creado = ControlHorasBalancin.objects.get_or_create(
             balancin=balancin
         )
         
-        # Registrar en HistorialOH (para mantener el historial)
+        # Registrar en HistorialOH
         nuevo_oh = HistorialOH.objects.create(
             balancin=balancin,
             numero_oh=(HistorialOH.objects.filter(balancin=balancin).count() + 1),
             fecha_oh=timezone.now().date(),
-            horas_operacion=nuevas_horas,
-            observaciones=f"Reinicio de contador. {observaciones}",
+            horas_operacion=horas_base_calculadas,
+            observaciones=f"Reinicio: Usuario ingresó {horas_ingresadas}h → redondeado a {horas_base_calculadas}h ({dias_representados} días × 16h). {observaciones}",
             linea_nombre=balancin.torre.linea.nombre if balancin.torre else 'N/A',
             torre_numero=balancin.torre.numero_torre if balancin.torre else '0',
             sentido=balancin.sentido,
@@ -3036,7 +3071,7 @@ def reiniciar_contador(request):
             inicio_oc='2014-05-01',
             horas_promedio_dia=16,
             factor_correccion=1.00,
-            backlog=balancin.rango_horas_cambio_oh - nuevas_horas,
+            backlog=balancin.rango_horas_cambio_oh - horas_base_calculadas,
             anio=timezone.now().year,
             dia_semana=timezone.now().strftime('%A'),
             usuario_registro=request.user.email if request.user.is_authenticated else 'Sistema'
@@ -3044,15 +3079,25 @@ def reiniciar_contador(request):
         
         # Actualizar el control de horas
         control.actualizar_base(
-            nuevas_horas=nuevas_horas,
+            nuevas_horas=horas_base_calculadas,
             nueva_fecha=timezone.now().date(),
             nuevo_oh=nuevo_oh
         )
         
+        # Calcular lo que se mostrará hoy
+        hoy = timezone.now().date()
+        dias_transcurridos = (hoy - control.fecha_base).days
+        horas_mostradas_hoy = control.horas_base + (dias_transcurridos * 16)
+        
         return JsonResponse({
             'success': True,
-            'message': f'Contador reiniciado para {balancin.codigo} a {nuevas_horas} horas',
-            'nuevas_horas': control.horas_actuales,
+            'message': f'✅ Contador reiniciado. Usuario ingresó {horas_ingresadas}h → se guardó {horas_base_calculadas}h ({dias_representados} días × 16h)',
+            'horas_ingresadas': horas_ingresadas,
+            'horas_guardadas': horas_base_calculadas,
+            'dias_representados': dias_representados,
+            'horas_mostradas_hoy': horas_mostradas_hoy,
+            'horas_manana': horas_base_calculadas + 16,
+            'horas_pasado': horas_base_calculadas + 32,
             'nuevo_backlog': control.backlog_actual,
         })
         

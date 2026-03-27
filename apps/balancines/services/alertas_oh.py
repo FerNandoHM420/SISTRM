@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class ServicioAlertasOH:
     """
     Servicio para generar y gestionar alertas de OverHaul
+    AHORA BASADO EN ControlHorasBalancin (horas en vivo)
     """
     
     UMBRAL_ALERTA = 5000
@@ -27,20 +28,21 @@ class ServicioAlertasOH:
             return 'VENCIDO'
         elif backlog <= 50:
             return 'CRITICO'
-        elif backlog <= 2000:
+        elif backlog <= 5000:
             return 'ALERTA'
         else:
             return 'VERDE'
     
     @classmethod
-    def obtener_ultimo_historial(cls, balancin):
+    def obtener_control_horas(cls, balancin):
         """
-        Obtiene el último registro de historial OH del balancín
+        Obtiene el registro de control de horas del balancín
         """
-        from apps.balancines.models import HistorialOH
-        return HistorialOH.objects.filter(
-            balancin=balancin
-        ).order_by('-fecha_oh').first()
+        from apps.balancines.models import ControlHorasBalancin
+        try:
+            return ControlHorasBalancin.objects.get(balancin=balancin)
+        except ControlHorasBalancin.DoesNotExist:
+            return None
     
     @classmethod
     def _obtener_destinatarios(cls, nivel):
@@ -154,23 +156,25 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
     def generar_alerta_para_balancin(cls, balancin, forzar=False, enviar_email=True):
         """
         Genera una alerta para un balancín específico
+        BASADO EN ControlHorasBalancin (horas en vivo)
         """
         from apps.balancines.models import AlertaOH
         
-        ultimo_historial = cls.obtener_ultimo_historial(balancin)
+        # Obtener el control de horas (estado actual)
+        control = cls.obtener_control_horas(balancin)
         
-        if not ultimo_historial:
-            print(f"⚠️ {balancin.codigo} no tiene historial OH")
+        if not control:
+            print(f"⚠️ {balancin.codigo} no tiene registro de control de horas")
             return None
         
-        if ultimo_historial.backlog is None:
-            print(f"⚠️ {balancin.codigo} no tiene backlog calculado")
-            return None
+        # Recalcular horas en vivo
+        hoy = timezone.now().date()
+        horas_actuales = control.recalcular_horas(hoy)
+        backlog = control.backlog_actual
         
-        backlog = ultimo_historial.backlog
+        print(f"📊 {balancin.codigo}: Horas actuales={horas_actuales}, Backlog={backlog}")
+        
         nivel = cls.determinar_nivel(backlog)
-        
-        print(f"📊 {balancin.codigo}: Backlog={backlog}, Nivel={nivel}")
         
         if nivel not in ['VENCIDO', 'ALERTA', 'CRITICO']:
             print(f"✅ {balancin.codigo} está en nivel {nivel} - No se genera alerta")
@@ -185,13 +189,13 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
         
         if alerta_existente and not forzar:
             print(f"⚠️ Ya existe alerta {nivel} para {balancin.codigo} (ID: {alerta_existente.id})")
-            # 🔥 Reenviar email aunque la alerta ya exista
+            # Reenviar email aunque la alerta ya exista
             if enviar_email:
                 print(f"📧 Reenviando email para alerta existente {alerta_existente.id}")
                 cls._enviar_email_inmediato(alerta_existente)
             return alerta_existente
         
-        # Calcular fecha estimada
+        # Calcular fecha estimada de vencimiento
         if backlog < 0:
             fecha_estimada = timezone.now().date()
         else:
@@ -203,11 +207,11 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
             balancin=balancin,
             nivel=nivel,
             backlog_momento=backlog,
-            horas_operacion_momento=ultimo_historial.horas_operacion,
+            horas_operacion_momento=horas_actuales,
             fecha_estimada_vencimiento=fecha_estimada,
             leida=False,
             resuelta=False,
-            observaciones=f"Alerta generada por backlog de {backlog} horas"
+            observaciones=f"Alerta generada por backlog de {backlog} horas (en vivo)"
         )
         
         print(f"📢 Alerta {nivel} creada para {balancin.codigo} (ID: {alerta.id})")
@@ -221,9 +225,9 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
     @classmethod
     def generar_todas_las_alertas(cls, forzar=False, enviar_email=True):
         """
-        Genera alertas para todos los balancines
+        Genera alertas para todos los balancines basado en ControlHorasBalancin
         """
-        from apps.balancines.models import BalancinIndividual
+        from apps.balancines.models import BalancinIndividual, ControlHorasBalancin
         
         resultados = {
             'procesados': 0,
@@ -236,7 +240,7 @@ Fecha: {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}
             'errores': []
         }
         
-        print("🔍 Generando alertas para todos los balancines...")
+        print("🔍 Generando alertas basadas en ControlHorasBalancin...")
         
         for balancin in BalancinIndividual.objects.all():
             try:

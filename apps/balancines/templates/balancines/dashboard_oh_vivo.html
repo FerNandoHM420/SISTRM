@@ -4,127 +4,543 @@
 {% block title %}Dashboard OH - En Vivo{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/Chart.min.css">
 <style>
     :root {
         --primary: #4361ee;
+        --primary-light: #6c5ce7;
+        --primary-dark: #3a56d4;
         --success: #06d6a0;
+        --success-light: #4cc9f0;
         --warning: #ffb703;
+        --warning-dark: #fb8b24;
         --danger: #ef476f;
-        --dark: #2b2d42;
+        --danger-dark: #d62828;
+        --dark: #1a1f2e;
+        --dark-light: #2b2d42;
+        --gray: #6c757d;
+        --gray-light: #e9ecef;
+        --white: #ffffff;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
     
     body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+        background: linear-gradient(135deg, #f8f9ff 0%, #f0f2f8 100%);
+        font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
     
+    /* ===== ANIMACIONES ===== */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    /* ===== TARJETAS DE ESTADÍSTICAS ELEGANTES ===== */
     .stat-card {
         border: none;
-        border-radius: 20px;
-        transition: all 0.3s ease;
+        border-radius: 28px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
-    }
-    .stat-card .stat-value {
-        font-size: 2.5rem;
-        font-weight: 800;
-    }
-    .stat-card .stat-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        opacity: 0.8;
+        cursor: pointer;
+        background: var(--white);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.02);
+        position: relative;
+        backdrop-filter: blur(10px);
     }
     
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: inherit;
+        border-radius: 28px 28px 0 0;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 24px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04);
+    }
+    
+    .stat-card .stat-value {
+        font-size: 2.8rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+        opacity: 0.7;
+    }
+    
+    .stat-card .stat-icon {
+        font-size: 4rem;
+        opacity: 0.08;
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        transition: all 0.4s ease;
+    }
+    
+    .stat-card:hover .stat-icon {
+        transform: scale(1.1) rotate(5deg);
+        opacity: 0.12;
+    }
+    
+    /* ===== RELOJ EN VIVO MODERNO ===== */
     .reloj-card {
-        background: linear-gradient(135deg, var(--dark) 0%, #1a1f2e 100%);
-        border-radius: 20px;
-        padding: 20px;
+        background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+        border-radius: 32px;
+        padding: 28px;
         color: white;
         text-align: center;
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
     }
+    
+    .reloj-card::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -20%;
+        width: 80%;
+        height: 150%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
     .reloj-horas {
-        font-size: 3rem;
-        font-weight: 800;
-        font-family: 'Courier New', monospace;
+        font-size: 3.5rem;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        letter-spacing: 3px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
+    
     .reloj-progreso {
         height: 8px;
         background: rgba(255,255,255,0.2);
-        border-radius: 10px;
+        border-radius: 20px;
         overflow: hidden;
+        margin-top: 12px;
     }
+    
     .reloj-progreso-bar {
         height: 100%;
-        background: linear-gradient(90deg, #06d6a0, #4cc9f0);
-        border-radius: 10px;
-        transition: width 0.1s linear;
-    }
-    
-    .badge-estado {
-        padding: 6px 14px;
-        border-radius: 30px;
-        font-size: 0.7rem;
-        font-weight: 600;
-    }
-    .badge-normal { background: #06d6a0; color: white; }
-    .badge-alerta { background: #ffb703; color: white; }
-    .badge-critico { background: #ef476f; color: white; }
-    
-    .backlog-value {
-        font-size: 1.2rem;
-        font-weight: 800;
-        font-family: 'Courier New', monospace;
-    }
-    .backlog-negative { color: #ef476f; }
-    .backlog-warning { color: #ffb703; }
-    .backlog-positive { color: #06d6a0; }
-    
-    .progress-custom {
-        height: 10px;
-        background: #e9ecef;
-        border-radius: 10px;
+        background: linear-gradient(90deg, var(--success), var(--success-light));
+        border-radius: 20px;
+        transition: width 0.3s ease;
+        position: relative;
         overflow: hidden;
     }
+    
+    .reloj-progreso-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    /* ===== FILTROS ELEGANTES ===== */
+    .filter-bar {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 20px 28px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+    }
+    
+    .filter-bar select, .filter-bar input {
+        border-radius: 16px;
+        border: 1.5px solid var(--gray-light);
+        padding: 12px 18px;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        background: var(--white);
+    }
+    
+    .filter-bar select:focus, .filter-bar input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+        outline: none;
+    }
+    
+    /* ===== BADGES MODERNOS ===== */
+    .badge-estado {
+        padding: 6px 14px;
+        border-radius: 40px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge-normal { background: linear-gradient(135deg, var(--success), #05b588); color: white; box-shadow: 0 2px 8px rgba(6,214,160,0.3); }
+    .badge-alerta { background: linear-gradient(135deg, var(--warning), #fb8b24); color: white; box-shadow: 0 2px 8px rgba(255,183,3,0.3); }
+    .badge-critico { background: linear-gradient(135deg, var(--danger), #d62828); color: white; box-shadow: 0 2px 8px rgba(239,71,111,0.3); }
+    
+    /* ===== PROGRESS BAR MODERNA ===== */
+    .progress-custom {
+        height: 8px;
+        background: var(--gray-light);
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    
     .progress-bar-custom {
         height: 100%;
-        border-radius: 10px;
-        transition: width 0.1s linear;
+        border-radius: 20px;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
     
-    .filter-bar {
-        background: white;
-        border-radius: 16px;
-        padding: 15px 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    /* ===== BACKLOG ESTILIZADO ===== */
+    .backlog-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
     }
     
+    .backlog-negative { color: var(--danger); text-shadow: 0 0 8px rgba(239,71,111,0.2); }
+    .backlog-warning { color: var(--warning); text-shadow: 0 0 8px rgba(255,183,3,0.2); }
+    .backlog-positive { color: var(--success); text-shadow: 0 0 8px rgba(6,214,160,0.2); }
+    
+    /* ===== TABLA MEJORADA ===== */
     .table-responsive {
-        max-height: 600px;
+        max-height: 550px;
         overflow-y: auto;
+        scroll-behavior: smooth;
     }
+    
     .table-responsive::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
+        height: 8px;
     }
+    
     .table-responsive::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--gray-light);
         border-radius: 10px;
     }
+    
     .table-responsive::-webkit-scrollbar-thumb {
         background: var(--primary);
         border-radius: 10px;
     }
     
-    @media (max-width: 768px) {
-        .reloj-horas { font-size: 2rem; }
-        .stat-card .stat-value { font-size: 1.5rem; }
-        .btn-group-responsive { flex-direction: column; gap: 5px; }
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background: linear-gradient(180deg, var(--white) 0%, #fafbfc 100%);
+        z-index: 10;
+        border-bottom: 2px solid var(--gray-light);
+        font-weight: 600;
+        padding: 16px 12px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--gray);
     }
     
-    .modal-content {
-        border-radius: 16px;
+    .table tbody tr {
+        transition: all 0.2s ease;
     }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(90deg, #f8f9ff, var(--white));
+        transform: scale(1.01);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    
+    /* ===== GRÁFICOS ELEGANTES CON SCROLL ===== */
+    .chart-card {
+        border: none;
+        border-radius: 28px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+        transition: all 0.4s ease;
+        background: var(--white);
+        margin-bottom: 28px;
+    }
+    
+    .chart-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.12);
+    }
+    
+    .chart-card .card-header {
+        background: var(--white);
+        border-bottom: 2px solid var(--gray-light);
+        padding: 1.25rem 1.8rem;
+    }
+    
+    .chart-card .card-header h6 {
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0;
+        font-size: 1rem;
+        letter-spacing: -0.2px;
+    }
+    
+    /* Scroll horizontal elegante */
+    .chart-scroll-container {
+        position: relative;
+        background: linear-gradient(180deg, #fafbfc 0%, var(--white) 100%);
+        padding: 20px 0;
+    }
+    
+    .chart-scroll-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        cursor: grab;
+        padding: 10px 20px;
+    }
+    
+    .chart-scroll-wrapper:active {
+        cursor: grabbing;
+    }
+    
+    .chart-scroll-wrapper::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .chart-scroll-wrapper::-webkit-scrollbar-track {
+        background: var(--gray-light);
+        border-radius: 10px;
+        margin: 0 20px;
+    }
+    
+    .chart-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+    }
+    
+    .chart-scroll-wrapper canvas {
+        min-width: 100%;
+        height: 350px;
+    }
+    
+    /* Botones de navegación elegantes */
+    .scroll-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px 20px 20px;
+    }
+    
+    .scroll-btn {
+        background: var(--white);
+        border: 1.5px solid var(--gray-light);
+        border-radius: 40px;
+        padding: 8px 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    
+    .scroll-btn:hover {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(67, 97, 238, 0.2);
+    }
+    
+    .scroll-info {
+        font-size: 0.75rem;
+        color: var(--gray);
+        background: #f8f9fa;
+        padding: 6px 16px;
+        border-radius: 40px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .scroll-info i {
+        color: var(--primary);
+    }
+    
+    /* Tooltip personalizado */
+    .custom-tooltip {
+        position: fixed;
+        background: var(--dark);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        pointer-events: none;
+        z-index: 1000;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+        max-width: 280px;
+        line-height: 1.5;
+        display: none;
+    }
+    
+    .custom-tooltip strong {
+        color: var(--primary-light);
+    }
+    
+    /* ===== PESTAÑAS ===== */
+    .nav-tabs-custom {
+        border-bottom: none;
+        margin-bottom: 28px;
+        gap: 12px;
+    }
+    
+    .nav-tabs-custom .nav-link {
+        border: none;
+        color: var(--gray);
+        font-weight: 600;
+        padding: 12px 32px;
+        border-radius: 40px;
+        transition: all 0.3s ease;
+        background: var(--white);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        cursor: pointer;
+        font-size: 0.9rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .nav-tabs-custom .nav-link i {
+        margin-right: 8px;
+    }
+    
+    .nav-tabs-custom .nav-link:hover {
+        background: #f8f9ff;
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .nav-tabs-custom .nav-link.active {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        box-shadow: 0 8px 20px rgba(67, 97, 238, 0.25);
+    }
+    
+    /* ===== SELECTOR DE LÍNEA ===== */
+    .linea-selector-card {
+        background: linear-gradient(135deg, var(--white) 0%, #fafbfc 100%);
+        border-radius: 24px;
+        padding: 24px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    
+    .linea-selector-card select {
+        border-radius: 18px;
+        padding: 14px 22px;
+        font-weight: 500;
+        border: 2px solid var(--gray-light);
+        transition: all 0.3s ease;
+        background: var(--white);
+    }
+    
+    .linea-selector-card select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67,97,238,0.1);
+    }
+    
+    /* ===== RESUMEN DE LÍNEA ===== */
+    .resumen-linea {
+        background: linear-gradient(135deg, #f8f9ff 0%, #f0f2fe 100%);
+        border-radius: 20px;
+        padding: 16px;
+        border: 1px solid rgba(67,97,238,0.15);
+    }
+    
+    .resumen-item {
+        text-align: center;
+        padding: 12px;
+        border-radius: 16px;
+        background: var(--white);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    
+    .resumen-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    }
+    
+    /* ===== INDICADOR DE ESTRATEGIA ===== */
+    .estrategia-indicador {
+        background: linear-gradient(135deg, #e8f0ff 0%, #f0f4ff 100%);
+        border-left: 4px solid var(--primary);
+        padding: 16px 20px;
+        border-radius: 20px;
+        margin-bottom: 24px;
+        backdrop-filter: blur(10px);
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .reloj-horas { font-size: 2rem; }
+        .stat-card .stat-value { font-size: 2rem; }
+        .chart-scroll-wrapper canvas { height: 280px; }
+        .nav-tabs-custom .nav-link { padding: 8px 20px; font-size: 0.85rem; }
+        .scroll-btn { padding: 6px 16px; font-size: 0.7rem; }
+    }
+    
+    /* ===== MODAL ELEGANTE ===== */
+    .modal-content {
+        border-radius: 28px;
+        border: none;
+        overflow: hidden;
+    }
+    
     .modal-header {
-        border-radius: 16px 16px 0 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border: none;
+        padding: 20px 24px;
     }
 </style>
 {% endblock %}
@@ -132,47 +548,49 @@
 {% block content %}
 <div class="container-fluid px-4 py-4">
     
-    <!-- HEADER -->
-    <div class="row mb-4">
+    <!-- HEADER MODERNO -->
+    <div class="row mb-4 animate-fadeInUp">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
-                    <h1 class="display-5 fw-bold" style="color: var(--dark);">
+                    <h1 class="display-5 fw-bold" style="color: var(--dark); letter-spacing: -0.02em;">
                         <i class="fas fa-chart-line me-2" style="color: var(--primary);"></i>
-                        Control de Horas
+                        Control de Horas OH
                     </h1>
-                   
+                    <p class="text-muted mt-2 mb-0">
+                        <i class="fas fa-circle text-success me-1" style="font-size: 0.6rem;"></i>
+                        Datos en tiempo real | Monitoreo continuo de horas de operación
+                    </p>
                 </div>
                 <div>
-                    <button class="btn btn-primary shadow-sm" id="refreshNowBtn">
-                        <i class="fas fa-sync-alt"></i> Actualizar
+                    <button class="btn btn-primary rounded-pill shadow-sm px-4 py-2" id="refreshNowBtn">
+                        <i class="fas fa-sync-alt me-2"></i> Actualizar
                     </button>
-                   
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- RELOJ EN VIVO -->
-    <div class="row mb-4">
+    <!-- RELOJ EN VIVO ELEGANTE -->
+    <div class="row mb-4 animate-fadeInUp">
         <div class="col-12">
             <div class="reloj-card">
                 <div class="row align-items-center">
                     <div class="col-md-4 text-center text-md-start">
-                        <h6 class="text-white-50 mb-1">HORA ACTUAL</h6>
+                        <h6 class="text-white-50 mb-2">⏰ HORA ACTUAL</h6>
                         <div class="reloj-horas" id="relojHora">--:--:--</div>
                         <small class="text-white-50" id="fechaActual">--/--/----</small>
                     </div>
                     <div class="col-md-4 text-center">
-                        <h6 class="text-white-50 mb-1">HORAS DE HOY</h6>
+                        <h6 class="text-white-50 mb-2">📊 HORAS DE HOY</h6>
                         <div class="reloj-horas" id="horasHoy">0.00</div>
                         <div class="reloj-progreso mt-2">
                             <div class="reloj-progreso-bar" id="progresoHoy" style="width: 0%"></div>
                         </div>
-                   
+                        
                     </div>
                     <div class="col-md-4 text-center text-md-end">
-                        <h6 class="text-white-50 mb-1">BALANCINES CRÍTICOS</h6>
+                        <h6 class="text-white-50 mb-2">⚠️ BALANCINES CRÍTICOS</h6>
                         <div class="reloj-horas" id="totalCriticoBig">0</div>
                         <small class="text-white-50">Requieren atención inmediata</small>
                     </div>
@@ -181,94 +599,256 @@
         </div>
     </div>
 
-    <!-- FILTRO POR LÍNEA -->
-    <div class="filter-bar">
+    <!-- FILTRO POR LÍNEA ELEGANTE -->
+    <div class="filter-bar animate-fadeInUp">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <label class="form-label fw-bold mb-1">Filtrar por Línea:</label>
+                <label class="form-label fw-bold mb-2">
+                    <i class="fas fa-industry me-2 text-primary"></i>Filtrar por Línea de Producción
+                </label>
                 <select id="filtroLinea" class="form-select">
-                    <option value="">Todas las líneas</option>
+                    <option value="">📋 Todas las líneas</option>
                 </select>
             </div>
             <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <span class="badge bg-secondary" id="totalBalancinesFiltro">Cargando...</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- TARJETAS DE ESTADÍSTICAS -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="stat-card bg-primary text-white p-3">
-                <div class="stat-value" id="totalBalancines">--</div>
-                <div class="stat-label">Total Balancines</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card bg-success text-white p-3">
-                <div class="stat-value" id="totalNormal">--</div>
-                <div class="stat-label">Normal</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card bg-warning text-white p-3">
-                <div class="stat-value" id="totalAlerta">--</div>
-                <div class="stat-label">Alerta</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card bg-danger text-white p-3">
-                <div class="stat-value" id="totalCritico">--</div>
-                <div class="stat-label">Crítico</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TABLA DE BALANCINES -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-white py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 fw-bold">
-                    <i class="fas fa-list me-2 text-primary"></i>
-                    Estado de Balancines
-                </h6>
-                <span class="badge bg-success" id="indicadorTiempoReal">
-                    <i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i>
-                    EN VIVO
+                <span class="badge bg-primary rounded-pill px-4 py-2" id="totalBalancinesFiltro">
+                    <i class="fas fa-chart-simple me-1"></i> Cargando...
                 </span>
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th style="min-width: 120px">Balancín</th>
-                            <th style="min-width: 120px">Línea/Torre</th>
-                            <th style="min-width: 60px">Sentido</th>
-                            <th style="min-width: 150px">Horas Actuales</th>
-                            <th style="min-width: 100px">Backlog</th>
-                            <th style="min-width: 80px">Estado</th>
-                            <th style="min-width: 150px">Progreso</th>
-                            <th style="min-width: 100px">Último OH</th>
-                            <th style="min-width: 120px">Acciones</th>
-                        </thead>
-                    <tbody id="balancinesTableBody">
-                        <tr><td colspan="9" class="text-center py-5">Cargando datos...</td></tr>
-                    </tbody>
-                </table>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS ELEGANTES -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card p-4" data-estado="todos" style="border-left: 5px solid var(--primary);">
+                <div class="stat-value text-primary" id="totalBalancines">--</div>
+                <div class="stat-label text-muted">Total Balancines</div>
+                <i class="fas fa-building stat-icon text-primary"></i>
             </div>
         </div>
-        <div class="card-footer bg-white py-2">
-            <div class="row align-items-center">
-                <div class="col">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Las horas se calculan automáticamente: <strong>horas base + (días × 16h)</strong> en tiempo real
-                    </small>
+        <div class="col-md-3">
+            <div class="stat-card p-4" data-estado="normal" style="border-left: 5px solid var(--success);">
+                <div class="stat-value text-success" id="totalNormal">--</div>
+                <div class="stat-label text-muted">Estado Normal</div>
+                <i class="fas fa-check-circle stat-icon text-success"></i>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card p-4" data-estado="alerta" style="border-left: 5px solid var(--warning);">
+                <div class="stat-value text-warning" id="totalAlerta">--</div>
+                <div class="stat-label text-muted">En Alerta</div>
+                <i class="fas fa-exclamation-triangle stat-icon text-warning"></i>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card p-4" data-estado="critico" style="border-left: 5px solid var(--danger);">
+                <div class="stat-value text-danger" id="totalCritico">--</div>
+                <div class="stat-label text-muted">Estado Crítico</div>
+                <i class="fas fa-exclamation-circle stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑAS -->
+    <ul class="nav nav-tabs-custom" id="dashboardTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado" type="button">
+                <i class="fas fa-table me-2"></i> Listado en Vivo
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">
+                <i class="fas fa-chart-line me-2"></i> Dashboard Visual
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="dashboardTabsContent">
+        
+        <!-- PESTAÑA 1: LISTADO EN VIVO -->
+        <div class="tab-pane fade show active" id="listado" role="tabpanel">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white py-3 rounded-4 border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="fas fa-list me-2 text-primary"></i>
+                            Todos los Balancines por Torre
+                        </h6>
+                        <span class="badge bg-success rounded-pill px-3 py-2" id="indicadorTiempoReal">
+                            <i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i> EN VIVO
+                        </span>
+                    </div>
                 </div>
-                <div class="col-auto">
-                    <small class="text-muted" id="footerFecha"></small>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                 <tr>
+                                    <th><i class="fas fa-barcode me-1"></i> Balancín</th>
+                                    <th><i class="fas fa-industry me-1"></i> Línea/Torre</th>
+                                    <th><i class="fas fa-arrow-up-down me-1"></i> Sentido</th>
+                                    <th><i class="fas fa-clock me-1"></i> Horas Totales</th>
+                                    <th><i class="fas fa-chart-line me-1"></i> Rango OH</th>
+                                    <th><i class="fas fa-chart-simple me-1"></i> Backlog</th>
+                                    <th><i class="fas fa-flag-checkered me-1"></i> Estado</th>
+                                    <th><i class="fas fa-chart-simple me-1"></i> Progreso</th>
+                                    <th><i class="fas fa-history me-1"></i> Último OH</th>
+                                    <th><i class="fas fa-cog me-1"></i> Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balancinesTableBody">
+                                <tr><td colspan="10" class="text-center py-5">Cargando datos...…</tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white py-3">
+                    <div class="row">
+                        <div class="col">
+                            <small class="text-muted" id="footerFecha">
+                                <i class="fas fa-database me-1"></i> Datos en tiempo real
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <small class="text-muted">
+                                <i class="fas fa-check-circle text-success me-1"></i> 
+                                Horas acumulativas desde el último mantenimiento
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PESTAÑA 2: DASHBOARD VISUAL - MODO SCROLL HORIZONTAL ELEGANTE -->
+        <div class="tab-pane fade" id="dashboard" role="tabpanel">
+            <!-- Selector de línea para dashboard -->
+            <div class="linea-selector-card animate-fadeInUp">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold mb-2">
+                            <i class="fas fa-chart-line me-2 text-primary"></i>
+                            Seleccionar Línea para Análisis
+                        </label>
+                        <select id="dashboardLineaSelect" class="form-select">
+                            <option value="">-- Seleccione una línea --</option>
+                        </select>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Visualice todos los balancines con desplazamiento horizontal
+                        </small>
+                    </div>
+                    <div class="col-md-6" id="resumenLineaSeleccionada"></div>
+                </div>
+            </div>
+
+            <!-- Indicador de estrategia elegante -->
+            <div id="estrategiaIndicador" class="estrategia-indicador" style="display: none;"></div>
+
+            <!-- GRÁFICO DE BARRAS CON SCROLL HORIZONTAL ELEGANTE -->
+            <div class="chart-card animate-fadeInUp">
+                <div class="card-header">
+                    <h6>
+                        <i class="fas fa-chart-bar me-2" style="color: var(--primary);"></i>
+                        Horas Totales por Balancín
+                        <span class="badge bg-primary ms-2" id="lineaSeleccionadaNombre">Seleccione una línea</span>
+                    </h6>
+                    <p class="text-muted small mb-0 mt-1">
+                        <i class="fas fa-arrows-alt-h me-1"></i>
+                        Desplázate horizontalmente para ver todos los balancines
+                    </p>
+                </div>
+                <div class="chart-scroll-container">
+                    <div class="chart-scroll-wrapper" id="barChartScrollWrapper">
+                        <canvas id="horasBarChart" style="height: 380px;"></canvas>
+                    </div>
+                    <div class="scroll-nav">
+                        <button class="scroll-btn" id="scrollLeftBtn">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <div class="scroll-info">
+                            <i class="fas fa-mouse-pointer"></i>
+                            <span id="scrollPositionInfo">0 / 0</span>
+                        </div>
+                        <button class="scroll-btn" id="scrollRightBtn">
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICO DE PROGRESO CON SCROLL VERTICAL ELEGANTE -->
+            <div class="row g-4 mt-2">
+                <div class="col-md-12">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h6>
+                                <i class="fas fa-tachometer-alt me-2" style="color: var(--primary);"></i>
+                                Progreso hacia OH por Balancín
+                            </h6>
+                            <p class="text-muted small mb-0 mt-1">
+                                <i class="fas fa-arrow-down me-1"></i>
+                                Desplázate verticalmente para ver todos los balancines
+                            </p>
+                        </div>
+                        <div class="chart-scroll-container">
+                            <div class="chart-scroll-wrapper" style="overflow-y: auto; overflow-x: hidden; max-height: 450px;" id="progresoScrollWrapper">
+                                <canvas id="progresoGaugeChart" style="height: auto;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICO DE EVOLUCIÓN -->
+            <div class="chart-card">
+                <div class="card-header">
+                    <h6>
+                        <i class="fas fa-chart-line me-2" style="color: var(--primary);"></i>
+                        Evolución de Horas (Top 10 Balancines)
+                    </h6>
+                    <p class="text-muted small mb-0 mt-1">
+                        <i class="fas fa-chart-simple me-1"></i>
+                        Tendencia de crecimiento de horas durante el día
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="horasEvolucionChart" style="height: 350px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla detallada elegante -->
+            <div class="chart-card mt-4">
+                <div class="card-header">
+                    <h6>
+                        <i class="fas fa-list-check me-2" style="color: var(--primary);"></i>
+                        Detalle de Balancines - <span id="detalleLineaNombre" class="fw-bold">Seleccione una línea</span>
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><i class="fas fa-hashtag me-1"></i> Código</th>
+                                    <th><i class="fas fa-tower-cell me-1"></i> Torre</th>
+                                    <th><i class="fas fa-clock me-1"></i> Horas Totales</th>
+                                    <th><i class="fas fa-flag-checkered me-1"></i> Rango OH</th>
+                                    <th><i class="fas fa-chart-simple me-1"></i> Progreso</th>
+                                    <th><i class="fas fa-flag me-1"></i> Estado</th>
+                                    <th><i class="fas fa-chart-line me-1"></i> Backlog</th>
+                                 </thead>
+                            <tbody id="detalleBalancinesBody">
+                                <td colspan="7" class="text-center py-5 text-muted">
+                                    <i class="fas fa-chart-line fa-3x mb-3 d-block opacity-50"></i>
+                                    Seleccione una línea para ver todos los balancines
+                                 </tr>
+                            </tbody>
+                         </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -277,37 +857,33 @@
 
 <!-- MODAL PARA REINICIAR CONTADOR -->
 <div class="modal fade" id="reiniciarModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title">
-                    <i class="fas fa-sync-alt me-2"></i> Reiniciar Contador
+                    <i class="fas fa-sync-alt me-2"></i> Reiniciar Contador de Horas
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <input type="hidden" id="balancinReiniciar">
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="form-label fw-bold">Balancín</label>
-                    <p class="form-control-plaintext" id="balancinNombreReiniciar"></p>
+                    <p class="form-control-plaintext bg-light p-3 rounded-3" id="balancinNombreReiniciar"></p>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Nuevas horas base <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="nuevasHoras" value="0" min="0" step="100">
-                    <div class="form-text">Generalmente se reinicia a 0 después del mantenimiento</div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Nuevas horas base <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control rounded-3" id="nuevasHoras" value="0" min="0" step="100">
+                    <div class="form-text mt-1">Generalmente se reinicia a 0 después del mantenimiento</div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Observaciones</label>
-                    <textarea class="form-control" id="observacionesReinicio" rows="2" placeholder="Motivo del reinicio..."></textarea>
-                </div>
-                <div class="alert alert-warning small">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
+                <div class="alert alert-warning rounded-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
                     Esta acción registrará un nuevo OH en el historial y reiniciará el contador de horas.
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="confirmarReinicio">
+            <div class="modal-footer border-0 pb-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="confirmarReinicio">
                     <i class="fas fa-check me-1"></i> Reiniciar Contador
                 </button>
             </div>
@@ -315,34 +891,52 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 // ============================================================
 // VARIABLES GLOBALES
 // ============================================================
 let datosBase = null;
-let horaInicioCalculo = null;
 let intervaloTiempoReal = null;
 let autoRefresh = true;
 let lineaFiltro = '';
+let dashboardLineaSeleccionada = '';
+
+// Gráficos
+let horasBarChart = null;
+let progresoGaugeChart = null;
+let horasEvolucionChart = null;
+
+// Colores para gráficos
+const COLORES_GRAFICOS = [
+    '#4361ee', '#06d6a0', '#ffb703', '#ef476f', '#4cc9f0',
+    '#9c27b0', '#ff9800', '#795548', '#607d8b', '#3f51b5'
+];
 
 // ============================================================
-// RELOJ DE HORA ACTUAL
+// FUNCIONES DE RELOJ
 // ============================================================
 function actualizarRelojHora() {
     const ahora = new Date();
-    const hora = ahora.toLocaleTimeString('es-ES');
-    const fecha = ahora.toLocaleDateString('es-ES');
-    document.getElementById('relojHora').textContent = hora;
-    document.getElementById('fechaActual').textContent = fecha;
+    document.getElementById('relojHora').textContent = ahora.toLocaleTimeString('es-ES');
+    document.getElementById('fechaActual').textContent = ahora.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
     
-    // Horas trabajadas hoy (desde 06:30)
     const horaInicioDia = 6.5;
     const horaActual = ahora.getHours() + ahora.getMinutes() / 60;
     let horasHoy = Math.max(0, horaActual - horaInicioDia);
     if (horasHoy > 16) horasHoy = 16;
-    document.getElementById('horasHoy').textContent = horasHoy.toFixed(2);
+    
+    const horasEnteras = Math.floor(horasHoy);
+    const minutos = Math.floor((horasHoy - horasEnteras) * 60);
+    
+    document.getElementById('horasHoy').textContent = `${horasEnteras}:${minutos.toString().padStart(2, '0')}`;
     document.getElementById('progresoHoy').style.width = `${(horasHoy / 16) * 100}%`;
 }
+
 setInterval(actualizarRelojHora, 1000);
 actualizarRelojHora();
 
@@ -359,34 +953,34 @@ async function cargarDatos() {
         
         if (data.success) {
             datosBase = data;
-            horaInicioCalculo = new Date();
             
-            // Cargar líneas en el filtro
             const selectLinea = document.getElementById('filtroLinea');
+            const dashboardSelect = document.getElementById('dashboardLineaSelect');
+            
             if (selectLinea.options.length <= 1 && data.lineas) {
                 data.lineas.forEach(linea => {
-                    const option = document.createElement('option');
-                    option.value = linea;
-                    option.textContent = linea;
-                    selectLinea.appendChild(option);
+                    selectLinea.appendChild(new Option(linea, linea));
+                    dashboardSelect.appendChild(new Option(linea, linea));
                 });
             }
             
-            // Actualizar estadísticas
             document.getElementById('totalBalancines').textContent = data.resumen.total;
             document.getElementById('totalNormal').textContent = data.resumen.normal;
             document.getElementById('totalAlerta').textContent = data.resumen.alerta;
             document.getElementById('totalCritico').textContent = data.resumen.critico;
             document.getElementById('totalCriticoBig').textContent = data.resumen.critico;
-            document.getElementById('totalBalancinesFiltro').textContent = `${data.resumen.total} balancines`;
+            document.getElementById('totalBalancinesFiltro').innerHTML = `<i class="fas fa-chart-simple me-1"></i> ${data.resumen.total} balancines`;
             
-            // Iniciar actualización en tiempo real
             if (intervaloTiempoReal) clearInterval(intervaloTiempoReal);
             intervaloTiempoReal = setInterval(() => {
                 if (autoRefresh) actualizarTablaTiempoReal();
             }, 1000);
             
             actualizarTablaTiempoReal();
+            
+            if (dashboardLineaSeleccionada) {
+                actualizarDashboard();
+            }
         }
     } catch (error) {
         console.error('Error cargando datos:', error);
@@ -399,32 +993,22 @@ async function cargarDatos() {
 function actualizarTablaTiempoReal() {
     if (!datosBase || !datosBase.datos) return;
     
-    const ahora = new Date();
-    const segundosTranscurridos = (ahora - horaInicioCalculo) / 1000;
-    const horasAdicionales = segundosTranscurridos / 3600;
-    
     const tbody = document.getElementById('balancinesTableBody');
+    if (!tbody) return;
     
     const datosActualizados = datosBase.datos.map(b => {
-        const horasReales = b.horas_actuales + horasAdicionales;
+        const horasReales = b.horas_actuales;
         const backlogReal = b.rango_oh - horasReales;
         const porcentajeReal = Math.min(100, Math.max(0, (horasReales / b.rango_oh) * 100));
         
         let estadoReal;
         if (backlogReal < 0) estadoReal = 'critico';
-        else if (backlogReal < 5000) estadoReal = 'alerta';
+        else if (backlogReal <= 5000) estadoReal = 'alerta';
         else estadoReal = 'normal';
         
-        return {
-            ...b,
-            horas_reales: horasReales,
-            backlog_real: backlogReal,
-            estado_real: estadoReal,
-            porcentaje_real: porcentajeReal
-        };
+        return { ...b, horas_reales: horasReales, backlog_real: backlogReal, estado_real: estadoReal, porcentaje_real: porcentajeReal };
     });
     
-    // Ordenar por línea y número de torre
     datosActualizados.sort((a, b) => {
         if (a.linea_nombre !== b.linea_nombre) return a.linea_nombre.localeCompare(b.linea_nombre);
         const numA = parseInt(a.torre_numero) || 0;
@@ -432,155 +1016,436 @@ function actualizarTablaTiempoReal() {
         return numA - numB;
     });
     
+    const totalNormal = datosActualizados.filter(b => b.estado_real === 'normal').length;
+    const totalAlerta = datosActualizados.filter(b => b.estado_real === 'alerta').length;
+    const totalCritico = datosActualizados.filter(b => b.estado_real === 'critico').length;
+    
+    document.getElementById('totalNormal').textContent = totalNormal;
+    document.getElementById('totalAlerta').textContent = totalAlerta;
+    document.getElementById('totalCritico').textContent = totalCritico;
+    
     tbody.innerHTML = datosActualizados.map(b => {
-        const backlogClass = b.backlog_real < 0 ? 'backlog-negative' : (b.backlog_real < 5000 ? 'backlog-warning' : 'backlog-positive');
+        const backlogClass = b.backlog_real < 0 ? 'backlog-negative' : (b.backlog_real <= 5000 ? 'backlog-warning' : 'backlog-positive');
         const estadoClass = b.estado_real === 'critico' ? 'badge-critico' : (b.estado_real === 'alerta' ? 'badge-alerta' : 'badge-normal');
-        const barraColor = b.backlog_real < 0 ? '#ef476f' : (b.backlog_real < 5000 ? '#ffb703' : '#06d6a0');
-        
-        const horasFormateadas = b.horas_reales.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const backlogFormateado = Math.abs(b.backlog_real).toLocaleString('es-ES');
+        const barraColor = b.backlog_real < 0 ? '#ef476f' : (b.backlog_real <= 5000 ? '#ffb703' : '#06d6a0');
+        const horasFormateadas = Math.floor(b.horas_reales).toLocaleString();
+        const backlogFormateado = Math.abs(b.backlog_real).toLocaleString();
         const signoBacklog = b.backlog_real < 0 ? '-' : '';
         
         return `
             <tr>
                 <td><strong class="text-primary">${b.codigo}</strong></td>
-                <td>${b.linea_nombre} - T${b.torre_numero}</td>
-                <td><span class="badge bg-secondary">${b.sentido === 'ASCENDENTE' ? 'ASC' : 'DESC'}</span></td>
-                <td><strong>${horasFormateadas}</strong> h</td>
-                <td><span class="backlog-value ${backlogClass}">${signoBacklog}${backlogFormateado}</span> h</td>
+                <td><span class="badge bg-dark">${b.linea_nombre} · T${b.torre_numero}</span></td>
+                <td><span class="badge bg-secondary">${b.sentido === 'ASCENDENTE' ? '⬆ ASC' : '⬇ DESC'}</span></td>
+                <td><strong class="fs-5">${horasFormateadas}</strong> <small class="text-muted">h</small></td>
+                <td>${b.rango_oh.toLocaleString()} h</td>
+                <td class="${backlogClass} fw-bold">${signoBacklog}${backlogFormateado} h</td>
                 <td><span class="badge-estado ${estadoClass}">${b.estado_real.toUpperCase()}</span></td>
                 <td style="min-width: 130px;">
-                    <div class="progress-custom">
-                        <div class="progress-bar-custom" style="width: ${b.porcentaje_real}%; background-color: ${barraColor};"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-1">
-                        <small class="text-muted">0h</small>
-                        <small class="fw-bold" style="color: ${barraColor}">${b.porcentaje_real.toFixed(1)}%</small>
-                        <small class="text-muted">${b.rango_oh.toLocaleString()}h</small>
-                    </div>
+                    <div class="progress-custom"><div class="progress-bar-custom" style="width: ${b.porcentaje_real}%; background: ${barraColor};"></div></div>
+                    <div class="d-flex justify-content-between mt-1 small"><span>0h</span><span class="fw-bold">${b.porcentaje_real.toFixed(1)}%</span><span>${b.rango_oh.toLocaleString()}h</span></div>
                 </td>
-                <td>
-                    <small>${b.ultimo_oh_fecha}</small><br>
-                    <small class="text-muted">${b.ultimo_oh_horas.toLocaleString()}h</small>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-warning" onclick="abrirModalReinicio('${b.codigo}', '${b.linea_nombre} - T${b.torre_numero}')" title="Reiniciar contador">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                    <a href="/crear-formulario/${b.codigo}/" class="btn btn-sm btn-outline-success" title="Formulario">
-                        <i class="fas fa-file-alt"></i>
-                    </a>
-                    <a href="/historial-balancin/${b.codigo}/" class="btn btn-sm btn-outline-info" title="Historial">
-                        <i class="fas fa-history"></i>
-                    </a>
-                </td>
+                <td><small>${b.ultimo_oh_fecha}</small><br><small class="text-muted">${b.ultimo_oh_horas.toLocaleString()}h</small></td>
+                <td class="text-center"><button class="btn btn-sm btn-outline-warning" onclick="abrirModalReinicio('${b.codigo}', '${b.linea_nombre} - T${b.torre_numero}')"><i class="fas fa-sync-alt"></i></button></td>
             </tr>
         `;
     }).join('');
     
-    const ahoraStr = ahora.toLocaleTimeString('es-ES');
-    const footerFecha = document.getElementById('footerFecha');
-    if (footerFecha) footerFecha.textContent = `Datos al: ${datosBase.fecha_actual} ${ahoraStr}`;
+    const ahora = new Date();
+    document.getElementById('footerFecha').innerHTML = `<i class="fas fa-database me-1"></i> Datos al: ${datosBase.fecha_actual} ${ahora.toLocaleTimeString('es-ES')} | Total: ${datosBase.resumen.total} balancines`;
 }
 
 // ============================================================
-// MODAL PARA REINICIAR CONTADOR
+// FUNCIONES AUXILIARES
 // ============================================================
+function generarHorasDelDia() {
+    const horas = [];
+    const ahora = new Date();
+    const horaActual = ahora.getHours() + ahora.getMinutes() / 60;
+    const horaInicio = 6.5;
+    
+    for (let i = horaInicio; i <= horaActual; i += 0.5) {
+        if (i <= horaActual) {
+            const h = Math.floor(i);
+            const m = Math.floor((i % 1) * 60);
+            horas.push(`${h}:${m.toString().padStart(2, '0')}`);
+        }
+    }
+    return horas;
+}
+
+function actualizarTablaDetallada(balancines, total) {
+    document.getElementById('detalleBalancinesBody').innerHTML = balancines.map((b, idx) => {
+        const backlog = b.rango_oh - b.horas_actuales;
+        const progreso = (b.horas_actuales / b.rango_oh) * 100;
+        let estado, estadoClass, estadoIcon;
+        
+        if (backlog < 0) { estado = 'CRÍTICO'; estadoClass = 'badge-critico'; estadoIcon = 'fa-skull'; }
+        else if (backlog <= 5000) { estado = 'ALERTA'; estadoClass = 'badge-alerta'; estadoIcon = 'fa-exclamation-triangle'; }
+        else { estado = 'NORMAL'; estadoClass = 'badge-normal'; estadoIcon = 'fa-check-circle'; }
+        
+        const barraColor = backlog < 0 ? '#ef476f' : (backlog <= 5000 ? '#ffb703' : '#06d6a0');
+        
+        return `
+            <tr class="${idx % 2 === 0 ? 'table-light' : ''}">
+                <td><strong class="text-primary">${b.codigo}</strong><br><small class="text-muted">${b.sentido === 'ASCENDENTE' ? '⬆ Ascendente' : '⬇ Descendente'}</small></td>
+                <td class="text-center"><span class="badge bg-dark rounded-pill px-3 py-2">Torre ${b.torre_numero}</span></td>
+                <td class="text-end"><strong class="fs-5">${Math.floor(b.horas_actuales).toLocaleString()}</strong> <small class="text-muted">h</small></td>
+                <td class="text-end">${b.rango_oh.toLocaleString()} h</td>
+                <td style="min-width: 120px;">
+                    <div class="progress-custom mb-1"><div class="progress-bar-custom" style="width: ${progreso}%; background: ${barraColor};"></div></div>
+                    <div class="d-flex justify-content-between small"><span>0h</span><span class="fw-bold">${progreso.toFixed(1)}%</span><span>${b.rango_oh.toLocaleString()}h</span></div>
+                </td>
+                <td class="text-center"><span class="badge-estado ${estadoClass}"><i class="fas ${estadoIcon} me-1"></i>${estado}</span></td>
+                <td class="${backlog < 0 ? 'text-danger' : (backlog <= 5000 ? 'text-warning' : 'text-success')} fw-bold text-end">${backlog < 0 ? '-' : ''}${Math.abs(backlog).toLocaleString()} h</td>
+            </tr>
+        `;
+    }).join('');
+    
+    document.getElementById('detalleBalancinesBody').innerHTML += `
+        <tr class="table-secondary"><td colspan="7" class="text-center py-2"><small><i class="fas fa-chart-line me-1"></i> Mostrando ${total} balancines de la línea ${dashboardLineaSeleccionada}</small></td></tr>
+    `;
+}
+
+function actualizarResumenLinea(balancines, total) {
+    const horasTotales = balancines.reduce((sum, b) => sum + b.horas_actuales, 0);
+    const promedio = total > 0 ? Math.floor(horasTotales / total) : 0;
+    const criticos = balancines.filter(b => (b.rango_oh - b.horas_actuales) < 0).length;
+    const alertas = balancines.filter(b => {
+        const backlog = b.rango_oh - b.horas_actuales;
+        return backlog <= 5000 && backlog >= 0;
+    }).length;
+    const normales = total - criticos - alertas;
+    
+    document.getElementById('lineaSeleccionadaNombre').innerHTML = `${dashboardLineaSeleccionada} (${total} balancines)`;
+    document.getElementById('detalleLineaNombre').textContent = dashboardLineaSeleccionada;
+    document.getElementById('resumenLineaSeleccionada').innerHTML = `
+        <div class="resumen-linea">
+            <div class="row g-2">
+                <div class="col-2">
+                    <div class="resumen-item">
+                        <div class="text-muted small">Balancines</div>
+                        <div class="fw-bold fs-4 text-primary">${total}</div>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="resumen-item">
+                        <div class="text-muted small">Promedio</div>
+                        <div class="fw-bold fs-4 text-info">${promedio.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="resumen-item">
+                        <div class="text-muted small">Normal</div>
+                        <div class="fw-bold fs-4 text-success">${normales}</div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="resumen-item">
+                        <div class="text-muted small">Alerta</div>
+                        <div class="fw-bold fs-4 text-warning">${alertas}</div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="resumen-item">
+                        <div class="text-muted small">Críticos</div>
+                        <div class="fw-bold fs-4 text-danger">${criticos}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================
+// DASHBOARD - MODO SCROLL HORIZONTAL ELEGANTE
+// ============================================================
+function inicializarGraficos() {
+    const ctxBar = document.getElementById('horasBarChart');
+    if (ctxBar && !horasBarChart) {
+        horasBarChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Horas Totales', data: [], backgroundColor: [] }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        backgroundColor: '#1a1f2e',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#4361ee',
+                        borderWidth: 2,
+                        callbacks: {
+                            label: function(context) {
+                                return `Horas: ${context.raw.toLocaleString()} h`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { title: { display: true, text: 'Horas', font: { weight: 'bold' } }, beginAtZero: true, grid: { color: '#e9ecef' } },
+                    x: { ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } }, grid: { display: false } }
+                }
+            }
+        });
+    }
+    
+    const ctxProg = document.getElementById('progresoGaugeChart');
+    if (ctxProg && !progresoGaugeChart) {
+        progresoGaugeChart = new Chart(ctxProg, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Progreso (%)', data: [], backgroundColor: [] }] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    tooltip: {
+                        backgroundColor: '#1a1f2e',
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.raw.toFixed(1)}% completado hacia OH`;
+                            }
+                        }
+                    }
+                },
+                scales: { x: { max: 100, title: { display: true, text: 'Progreso (%)' }, grid: { color: '#e9ecef' } }, y: { grid: { display: false } } }
+            }
+        });
+    }
+    
+    const ctxEvo = document.getElementById('horasEvolucionChart');
+    if (ctxEvo && !horasEvolucionChart) {
+        horasEvolucionChart = new Chart(ctxEvo, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: { mode: 'index', intersect: false },
+                    legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 10, font: { size: 10 } } }
+                },
+                scales: {
+                    y: { title: { display: true, text: 'Horas' }, beginAtZero: true, grid: { color: '#e9ecef' } },
+                    x: { title: { display: true, text: 'Horario' }, grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45 } }
+                }
+            }
+        });
+    }
+}
+
+function actualizarDashboard() {
+    if (!datosBase || !dashboardLineaSeleccionada) return;
+    
+    const balancinesLinea = datosBase.datos.filter(b => b.linea_nombre === dashboardLineaSeleccionada);
+    const total = balancinesLinea.length;
+    
+    if (total === 0) {
+        document.getElementById('lineaSeleccionadaNombre').innerHTML = 'Sin datos';
+        document.getElementById('detalleLineaNombre').textContent = 'Sin datos';
+        document.getElementById('resumenLineaSeleccionada').innerHTML = '<div class="alert alert-warning">No hay balancines en esta línea</div>';
+        document.getElementById('detalleBalancinesBody').innerHTML = '<td colspan="7" class="text-center py-5">No hay balancines en esta línea</td>';
+        document.getElementById('estrategiaIndicador').style.display = 'none';
+        return;
+    }
+    
+    const ordenados = [...balancinesLinea].sort((a, b) => b.horas_actuales - a.horas_actuales);
+    
+    // Actualizar resumen
+    actualizarResumenLinea(ordenados, total);
+    
+    // Indicador elegante
+    const indicador = document.getElementById('estrategiaIndicador');
+    indicador.innerHTML = `
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fas fa-arrows-alt-h fa-2x text-primary"></i>
+                <div>
+                    <strong class="d-block">📊 Modo Scroll Horizontal</strong>
+                    <small>Hay <strong>${total} balancines</strong> en esta línea</small>
+                </div>
+            </div>
+            <div class="ms-auto">
+                <div class="scroll-info">
+                    <i class="fas fa-mouse-pointer me-1"></i>
+                    <span>Arrastra o usa los botones para navegar</span>
+                </div>
+            </div>
+        </div>
+    `;
+    indicador.style.display = 'block';
+    
+    // Inicializar gráficos si no existen
+    if (!horasBarChart) inicializarGraficos();
+    
+    // Configurar gráfico de barras
+    if (horasBarChart) {
+        const datosBarra = ordenados.map(b => b.horas_actuales);
+        const coloresBarra = ordenados.map(b => {
+            const backlog = b.rango_oh - b.horas_actuales;
+            if (backlog < 0) return '#ef476f';
+            if (backlog <= 5000) return '#ffb703';
+            return '#06d6a0';
+        });
+        
+        const labelsBarra = ordenados.map(b => {
+            let codigo = b.codigo;
+            if (codigo.length > 18) codigo = codigo.substring(0, 16) + '...';
+            return `${codigo}\n(T${b.torre_numero})`;
+        });
+        
+        horasBarChart.data.labels = labelsBarra;
+        horasBarChart.data.datasets[0].data = datosBarra;
+        horasBarChart.data.datasets[0].backgroundColor = coloresBarra;
+        horasBarChart.update();
+        
+        // Configurar scroll horizontal
+        const wrapper = document.getElementById('barChartScrollWrapper');
+        if (wrapper && ordenados.length > 8) {
+            const canvas = document.getElementById('horasBarChart');
+            const anchoMinimo = Math.max(700, ordenados.length * 65);
+            canvas.style.minWidth = `${anchoMinimo}px`;
+            
+            // Botones de scroll
+            document.getElementById('scrollLeftBtn').onclick = () => {
+                wrapper.scrollBy({ left: -300, behavior: 'smooth' });
+            };
+            document.getElementById('scrollRightBtn').onclick = () => {
+                wrapper.scrollBy({ left: 300, behavior: 'smooth' });
+            };
+            
+            // Actualizar posición
+            wrapper.addEventListener('scroll', () => {
+                const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+                const currentScroll = wrapper.scrollLeft;
+                const porcentaje = maxScroll > 0 ? Math.round((currentScroll / maxScroll) * 100) : 0;
+                document.getElementById('scrollPositionInfo').innerHTML = `${porcentaje}% visto`;
+            });
+        }
+    }
+    
+    // Configurar gráfico de progreso
+    if (progresoGaugeChart) {
+        const progresos = ordenados.map(b => (b.horas_actuales / b.rango_oh) * 100);
+        const coloresProg = ordenados.map(b => {
+            const backlog = b.rango_oh - b.horas_actuales;
+            if (backlog < 0) return '#ef476f';
+            if (backlog <= 5000) return '#ffb703';
+            return '#06d6a0';
+        });
+        
+        const labelsProg = ordenados.map(b => {
+            let codigo = b.codigo;
+            if (codigo.length > 20) codigo = codigo.substring(0, 18) + '...';
+            return codigo;
+        });
+        
+        progresoGaugeChart.data.labels = labelsProg;
+        progresoGaugeChart.data.datasets[0].data = progresos;
+        progresoGaugeChart.data.datasets[0].backgroundColor = coloresProg;
+        
+        const wrapper = document.getElementById('progresoScrollWrapper');
+        if (wrapper && ordenados.length > 12) {
+            const canvas = document.getElementById('progresoGaugeChart');
+            const alturaMinima = Math.max(300, ordenados.length * 35);
+            canvas.style.height = `${alturaMinima}px`;
+        }
+        
+        progresoGaugeChart.update();
+    }
+    
+    // Configurar gráfico de evolución
+    if (horasEvolucionChart) {
+        const topEvolucion = ordenados.slice(0, 10);
+        const horasDelDia = generarHorasDelDia();
+        
+        const datasets = topEvolucion.map((b, idx) => {
+            const horasBase = b.horas_actuales;
+            const horasInicioVal = Math.max(0, horasBase - 8);
+            const incremento = (horasBase - horasInicioVal) / Math.max(1, horasDelDia.length);
+            const dataPoints = horasDelDia.map((_, i) => Math.floor(horasInicioVal + incremento * i));
+            
+            return {
+                label: `${b.codigo.substring(0, 12)} T${b.torre_numero}`,
+                data: dataPoints,
+                borderColor: COLORES_GRAFICOS[idx % COLORES_GRAFICOS.length],
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 3,
+                pointHoverRadius: 6
+            };
+        });
+        
+        horasEvolucionChart.data.labels = horasDelDia;
+        horasEvolucionChart.data.datasets = datasets;
+        horasEvolucionChart.update();
+    }
+    
+    // Tabla detallada
+    actualizarTablaDetallada(ordenados, total);
+}
+
+// ============================================================
+// EVENTOS
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarGraficos();
+    
+    document.getElementById('filtroLinea').addEventListener('change', (e) => {
+        lineaFiltro = e.target.value;
+        cargarDatos();
+    });
+    
+    document.getElementById('dashboardLineaSelect').addEventListener('change', (e) => {
+        dashboardLineaSeleccionada = e.target.value;
+        if (dashboardLineaSeleccionada) {
+            actualizarDashboard();
+        }
+    });
+    
+    document.getElementById('refreshNowBtn').addEventListener('click', () => cargarDatos());
+    
+    document.getElementById('confirmarReinicio').addEventListener('click', async () => {
+        const codigo = document.getElementById('balancinReiniciar').value;
+        const nuevasHoras = parseInt(document.getElementById('nuevasHoras').value) || 0;
+        
+        const btn = document.getElementById('confirmarReinicio');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        
+        try {
+            const response = await fetch('/api/reiniciar-contador/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ balancin_codigo: codigo, nuevas_horas: nuevasHoras })
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('✅ ' + data.message);
+                bootstrap.Modal.getInstance(document.getElementById('reiniciarModal')).hide();
+                cargarDatos();
+            } else {
+                alert('❌ Error: ' + data.error);
+            }
+        } catch (error) {
+            alert('❌ Error: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i> Reiniciar Contador';
+        }
+    });
+    
+    cargarDatos();
+});
+
 function abrirModalReinicio(codigo, nombre) {
     document.getElementById('balancinReiniciar').value = codigo;
     document.getElementById('balancinNombreReiniciar').textContent = nombre;
     document.getElementById('nuevasHoras').value = 0;
-    document.getElementById('observacionesReinicio').value = '';
     new bootstrap.Modal(document.getElementById('reiniciarModal')).show();
 }
-
-document.getElementById('confirmarReinicio').addEventListener('click', async () => {
-    const codigo = document.getElementById('balancinReiniciar').value;
-    const nuevasHoras = parseInt(document.getElementById('nuevasHoras').value) || 0;
-    const observaciones = document.getElementById('observacionesReinicio').value;
-    
-    const btn = document.getElementById('confirmarReinicio');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-    
-    try {
-        const response = await fetch('/api/reiniciar-contador/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({
-                balancin_codigo: codigo,
-                nuevas_horas: nuevasHoras,
-                observaciones: observaciones
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert(`✅ ${data.message}`);
-            bootstrap.Modal.getInstance(document.getElementById('reiniciarModal')).hide();
-            cargarDatos();
-        } else {
-            alert(`❌ Error: ${data.error}`);
-        }
-    } catch (error) {
-        alert(`❌ Error: ${error.message}`);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check me-1"></i> Reiniciar Contador';
-    }
-});
-
-// ============================================================
-// FILTRO POR LÍNEA
-// ============================================================
-const filtroLinea = document.getElementById('filtroLinea');
-if (filtroLinea) {
-    filtroLinea.addEventListener('change', (e) => {
-        lineaFiltro = e.target.value;
-        cargarDatos();
-    });
-}
-
-// ============================================================
-// CONTROLES DE AUTO-REFRESH
-// ============================================================
-const refreshBtn = document.getElementById('refreshNowBtn');
-if (refreshBtn) {
-    refreshBtn.addEventListener('click', () => cargarDatos());
-}
-
-const toggleBtn = document.getElementById('toggleAutoRefresh');
-if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-        autoRefresh = !autoRefresh;
-        const indicator = document.getElementById('indicadorTiempoReal');
-        if (autoRefresh) {
-            toggleBtn.innerHTML = '<i class="fas fa-pause"></i> Pausar';
-            toggleBtn.classList.remove('btn-success');
-            toggleBtn.classList.add('btn-outline-secondary');
-            if (indicator) {
-                indicator.className = 'badge bg-success';
-                indicator.innerHTML = '<i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i> EN VIVO';
-            }
-        } else {
-            toggleBtn.innerHTML = '<i class="fas fa-play"></i> Reanudar';
-            toggleBtn.classList.add('btn-success');
-            toggleBtn.classList.remove('btn-outline-secondary');
-            if (indicator) {
-                indicator.className = 'badge bg-secondary';
-                indicator.innerHTML = '<i class="fas fa-pause me-1" style="font-size: 0.6rem;"></i> PAUSADO';
-            }
-        }
-    });
-}
-
-// ============================================================
-// INICIALIZAR
-// ============================================================
-cargarDatos();
 </script>
 {% endblock %}

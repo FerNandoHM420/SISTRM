@@ -9,24 +9,21 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender='balancines.HistorialOH')
 def actualizar_control_horas(sender, instance, created, **kwargs):
-    """
-    Cuando se registra un nuevo OH, actualizar el ControlHorasBalancin
-    """
+    """Cuando se registra un nuevo OH, actualizar el ControlHorasBalancin"""
     if created:
         try:
             from .models import ControlHorasBalancin
             
-            # Obtener o crear el registro de control
             control, creado = ControlHorasBalancin.objects.get_or_create(
                 balancin=instance.balancin,
                 defaults={
                     'horas_base': instance.horas_operacion,
                     'fecha_base': instance.fecha_oh,
+                    'ultimo_oh_relacionado': instance
                 }
             )
             
             if not creado:
-                # Actualizar la base con las nuevas horas del OH
                 control.actualizar_base(
                     nuevas_horas=instance.horas_operacion,
                     nueva_fecha=instance.fecha_oh,
@@ -41,18 +38,18 @@ def actualizar_control_horas(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender='balancines.HistorialOH')
 def generar_alerta_al_registrar_oh(sender, instance, created, **kwargs):
-    """Cuando se registra un nuevo OH, generar alerta inmediata"""
+    """Cuando se registra un nuevo OH, generar alerta basada en ControlHorasBalancin"""
     if created:
         try:
             from .services.alertas_oh import ServicioAlertasOH
             
             logger.info(f"📝 Nuevo OH registrado para {instance.balancin.codigo}")
             
-            # Generar alerta basada en el control de horas
+            # Generar alerta basada en el control de horas (estado actual)
             ServicioAlertasOH.generar_alerta_para_balancin(
                 instance.balancin,
                 forzar=True,
-                enviar_email=False
+                enviar_email=True  # Enviar email inmediato
             )
         except Exception as e:
             logger.error(f"Error generando alerta: {e}")

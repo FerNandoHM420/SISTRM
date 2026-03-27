@@ -126,25 +126,84 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Función para mostrar mensaje
+    // ========== AUTO-REFRESH CADA 10 SEGUNDOS ==========
+    let autoRefresh = true;
+    let intervalo = null;
+    
+    // Función para recargar la página
+    function recargarPagina() {
+        if (autoRefresh) {
+            console.log("🔄 Actualizando dashboard de alertas...");
+            location.reload();
+        }
+    }
+    
+    // Iniciar auto-refresh
+    function iniciarAutoRefresh() {
+        if (intervalo) clearInterval(intervalo);
+        intervalo = setInterval(recargarPagina, 60000); // 10 segundos
+    }
+    
+    // Detener auto-refresh
+    function detenerAutoRefresh() {
+        if (intervalo) {
+            clearInterval(intervalo);
+            intervalo = null;
+        }
+    }
+    
+    // ========== INDICADOR DE AUTO-REFRESH ==========
+    // Agregar control al header
+    const header = document.querySelector('.card-header');
+    if (header) {
+        const controlDiv = document.createElement('div');
+        controlDiv.className = 'd-flex align-items-center gap-2';
+        controlDiv.innerHTML = `
+          
+            <button class="btn btn-sm btn-outline-secondary" id="toggleAutoRefreshBtn">
+                <i class="fas fa-pause"></i>
+            </button>
+        `;
+        header.appendChild(controlDiv);
+        
+        // Control de pausa/reanudar
+        const toggleBtn = document.getElementById('toggleAutoRefreshBtn');
+        const indicator = document.getElementById('refreshIndicator');
+        
+        toggleBtn.addEventListener('click', function() {
+            autoRefresh = !autoRefresh;
+            if (autoRefresh) {
+                toggleBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                indicator.innerHTML = '<i class="fas fa-sync-alt"></i> Auto: 10s';
+                indicator.className = 'badge bg-success';
+                iniciarAutoRefresh();
+                console.log("✅ Auto-refresh activado");
+            } else {
+                toggleBtn.innerHTML = '<i class="fas fa-play"></i>';
+                indicator.innerHTML = '<i class="fas fa-pause"></i> Pausado';
+                indicator.className = 'badge bg-secondary';
+                detenerAutoRefresh();
+                console.log("⏸️ Auto-refresh pausado");
+            }
+        });
+    }
+    
+    // ========== MARCAR ALERTA COMO LEÍDA ==========
     function mostrarMensaje(mensaje) {
         document.getElementById('mensaje-modal').textContent = mensaje;
         const modal = new bootstrap.Modal(document.getElementById('modalConfirmacion'));
         modal.show();
     }
     
-    // Marcar alerta como leída
     document.querySelectorAll('.btn-marcar-leida').forEach(btn => {
         btn.addEventListener('click', function() {
             const alertaId = this.dataset.id;
             const fila = this.closest('tr');
             const boton = this;
             
-            // Deshabilitar botón mientras se procesa
             boton.disabled = true;
             boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
             
@@ -159,20 +218,33 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Recargar para actualizar la vista
-                    location.reload();
+                    mostrarMensaje('✅ Alerta marcada como leída');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
                     boton.disabled = false;
                     boton.innerHTML = '<i class="fas fa-check"></i> Marcar';
-                    mostrarMensaje('Error: ' + data.message);
+                    mostrarMensaje('❌ Error: ' + data.message);
                 }
             })
             .catch(error => {
                 boton.disabled = false;
                 boton.innerHTML = '<i class="fas fa-check"></i> Marcar';
-                mostrarMensaje('Error de conexión');
+                mostrarMensaje('❌ Error de conexión');
             });
         });
+    });
+    
+    // Iniciar auto-refresh
+    iniciarAutoRefresh();
+    
+    // Detener auto-refresh cuando el usuario interactúa con la página (opcional)
+    document.addEventListener('click', function() {
+        // Si el usuario hace clic en algo, no detenemos el refresh
+        // pero podemos reiniciar el contador
+        if (autoRefresh) {
+            detenerAutoRefresh();
+            iniciarAutoRefresh();
+        }
     });
 });
 </script>
